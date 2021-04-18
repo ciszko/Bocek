@@ -7,10 +7,16 @@ from scrape import LolCounter
 from tts import TTS
 from anonse import Anonse
 from time import sleep
+import platform
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD = os.getenv('GUILD_ID')
+
+if platform.system() == 'Windows':
+    ffmpeg = 'D:/Projekt/Bocek/extras/ffmpeg.exe'
+else:
+    ffmpeg = '/usr/bin/ffmpeg'
 
 
 class MyBot(Bot):
@@ -69,8 +75,7 @@ async def anonse(ctx):
     if voice_channel != None:
         channel = voice_channel.name
         vc = await voice_channel.connect()
-        vc.play(discord.FFmpegPCMAudio(
-            executable="D:/Projekt/Bocek/extras/ffmpeg.exe", source=tts))
+        vc.play(discord.FFmpegPCMAudio(executable=ffmpeg, source=tts))
         # Sleep while audio is playing.
         while vc.is_playing():
             sleep(.1)
