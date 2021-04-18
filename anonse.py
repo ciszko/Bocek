@@ -1,6 +1,6 @@
 from bs4 import BeautifulSoup
 import requests
-from random import choice
+from random import choice, randint
 
 
 class Anonse:
@@ -9,7 +9,8 @@ class Anonse:
         self.session = requests.Session()
         self.session.headers.update(self.headers)
 
-    def get_random_anonse(self, page=1):
+    def get_random_anonse(self, page=None):
+        page = randint(1, 100) if not page else page
         url = f'https://anonse.inaczej.pl/?m=list&pg={page}&cat=1'
         r = self.session.get(url)
         dom = BeautifulSoup(r.content, 'html.parser')

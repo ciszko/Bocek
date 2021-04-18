@@ -32,6 +32,24 @@ bot = MyBot(command_prefix='$')
 channel_list = []
 
 
+async def play_on_channel(ctx=None, voice_channel=None, message=None):
+    if voice_channel != None:
+        channel = voice_channel.name
+        vc = await voice_channel.connect()
+        vc.play(discord.FFmpegPCMAudio(executable=ffmpeg, source=message))
+        # Sleep while audio is playing.
+        while vc.is_playing():
+            sleep(.1)
+        await vc.disconnect()
+    else:
+        await ctx.send(f'{ctx.author.name}, nie jesteś nawet na kanale...')
+    # Delete command after the audio is done playing.
+    if hasattr(ctx, 'message'):
+        await ctx.message.delete()
+    else:
+        await ctx.delete()
+
+
 @bot.event
 async def on_ready():
     print(f'{bot.user.name} has connected to Discord!')
@@ -39,7 +57,7 @@ async def on_ready():
         channel_list.append(channel)
 
 
-@bot.command()
+@bot.command(name='siusiak', help='Powie Ci prawdę o siusiaku')
 async def siusiak(ctx):
     types = ['potężnego', 'małego', 'brudnego',
              'paskudnego', 'ślicznego', 'krzywego', 'obszczanego']
@@ -48,16 +66,16 @@ async def siusiak(ctx):
     await ctx.message.delete()
 
 
-@bot.command()
-async def counter(ctx, arg):
-    counters = bot.lol_counter.get_lol_counters(arg)
-
-    response = '\n'.join(f'{x}: {y}' for x, y in counters)
+@bot.command(name='counter', help='Zwraca x kontr na daną postać: $counter jinx x')
+async def counter(ctx, *arg):
+    counters = bot.lol_counter.get_lol_counters(*arg)
+    response = f'**Kontry na {arg[0]}:**\n'
+    response += '\n'.join(f'{x}: {y}' for x, y in counters)
     await ctx.send(response)
     await ctx.message.delete()
 
 
-@bot.command()
+@bot.command(name='tts', help='Zwraca plik z nagraniem: $tts "tutaj tekst"')
 async def tts(ctx, arg):
     tts = bot.gtts.create_tts(arg, 'pl')
 
@@ -65,25 +83,15 @@ async def tts(ctx, arg):
     await ctx.message.delete()
 
 
-@bot.command()
+@bot.command(name='anonse', help='Zwraca losowe gejowe anonse')
 async def anonse(ctx):
     # Gets voice channel of message author
     voice_channel = ctx.author.voice.channel
     channel = None
     anonse = bot.anonse.get_random_anonse()
     tts = bot.gtts.create_tts(anonse, 'pl')
-    if voice_channel != None:
-        channel = voice_channel.name
-        vc = await voice_channel.connect()
-        vc.play(discord.FFmpegPCMAudio(executable=ffmpeg, source=tts))
-        # Sleep while audio is playing.
-        while vc.is_playing():
-            sleep(.1)
-        await vc.disconnect()
-    else:
-        await ctx.send(str(ctx.author.name) + "is not in a channel.")
-    # Delete command after the audio is done playing.
-    await ctx.message.delete()
+
+    await play_on_channel(ctx, voice_channel, tts)
 
 
 @bot.event
@@ -100,7 +108,14 @@ async def on_message(message):
 
     elif msg == 'bocek huju':
         to_choose = ['paruwo', 'obżydronie', 'obszczańcu', 'kutfo']
-        await message.channel.send(f'{message.author.name} {random.choice(to_choose)}', tts=True)
+        to_choose_2 = [message.author.name, 'ty']
+
+        to_say = f'{random.choice(to_choose_2)} {random.choice(to_choose)}'
+        tts = bot.gtts.create_tts(to_say, 'pl')
+        if message.author.voice.channel:
+            await play_on_channel(message, message.author.voice.channel, tts)
+        else:
+            await message.channel.send(f'{message.author.name} {random.choice(to_choose)}', tts=True)
 
     await bot.process_commands(message)
 
