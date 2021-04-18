@@ -8,7 +8,7 @@ class LolCounter:
         self.session = requests.Session()
         self.session.headers.update(self.headers)
 
-    def get_lol_counters(self, champion):
+    def get_lol_counters(self, champion, limit=10):
         url = f'https://www.counterstats.net/league-of-legends/{champion}'
         r = self.session.get(url)
         dom = BeautifulSoup(r.content, 'html.parser')
@@ -16,7 +16,8 @@ class LolCounter:
         picks = tight_dom.findAll('div', {'class': 'champ-box ALL'})
         best_picks, worst_picks, pop_counters = picks
 
-        return self.get_champs_and_percentage(best_picks)
+        champs_perc = self.get_champs_and_percentage(best_picks)
+        return champs_perc[:int(limit)]
 
     def get_champs_and_percentage(self, picks):
         to_ret = []
