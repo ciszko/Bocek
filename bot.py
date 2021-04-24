@@ -84,11 +84,12 @@ async def tts(ctx, arg):
 
 
 @bot.command(name='anonse', help='Zwraca losowe gejowe anonse')
-async def anonse(ctx):
+async def anonse(ctx, arg='fetysze'):
     # Gets voice channel of message author
     voice_channel = ctx.author.voice.channel
     channel = None
-    anonse = bot.anonse.get_random_anonse()
+
+    anonse = bot.anonse.get_random_anonse(arg)
     tts = bot.gtts.create_tts(anonse, 'pl')
 
     await play_on_channel(ctx, voice_channel, tts)
