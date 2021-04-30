@@ -25,11 +25,19 @@ class Anonse:
             'widzialem cie': '18',
         }
 
-    def get_random_anonse(self, cat='fetysze'):
-        page = randint(1, 10)
+    def get_anonse(self, cat='fetysze'):
         cat = self.categories[unidecode(cat)]
+        for i in range(1, 5):
+            page = randint(1, int(30/i))
+            anonse_list = self.get_random_anonse(page, cat)
+            if anonse_list:
+                return choice(anonse_list)
+        else:
+            return 'Kurde belka, coś poszło nie tak'
+
+    def get_random_anonse(self, page, cat):
         url = f'https://anonse.inaczej.pl/?m=list&pg={page}&cat={cat}'
         r = self.session.get(url)
         dom = BeautifulSoup(r.content, 'html.parser')
         ads = dom.find_all('div', {'class': 'adcontent'})
-        return choice([x.get_text().strip() for x in ads])
+        return [x.get_text().strip() for x in ads]
