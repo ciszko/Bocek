@@ -54,7 +54,9 @@ class MyBot(Bot):
         file_path = os.path.join(self.path, 'glossary/random_join.txt')
         with open(file_path, 'r+', encoding="utf-8") as f:
             lines = f.readlines()
-        return random.choice(lines)
+        index = random.randrange(len(lines))
+        print(index)
+        return lines[index]
 
     async def on_message(self, message):
         if message.author == self.user:
