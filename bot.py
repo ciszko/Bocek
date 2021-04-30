@@ -8,7 +8,6 @@ import random
 from plugins.scrape import LolCounter
 from plugins.tts import TTS
 from plugins.anonse import Anonse
-from time import sleep
 import platform
 import asyncio
 
@@ -40,14 +39,18 @@ class MyBot(Bot):
             for x in self.channel_list:
                 print(x.members, str(x.type), self.voice_clients)
                 if x.members and str(x.type) == 'voice' and not self.voice_clients:
+                    print('inside')
                     msg = self.get_random_join_msg()
+
                     msg = msg.replace('%user%', random.choice(x.members).name)
                     msg = msg.replace('%all%', ', '.join(
                         [m.name for m in x.members]))
+                    print(msg)
                     tts = self.gtts.create_tts(msg, 'pl')
+                    print('did tts')
                     await self.play_on_channel(None, x, tts)
             # task runs every 60 seconds
-            await asyncio.sleep(random.randint(10*60, 15*60))
+            await asyncio.sleep(random.randint(30, 40))
 
     def get_random_join_msg(self):
         with open('./glossary/random_join.txt', 'r+', encoding="utf-8") as f:
