@@ -8,6 +8,7 @@ import random
 from plugins.scrape import LolCounter
 from plugins.tts import TTS
 from plugins.anonse import Anonse
+from plugins.rito import Rito
 import platform
 import asyncio
 import pathlib
@@ -28,18 +29,19 @@ class MyBot(Bot):
         self.lol_counter = LolCounter()
         self.gtts = TTS()
         self.anonse = Anonse()
+        self.rito = Rito()
         self.channel_list = []
         self.path = pathlib.Path(__file__).parent.absolute()
 
-        self.bg_task = self.loop.create_task(self.my_background_task())
+        self.bg_task = self.loop.create_task(self.random_msg())
+        self.rito_task = self.loop.create_task(self.rito_check())
 
         self.add_commands()
 
-    async def my_background_task(self):
+    async def random_msg(self):
         await self.wait_until_ready()
         while not self.is_closed():
             for x in self.channel_list:
-                print(x.members, str(x.type), self.voice_clients)
                 if x.members and str(x.type) == 'voice' and not self.voice_clients:
                     msg = self.get_random_join_msg()
                     msg = msg.replace('%user%', random.choice(x.members).name)
@@ -47,6 +49,7 @@ class MyBot(Bot):
                         [m.name for m in x.members]))
                     tts = self.gtts.create_tts(msg, 'pl')
                     await self.play_on_channel(None, x, tts)
+                    break
             # task runs every 60 seconds
             await asyncio.sleep(random.randint(10*60, 15*60))
 
@@ -57,6 +60,18 @@ class MyBot(Bot):
         index = random.randrange(len(lines))
         print(index)
         return lines[index]
+
+    async def rito_check(self):
+        await self.wait_until_ready()
+        wait_time = 30
+        while not self.is_closed():
+            if in_game := await self.rito.in_game():
+                wait_time = 10
+                diff = self.rito.compare_stats()
+                print(diff)
+            else:
+                print('Ciszko not in game')
+            await asyncio.sleep(wait_time)
 
     async def on_message(self, message):
         if message.author == self.user:
