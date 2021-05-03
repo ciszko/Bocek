@@ -66,11 +66,12 @@ class MyBot(Bot):
         wait_time = 30
         while not self.is_closed():
             if in_game := await self.rito.in_game():
-                wait_time = 10
+                wait_time = 5
                 diff = await self.rito.compare_stats()
                 print(diff)
             else:
                 print(in_game)
+                wait_time = 30
             await asyncio.sleep(wait_time)
 
     async def on_message(self, message):
