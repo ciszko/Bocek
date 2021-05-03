@@ -70,7 +70,7 @@ class MyBot(Bot):
                 diff = self.rito.compare_stats()
                 print(diff)
             else:
-                print('Ciszko not in game')
+                print(in_game)
             await asyncio.sleep(wait_time)
 
     async def on_message(self, message):
