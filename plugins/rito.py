@@ -34,7 +34,7 @@ class Rito:
                     if x:
                         return True
             except Exception as e:
-                return False
+                return e
 
     async def compare_stats(self):
         data1 = self.stats
