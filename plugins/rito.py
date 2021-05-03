@@ -3,7 +3,7 @@ import aiohttp
 
 class Rito:
     def __init__(self):
-        self.url_base = 'https://192.168.0.31:2999/liveclientdata/'
+        self.url_base = 'https://192.168.0.31:29999/liveclientdata/'
         self.connector = aiohttp.TCPConnector(ssl=False)
         self.stats = {}
         self.mode = 'idle'

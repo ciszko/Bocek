@@ -34,7 +34,7 @@ class MyBot(Bot):
         self.path = pathlib.Path(__file__).parent.absolute()
 
         self.bg_task = self.loop.create_task(self.random_msg())
-        # self.rito_task = self.loop.create_task(self.rito_check())
+        self.rito_task = self.loop.create_task(self.rito_check())
 
         self.add_commands()
 
