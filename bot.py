@@ -67,7 +67,7 @@ class MyBot(Bot):
         while not self.is_closed():
             if in_game := await self.rito.in_game():
                 wait_time = 10
-                diff = self.rito.compare_stats()
+                diff = await self.rito.compare_stats()
                 print(diff)
             else:
                 print(in_game)
