@@ -33,7 +33,7 @@ class Rito:
                     x = await resp
                     if x:
                         return True
-            except aiohttp.ClientConnectionError:
+            except Exception as e:
                 return False
 
     async def compare_stats(self):
