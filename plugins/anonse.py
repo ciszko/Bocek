@@ -2,6 +2,7 @@ from bs4 import BeautifulSoup
 import requests
 from unidecode import unidecode
 from random import choice, randint
+from .common import async_wrap
 
 
 class Anonse:
@@ -25,6 +26,7 @@ class Anonse:
             'widzialem cie': '18',
         }
 
+    @async_wrap
     def get_anonse(self, cat='fetysze'):
         cat = self.categories[unidecode(cat)]
         for i in range(1, 5):
