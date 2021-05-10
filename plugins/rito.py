@@ -37,11 +37,13 @@ class Rito:
                 return e
 
     async def compare_stats(self):
-        data1 = self.stats
+        data1 = self.stats.copy()
         if not data1:
+            await self.get_all_stats()
             return None
         data2 = await self.get_all_stats()
         to_ret = {}
+        print(data1, data2)
         for i, _ in enumerate(data1):
             set1 = set(data1[i].items())
             set2 = set(data2[i].items())

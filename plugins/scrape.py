@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
 import requests
+from .common import async_wrap
 
 
 class LolCounter:
@@ -8,6 +9,7 @@ class LolCounter:
         self.session = requests.Session()
         self.session.headers.update(self.headers)
 
+    @async_wrap
     def get_lol_counters(self, champion, limit=10):
         url = f'https://www.counterstats.net/league-of-legends/{champion}'
         r = self.session.get(url)
