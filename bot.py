@@ -12,6 +12,7 @@ from plugins.rito import Rito
 import platform
 import asyncio
 import pathlib
+from difflib import get_close_matches
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -47,7 +48,7 @@ class MyBot(Bot):
                     msg = msg.replace('%user%', random.choice(x.members).name)
                     msg = msg.replace('%all%', ', '.join(
                         [m.name for m in x.members]))
-                    tts = self.gtts.create_tts(msg, 'pl')
+                    tts = await self.gtts.create_tts(msg, 'pl')
                     await self.play_on_channel(None, x, tts)
                     break
             # task runs every 60 seconds
@@ -91,7 +92,7 @@ class MyBot(Bot):
             to_choose_2 = [message.author.name, 'ty']
 
             to_say = f'{random.choice(to_choose_2)} {random.choice(to_choose)}'
-            tts = self.gtts.create_tts(to_say, 'pl')
+            tts = await self.gtts.create_tts(to_say, 'pl')
             if message.author.voice.channel:
                 await self.play_on_channel(message, message.author.voice.channel, tts)
             else:
@@ -123,6 +124,17 @@ class MyBot(Bot):
         for channel in self.get_all_channels():
             self.channel_list.append(channel)
 
+    async def on_command_error(self, context, exception):
+        all_commands = [x.name for x in self.commands]
+        msg = context.message
+        closest_match = get_close_matches(
+            msg.content, all_commands, n=1)
+        await context.message.add_reaction('❓')
+        if closest_match:
+            return await msg.reply(f'Grube paluszki :( Czy chodziło Ci o **${closest_match[0]}**?')
+        else:
+            return await msg.reply(f'Masz tak grube paluszki, że nie wiem o co chodzi :(')
+
     def add_commands(self):
 
         @self.command(name='siusiak', help='Powie Ci prawdę o siusiaku')
@@ -135,7 +147,7 @@ class MyBot(Bot):
 
         @self.command(name='counter', help='Zwraca x kontr na daną postać: $counter jinx x')
         async def counter(ctx, *arg):
-            counters = self.lol_counter.get_lol_counters(*arg)
+            counters = await self.lol_counter.get_lol_counters(*arg)
             response = f'**Kontry na {arg[0]}:**\n'
             response += '\n'.join(f'{x}: {y}' for x, y in counters)
             await ctx.send(response)
@@ -143,7 +155,7 @@ class MyBot(Bot):
 
         @self.command(name='tts', help='Zwraca plik z nagraniem: $tts "tutaj tekst"')
         async def tts(ctx, arg):
-            tts = self.gtts.create_tts(arg, 'pl')
+            tts = await self.gtts.create_tts(arg, 'pl')
 
             await ctx.send(file=discord.File(tts))
             await ctx.message.delete()
@@ -153,8 +165,8 @@ class MyBot(Bot):
             # Gets voice channel of message author
             if voice := ctx.author.voice:
                 voice_channel = voice.channel
-                msg = self.anonse.get_anonse(arg)
-                tts = self.gtts.create_tts(msg, 'pl')
+                msg = await self.anonse.get_anonse(arg)
+                tts = await self.gtts.create_tts(msg, 'pl')
                 await self.play_on_channel(ctx, voice_channel, tts)
             else:
                 msg = (f'{ctx.author.name}, nie jesteś nawet na kanale...')
