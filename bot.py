@@ -33,6 +33,7 @@ class MyBot(Bot):
         self.rito = Rito()
         self.channel_list = []
         self.path = pathlib.Path(__file__).parent.absolute()
+        self.main_channel = '🍆💦💦💦💦'
 
         self.bg_task = self.loop.create_task(self.random_msg())
         self.rito_task = self.loop.create_task(self.rito_check())
@@ -100,6 +101,15 @@ class MyBot(Bot):
 
         await self.process_commands(message)
 
+    async def on_voice_state_update(self, member, before, after):
+        if member == self.user:
+            return
+        if before.channel != after.channel and after.channel.name == self.main_channel:
+            to_say = f'siemanko {member.name}! Co tam u Ciebie?'
+            tts = await self.gtts.create_tts(to_say, 'pl')
+            await self.play_on_channel(to_say, after.channel, tts)
+        print(member, before, after)
+
     async def play_on_channel(self, ctx=None, voice_channel=None, message=None):
         vc = await voice_channel.connect()
         vc.play(discord.FFmpegPCMAudio(executable=ffmpeg, source=message))
@@ -114,10 +124,13 @@ class MyBot(Bot):
         # Delete command after the audio is done playing.
         if not ctx:
             return
-        if hasattr(ctx, 'message'):
-            await ctx.message.delete()
-        else:
-            await ctx.delete()
+        try:
+            if hasattr(ctx, 'message'):
+                await ctx.message.delete()
+            else:
+                await ctx.delete()
+        except Exception:
+            pass
 
     async def on_ready(self):
         print(f'{self.user.name} has connected to Discord!')
