@@ -104,6 +104,8 @@ class MyBot(Bot):
     async def on_voice_state_update(self, member, before, after):
         if member == self.user:
             return
+        if not hasattr(after, 'channel') and not hasattr(after.channel.name):
+            return
         if before.channel != after.channel and after.channel.name == self.main_channel:
             to_say = f'siemanko {member.name}! Co tam u Ciebie?'
             tts = await self.gtts.create_tts(to_say, 'pl')
