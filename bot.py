@@ -69,7 +69,8 @@ class MyBot(Bot):
             if in_game := await self.rito.in_game():
                 wait_time = 5
                 diff = await self.rito.compare_stats()
-                print(diff)
+                if diff:
+                    print(diff)
             else:
                 wait_time = 30
             await asyncio.sleep(wait_time)
