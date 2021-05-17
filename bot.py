@@ -60,7 +60,6 @@ class MyBot(Bot):
         with open(file_path, 'r+', encoding="utf-8") as f:
             lines = f.readlines()
         index = random.randrange(len(lines))
-        print(index)
         return lines[index]
 
     async def rito_check(self):
@@ -72,7 +71,6 @@ class MyBot(Bot):
                 diff = await self.rito.compare_stats()
                 print(diff)
             else:
-                print(in_game)
                 wait_time = 30
             await asyncio.sleep(wait_time)
 
@@ -98,6 +96,7 @@ class MyBot(Bot):
                 await self.play_on_channel(message, message.author.voice.channel, tts)
             else:
                 await message.channel.send(f'{message.author.name} {random.choice(to_choose)}', tts=True)
+            await message.delete()
 
         await self.process_commands(message)
 
@@ -108,7 +107,6 @@ class MyBot(Bot):
             to_say = f'siemanko {member.name}! Co tam u Ciebie?'
             tts = await self.gtts.create_tts(to_say, 'pl')
             await self.play_on_channel(to_say, after.channel, tts)
-        print(member, before, after)
 
     async def play_on_channel(self, ctx=None, voice_channel=None, message=None):
         vc = await voice_channel.connect()
@@ -120,17 +118,6 @@ class MyBot(Bot):
             await vc.disconnect()
         except Exception as e:
             print(e)
-
-        # Delete command after the audio is done playing.
-        if not ctx:
-            return
-        try:
-            if hasattr(ctx, 'message'):
-                await ctx.message.delete()
-            else:
-                await ctx.delete()
-        except Exception:
-            pass
 
     async def on_ready(self):
         print(f'{self.user.name} has connected to Discord!')
@@ -184,6 +171,7 @@ class MyBot(Bot):
             else:
                 msg = (f'{ctx.author.name}, nie jesteś nawet na kanale...')
                 await ctx.channel.send(msg)
+            await ctx.message.delete()
 
 
 bot = MyBot(command_prefix='$')
