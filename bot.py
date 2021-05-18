@@ -64,13 +64,14 @@ class MyBot(Bot):
 
     async def rito_check(self):
         await self.wait_until_ready()
-        wait_time = 30
+        wait_time = 5
         while not self.is_closed():
             if in_game := await self.rito.in_game():
                 wait_time = 5
                 diff = await self.rito.compare_stats()
-                if diff:
-                    print(diff)
+                if diff and random.random() < 0.3:
+                    tts = await self.gtts.create_tts(diff, 'pl')
+                    await self.play_on_channel(None, self.main_channel, tts)
             else:
                 wait_time = 30
             await asyncio.sleep(wait_time)
@@ -106,7 +107,7 @@ class MyBot(Bot):
             return
         if not hasattr(after, 'channel') and not hasattr(after.channel.name):
             return
-        if before.channel != after.channel and after.channel.name == self.main_channel:
+        if before.channel != after.channel and after.channel == self.main_channel:
             to_say = f'siemanko {member.name}! Co tam u Ciebie?'
             tts = await self.gtts.create_tts(to_say, 'pl')
             await self.play_on_channel(to_say, after.channel, tts)
@@ -126,6 +127,8 @@ class MyBot(Bot):
         print(f'{self.user.name} has connected to Discord!')
         for channel in self.get_all_channels():
             self.channel_list.append(channel)
+            if channel.name == '🍆💦💦💦💦':
+                self.main_channel = channel
 
     async def on_command_error(self, context, exception):
         all_commands = [x.name for x in self.commands]
