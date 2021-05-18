@@ -3,8 +3,8 @@ from random import choice
 from .common import async_wrap
 
 dictionary = {
-    'deaths': ['%user% cioto', '%user% kiedy power spike?'],
-    'kills': ['najs %user%', 'jedziesz %user%!', 'dawaj jeszcze jeden %user%'],
+    'deaths': ['%user% cioto', '%user% kiedy power spike?', '%user% znowu...', '%user% graj safe'],
+    'kills': ['najs %user%', 'jedziesz %user%!', 'dawaj jeszcze jeden %user%', '%user% dawaj teraz zgin', '%user% oddaj fraga timowi'],
     'deaths_kills': ['zawsze coś %user%']
 }
 
