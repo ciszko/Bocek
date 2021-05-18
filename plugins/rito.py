@@ -73,5 +73,7 @@ class Rito:
     def create_msg(self, stats):
         player, stat = choice(list(stats.items()))
         stat = '_'.join(list(stat))
-        msg = choice(dictionary.get(stat))
-        return msg.replace('%user%', player)
+        if msg := dictionary.get(stat, ''):
+            msg = choice(msg)
+            return msg.replace('%user%', player)
+        return None
