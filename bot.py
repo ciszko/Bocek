@@ -113,6 +113,8 @@ class MyBot(Bot):
             await self.play_on_channel(to_say, after.channel, tts)
 
     async def play_on_channel(self, ctx=None, voice_channel=None, message=None):
+        if self.voice_clients:
+            return
         vc = await voice_channel.connect()
         vc.play(discord.FFmpegPCMAudio(executable=ffmpeg, source=message))
         # Sleep while audio is playing.
