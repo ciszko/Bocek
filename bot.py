@@ -98,7 +98,6 @@ class MyBot(Bot):
                 await self.play_on_channel(message, message.author.voice.channel, tts)
             else:
                 await message.channel.send(f'{message.author.name} {random.choice(to_choose)}', tts=True)
-            await message.delete()
 
         await self.process_commands(message)
 
@@ -110,7 +109,7 @@ class MyBot(Bot):
         if before.channel != after.channel and after.channel == self.main_channel:
             to_say = f'siemanko {member.name}! Co tam u Ciebie?'
             tts = await self.gtts.create_tts(to_say, 'pl')
-            await self.play_on_channel(to_say, after.channel, tts)
+            await self.play_on_channel(None, after.channel, tts)
 
     async def play_on_channel(self, ctx=None, voice_channel=None, message=None):
         if self.voice_clients:
@@ -119,11 +118,16 @@ class MyBot(Bot):
         vc.play(discord.FFmpegPCMAudio(executable=ffmpeg, source=message))
         # Sleep while audio is playing.
         while vc.is_connected() and vc.is_playing():
-            await asyncio.sleep(.2)
+            await asyncio.sleep(.1)
         try:
             await vc.disconnect()
         except Exception as e:
             print(e)
+        try:
+            if ctx:
+                ctx.delete()
+        except Exception:
+            pass
 
     async def on_ready(self):
         print(f'{self.user.name} has connected to Discord!')
@@ -175,11 +179,10 @@ class MyBot(Bot):
                 voice_channel = voice.channel
                 msg = await self.anonse.get_anonse(arg)
                 tts = await self.gtts.create_tts(msg, 'pl')
-                await self.play_on_channel(ctx, voice_channel, tts)
+                await self.play_on_channel(ctx.message, voice_channel, tts)
             else:
                 msg = (f'{ctx.author.name}, nie jesteś nawet na kanale...')
                 await ctx.channel.send(msg)
-            await ctx.message.delete()
 
 
 bot = MyBot(command_prefix='$')
