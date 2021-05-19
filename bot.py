@@ -5,6 +5,8 @@ from discord.utils import get
 import discord
 from dotenv import load_dotenv
 import random
+
+from gtts import tts
 from plugins.scrape import LolCounter
 from plugins.tts import TTS
 from plugins.anonse import Anonse
@@ -115,7 +117,7 @@ class MyBot(Bot):
         if self.voice_clients:
             return
         vc = await voice_channel.connect()
-        vc.play(discord.FFmpegAudio(executable=ffmpeg, source=message))
+        vc.play(discord.FFmpegPCMAudio(executable=ffmpeg, source=message))
         # Sleep while audio is playing.
         while vc.is_connected() and vc.is_playing():
             await asyncio.sleep(.1)
@@ -123,11 +125,13 @@ class MyBot(Bot):
             await vc.disconnect()
         except Exception as e:
             print(e)
-        try:
-            if ctx:
-                ctx.delete()
-        except Exception:
-            pass
+        else:
+            try:
+                await self.gtts.delete_tts(message)
+                if ctx:
+                    await ctx.delete()
+            except Exception:
+                pass
 
     async def on_ready(self):
         print(f'{self.user.name} has connected to Discord!')
@@ -137,15 +141,18 @@ class MyBot(Bot):
                 self.main_channel = channel
 
     async def on_command_error(self, context, exception):
-        all_commands = [x.name for x in self.commands]
-        msg = context.message
-        closest_match = get_close_matches(
-            msg.content, all_commands, n=1)
-        await context.message.add_reaction('❓')
-        if closest_match:
-            return await msg.reply(f'Grube paluszki :( Czy chodziło Ci o **${closest_match[0]}**?')
+        if type(exception) == discord.ext.commands.errors.CommandNotFound:
+            all_commands = [x.name for x in self.commands]
+            msg = context.message
+            closest_match = get_close_matches(
+                msg.content, all_commands, n=1)
+            await context.message.add_reaction('❓')
+            if closest_match:
+                return await msg.reply(f'Grube paluszki :( Czy chodziło Ci o **${closest_match[0]}**?')
+            else:
+                return await msg.reply(f'Masz tak grube paluszki, że nie wiem o co chodzi :(')
         else:
-            return await msg.reply(f'Masz tak grube paluszki, że nie wiem o co chodzi :(')
+            return await context.reply(f'Coś poszło nie tak, chyba się zebzdziałem 💩💩💩💩.\n Błąd: ``` {exception} ```')
 
     def add_commands(self):
 
