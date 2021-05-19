@@ -49,7 +49,8 @@ class Rito:
                                 {'player': p['summonerName'], **scores})
                         self.stats = stats
                         return stats
-                except Exception:
+                except Exception as e:
+                    print(e)
                     return None
 
     async def in_game(self):
@@ -61,7 +62,7 @@ class Rito:
                     if x:
                         return True
             except Exception as e:
-                return e
+                return False
 
     async def compare_stats(self):
         data1 = self.stats.copy()
@@ -82,8 +83,8 @@ class Rito:
                     to_ret[data1[i]['player']] = set([x[0] for x in diff])
                     if to_ret:
                         return self.create_msg(to_ret)
-        except Exception:
-            return None
+        except Exception as e:
+            print(e)
         return None
 
     def create_msg(self, stats):
