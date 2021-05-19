@@ -16,6 +16,13 @@ class Rito:
         self.to_look_for = ['kills', 'deaths', 'assists']
         self.players = ['Ciszkoo', 'LikeBanana',
                         'MEGACH0NKER', 'SwagettiYoloneze', 'Sabijak']
+        self.player_pro = {
+            'Ciszkoo': 'ciszko',
+            'LikeBanana': 'lajk banana',
+            'MEGACH0NKER': 'megaczonker',
+            'SwagettiYoloneze': 'słagetti joloneze',
+            'Sabijak': 'sabijak'
+        }
         self.stats = {}
         self.mode = 'idle'
 
@@ -29,18 +36,21 @@ class Rito:
         url = f'{self.url_base}allgamedata'
         async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=False)) as session:
             async with session.get(url) as resp:
-                data = await resp.json()
-                if data:
-                    stats = []
-                    for p in data['allPlayers']:
-                        if p['summonerName'] not in self.players:
-                            continue
-                        scores = {
-                            k: v for k, v in p['scores'].items() if k in self.to_look_for}
-                        stats.append(
-                            {'player': p['summonerName'], **scores})
-                    self.stats = stats
-                    return stats
+                try:
+                    data = await resp.json()
+                    if data:
+                        stats = []
+                        for p in data['allPlayers']:
+                            if p['summonerName'] not in self.players:
+                                continue
+                            scores = {
+                                k: v for k, v in p['scores'].items() if k in self.to_look_for}
+                            stats.append(
+                                {'player': p['summonerName'], **scores})
+                        self.stats = stats
+                        return stats
+                except Exception:
+                    return None
 
     async def in_game(self):
         url = f'{self.url_base}allgamedata'
@@ -58,16 +68,22 @@ class Rito:
         if not data1:
             await self.get_all_stats()
             return None
-        data2 = await self.get_all_stats()
+        if data2 := await self.get_all_stats():
+            ...
+        else:
+            return None
         to_ret = {}
         # print(data1, data2)
-        for i, _ in enumerate(data1):
-            set1 = set(data1[i].items())
-            set2 = set(data2[i].items())
-            if diff := set1 ^ set2:
-                to_ret[data1[i]['player']] = set([x[0] for x in diff])
-                if to_ret:
-                    return self.create_msg(to_ret)
+        try:
+            for i, _ in enumerate(data1):
+                set1 = set(data1[i].items())
+                set2 = set(data2[i].items())
+                if diff := set1 ^ set2:
+                    to_ret[data1[i]['player']] = set([x[0] for x in diff])
+                    if to_ret:
+                        return self.create_msg(to_ret)
+        except Exception:
+            return None
         return None
 
     def create_msg(self, stats):
@@ -75,5 +91,5 @@ class Rito:
         stat = '_'.join(list(stat))
         if msg := dictionary.get(stat, ''):
             msg = choice(msg)
-            return msg.replace('%user%', player)
+            return msg.replace('%user%', self.player_pro[player])
         return None
