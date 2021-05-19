@@ -64,10 +64,10 @@ class MyBot(Bot):
 
     async def rito_check(self):
         await self.wait_until_ready()
-        wait_time = 5
+        wait_time = 30
         while not self.is_closed():
             if in_game := await self.rito.in_game():
-                wait_time = 5
+                wait_time = 10
                 diff = await self.rito.compare_stats()
                 if diff and random.random() < 0.3:
                     tts = await self.gtts.create_tts(diff, 'pl')
@@ -115,7 +115,7 @@ class MyBot(Bot):
         if self.voice_clients:
             return
         vc = await voice_channel.connect()
-        vc.play(discord.FFmpegPCMAudio(executable=ffmpeg, source=message))
+        vc.play(discord.FFmpegAudio(executable=ffmpeg, source=message))
         # Sleep while audio is playing.
         while vc.is_connected() and vc.is_playing():
             await asyncio.sleep(.1)
