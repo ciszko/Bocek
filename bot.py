@@ -1,16 +1,19 @@
 import os
+from discord import user
 from discord.ext.commands import Bot
 from discord.ext import commands
 from discord.utils import get
 import discord
 from dotenv import load_dotenv
 import random
+import logging
 
-from gtts import tts
 from plugins.scrape import LolCounter
 from plugins.tts import TTS
 from plugins.anonse import Anonse
 from plugins.rito import Rito
+from plugins.glossary import Glossary
+
 import platform
 import asyncio
 import pathlib
@@ -29,6 +32,7 @@ else:
 class MyBot(Bot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.glossary = Glossary(self, 'talk.json')
         self.lol_counter = LolCounter()
         self.gtts = TTS()
         self.anonse = Anonse()
@@ -47,22 +51,17 @@ class MyBot(Bot):
         while not self.is_closed():
             for x in self.channel_list:
                 if x.members and str(x.type) == 'voice' and not self.voice_clients:
-                    msg = self.get_random_join_msg()
-                    msg = msg.replace('%user%', random.choice(x.members).name)
-                    msg = msg.replace('%all%', ', '.join(
-                        [m.name for m in x.members]))
+                    user = random.choice(x.members).name
+                    all_users = ', '.join([m.name for m in x.members])
+                    msg = self.glossary.get_random(
+                        user=user, all_users=all_users)
                     tts = await self.gtts.create_tts(msg, 'pl')
                     await self.play_on_channel(None, x, tts)
                     break
             # task runs every 60 seconds
-            await asyncio.sleep(random.randint(10*60, 15*60))
-
-    def get_random_join_msg(self):
-        file_path = os.path.join(self.path, 'glossary/random_join.txt')
-        with open(file_path, 'r+', encoding="utf-8") as f:
-            lines = f.readlines()
-        index = random.randrange(len(lines))
-        return lines[index]
+            wait_time = random.randint(10*60, 15*60)
+            logging.info(f'Joining in {wait_time} s')
+            await asyncio.sleep(wait_time)
 
     async def rito_check(self):
         await self.wait_until_ready()
@@ -91,15 +90,14 @@ class MyBot(Bot):
             await message.channel.send(f'Siemano {message.author.name}!')
 
         elif msg == 'bocek huju':
-            to_choose = ['paruwo', 'obżydronie', 'obszczańcu', 'kutfo']
-            to_choose_2 = [message.author.name, 'ty']
 
-            to_say = f'{random.choice(to_choose_2)} {random.choice(to_choose)}'
+            to_say = self.glossary.get_random(
+                'bocek_huju', user=message.author.name)
             tts = await self.gtts.create_tts(to_say, 'pl')
             if message.author.voice.channel:
                 await self.play_on_channel(message, message.author.voice.channel, tts)
             else:
-                await message.channel.send(f'{message.author.name} {random.choice(to_choose)}', tts=True)
+                await message.channel.send(to_say, tts=True)
 
         await self.process_commands(message)
 
@@ -109,7 +107,7 @@ class MyBot(Bot):
         if not hasattr(after, 'channel') and not hasattr(after.channel.name):
             return
         if before.channel != after.channel and after.channel == self.main_channel:
-            to_say = f'siemanko {member.name}! Co tam u Ciebie?'
+            to_say = self.glossary.get_random('greetings', user=member.name)
             tts = await self.gtts.create_tts(to_say, 'pl')
             await self.play_on_channel(None, after.channel, tts)
 

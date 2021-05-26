@@ -1,12 +1,8 @@
 import aiohttp
+import logging
 from random import choice
 from .common import async_wrap
-
-dictionary = {
-    'deaths': ['%user% cioto', '%user% kiedy power spike?', '%user% znowu...', '%user% graj safe'],
-    'kills': ['najs %user%', 'jedziesz %user%!', 'dawaj jeszcze jeden %user%', '%user% dawaj teraz zgin', '%user% oddaj fraga timowi'],
-    'deaths_kills': ['zawsze coś %user%']
-}
+from .glossary import Glossary
 
 
 class Rito:
@@ -16,13 +12,8 @@ class Rito:
         self.to_look_for = ['kills', 'deaths', 'assists']
         self.players = ['Ciszkoo', 'LikeBanana',
                         'MEGACH0NKER', 'SwagettiYoloneze', 'Sabijak']
-        self.player_pro = {
-            'Ciszkoo': 'ciszko',
-            'LikeBanana': 'lajk banana',
-            'MEGACH0NKER': 'megaczonker',
-            'SwagettiYoloneze': 'słagetti joloneze',
-            'Sabijak': 'sabijak'
-        }
+        self.glossary = Glossary(self, 'rito.json')
+
         self.stats = {}
         self.mode = 'idle'
 
@@ -50,7 +41,7 @@ class Rito:
                         self.stats = stats
                         return stats
                 except Exception as e:
-                    print(e)
+                    logging.exception(e)
                     return None
 
     async def in_game(self):
@@ -62,6 +53,7 @@ class Rito:
                     if x:
                         return True
             except Exception as e:
+                logging.exception(e)
                 return False
 
     async def compare_stats(self):
@@ -84,13 +76,13 @@ class Rito:
                     if to_ret:
                         return self.create_msg(to_ret)
         except Exception as e:
-            print(e)
+            logging.exception(e)
         return None
 
     def create_msg(self, stats):
         player, stat = choice(list(stats.items()))
         stat = '_'.join(list(stat))
-        if msg := dictionary.get(stat, ''):
-            msg = choice(msg)
-            return msg.replace('%user%', self.player_pro[player])
+        player = self.glossary.get_value('player_transcript', player)
+        if msg := self.glossary.get_random(stat, user=player):
+            return msg
         return None
