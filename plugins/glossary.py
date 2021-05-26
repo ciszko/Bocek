@@ -1,6 +1,6 @@
 import random
 import json
-from common import BASEDIR
+from .common import BASEDIR
 import asyncio
 
 
