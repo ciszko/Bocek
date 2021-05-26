@@ -4,16 +4,16 @@
         "%user% kiedy power spike?",
         "%user% znowu...",
         "%user% graj safe",
-        "%user% brawo",
-        "%user no super"
+        "brawo %user%",
+        "no super, %user",
+        "%user% może kup więcej rezistów?"
     ],
     "kills": [
         "najs %user%",
         "jedziesz %user%!",
         "dawaj jeszcze jeden %user%",
         "%user% dawaj teraz zgin",
-        "%user% oddaj fraga timowi",
-        "%user% może kup więcej rezistów?"
+        "%user% oddaj fraga timowi"
     ],
     "deaths_kills": [
         "zawsze coś %user%"
