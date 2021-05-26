@@ -1,0 +1,28 @@
+{
+    "deaths": [
+        "%user% cioto",
+        "%user% kiedy power spike?",
+        "%user% znowu...",
+        "%user% graj safe",
+        "%user% brawo",
+        "%user no super"
+    ],
+    "kills": [
+        "najs %user%",
+        "jedziesz %user%!",
+        "dawaj jeszcze jeden %user%",
+        "%user% dawaj teraz zgin",
+        "%user% oddaj fraga timowi",
+        "%user% może kup więcej rezistów?"
+    ],
+    "deaths_kills": [
+        "zawsze coś %user%"
+    ],
+    "player_transcript": {
+        "Ciszkoo": "ciszko",
+        "LikeBanana": "lajk banana",
+        "MEGACH0NKER": "megaczonker",
+        "SwagettiYoloneze": "słagetti",
+        "Sabijak": "sabijak"
+    }
+}
