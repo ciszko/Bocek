@@ -1,6 +1,10 @@
 import asyncio
 from functools import wraps, partial
-import random
+import os
+import pathlib
+
+BASEDIR = os.path.join(pathlib.Path(
+    __file__).parent.absolute(), '..')
 
 
 def async_wrap(func):
