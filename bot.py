@@ -6,7 +6,6 @@ from discord.utils import get
 import discord
 from dotenv import load_dotenv
 import random
-import logging
 
 from plugins.scrape import LolCounter
 from plugins.tts import TTS
@@ -60,7 +59,7 @@ class MyBot(Bot):
                     break
             # task runs every 60 seconds
             wait_time = random.randint(10*60, 15*60)
-            logging.info(f'Joining in {wait_time} s')
+            print(f'Joining in {wait_time} s')
             await asyncio.sleep(wait_time)
 
     async def rito_check(self):

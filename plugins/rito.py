@@ -1,5 +1,5 @@
 import aiohttp
-import logging
+
 from random import choice
 from .common import async_wrap
 from .glossary import Glossary
@@ -41,7 +41,7 @@ class Rito:
                         self.stats = stats
                         return stats
                 except Exception as e:
-                    logging.exception(e)
+                    print(e)
                     return None
 
     async def in_game(self):
@@ -53,7 +53,7 @@ class Rito:
                     if x:
                         return True
             except Exception as e:
-                logging.exception(e)
+                print(e)
                 return False
 
     async def compare_stats(self):
@@ -76,7 +76,7 @@ class Rito:
                     if to_ret:
                         return self.create_msg(to_ret)
         except Exception as e:
-            logging.exception(e)
+            print(e)
         return None
 
     def create_msg(self, stats):
