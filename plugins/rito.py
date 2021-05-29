@@ -1,5 +1,4 @@
 import aiohttp
-
 from random import choice
 from .common import async_wrap
 from .glossary import Glossary
@@ -49,11 +48,12 @@ class Rito:
         async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=False)) as session:
             try:
                 async with session.get(url, timeout=1) as resp:
-                    x = await resp
+                    x = await resp.json()
                     if x:
                         return True
             except Exception as e:
-                print(e)
+                if 'Timeout' not in str(e):
+                    print(e)
                 return False
 
     async def compare_stats(self):
