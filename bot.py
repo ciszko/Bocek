@@ -139,10 +139,11 @@ class MyBot(Bot):
             to_say = self.glossary.get_random(
                 'bocek_huju', user=message.author.name)
             tts = await self.gtts.create_tts(to_say, 'pl')
-            if message.author.voice.channel:
+            if hasattr(message.author.voice, 'channel') and message.author.voice.channel:
                 await self.play_on_channel(message, message.author.voice.channel, tts)
             else:
-                await message.channel.send(to_say, tts=True)
+                await message.add_reaction(self.get_emoji(283294977969356800))
+                await message.reply(to_say)
 
         # elif hasattr(self.poll_msg) and hasattr(msg, 'reference') and msg.reference.message_id == self.poll_msg.id:
         #     self.poll_msgs[msg.author] = msg
