@@ -3,6 +3,9 @@ import requests
 from unidecode import unidecode
 from random import choice, randint
 from .common import async_wrap
+from .log import get_logger
+
+log = get_logger(__name__)
 
 
 class Anonse:
@@ -34,7 +37,7 @@ class Anonse:
             anonse_list = self.get_random_anonse(page, cat)
             if anonse_list:
                 to_ret = choice(anonse_list)
-                print(f'ANONSE: page={page}, cat={cat}, {to_ret}')
+                log.info(f'ANONSE: page={page}, cat={cat}, {to_ret}')
                 return choice(anonse_list)
         else:
             return 'Kurde belka, coś poszło nie tak'

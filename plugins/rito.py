@@ -2,6 +2,9 @@ import aiohttp
 from random import choice
 from .common import async_wrap
 from .glossary import Glossary
+from .log import get_logger
+
+log = get_logger(__name__)
 
 
 class Rito:
@@ -40,7 +43,7 @@ class Rito:
                         self.stats = stats
                         return stats
                 except Exception as e:
-                    print(e)
+                    log.info(e)
                     return None
 
     async def in_game(self):
@@ -52,8 +55,8 @@ class Rito:
                     if x:
                         return True
             except Exception as e:
-                if 'Timeout' not in str(e):
-                    print(e)
+                if str(e) != '' and 'Timeout' not in str(e):
+                    log.info(e)
                 return False
 
     async def compare_stats(self):
@@ -66,7 +69,7 @@ class Rito:
         else:
             return None
         to_ret = {}
-        # print(data1, data2)
+        # log.info(data1, data2)
         try:
             for i, _ in enumerate(data1):
                 set1 = set(data1[i].items())
@@ -76,7 +79,7 @@ class Rito:
                     if to_ret:
                         return self.create_msg(to_ret)
         except Exception as e:
-            print(e)
+            log.info(e)
         return None
 
     def create_msg(self, stats):

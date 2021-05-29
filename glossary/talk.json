@@ -66,7 +66,7 @@
         "Sprzedam riba, es-er 30, M1, kowal, fast, szept",
         "Szukam bufa na orki",
         "Euro Neuro don't bi sceptic, Hermetic, pathetic, analphabetic",
-        "Euro Neuro",
+        "Euro Neuro"
     ],
     "greetings": [
         "Siemanko %user%",
@@ -86,5 +86,26 @@
         "%user% gnido",
         "A ty masz małego pindolka %user%",
         "Jeszcze cię dopadnę %user%"
+    ],
+    "activity_0": [
+        "Masturbator 2020",
+        "Jakieś hentajce"
+    ],
+    "activity_1": [
+        "Just chatting",
+        "Pornoski"
+    ],
+    "activity_2": [
+        "dałnów z kanału",
+        "ASMR"
+    ],
+    "activity_3": [
+        "siusiaki",
+        "twojego starego"
+    ],
+    "activity_5": [
+        "Masturbacji na czas",
+        "Rzyganiu na odległość",
+        "Zawodach na najkrótszego członka"
     ]
 }
