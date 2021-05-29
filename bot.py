@@ -1,11 +1,11 @@
 import os
-from discord import user
+from time import sleep
 from discord.ext.commands import Bot
-from discord.ext import commands
-from discord.utils import get
 import discord
+from discord.utils import get
 from dotenv import load_dotenv
 import random
+from datetime import timedelta, datetime
 
 from plugins.scrape import LolCounter
 from plugins.tts import TTS
@@ -38,18 +38,22 @@ class MyBot(Bot):
         self.rito = Rito()
         self.channel_list = []
         self.path = pathlib.Path(__file__).parent.absolute()
-        self.main_channel = '🍆💦💦💦💦'
+        self.voice_channel = '🍆💦💦💦💦'
+        self.text_channel = 'piszemy'
 
-        self.bg_task = self.loop.create_task(self.random_msg())
+        self.bg_task = self.loop.create_task(self.random_check())
         self.rito_task = self.loop.create_task(self.rito_check())
 
         self.add_commands()
 
-    async def random_msg(self):
+    async def random_check(self):
         await self.wait_until_ready()
         while not self.is_closed():
             for x in self.channel_list:
                 if x.members and str(x.type) == 'voice' and not self.voice_clients:
+                    # if len(x.members) > 0:
+                    #     self.poll_task = self.loop.create_task(
+                    #         self.random_poll(len(x.members)))
                     user = random.choice(x.members).name
                     all_users = ', '.join([m.name for m in x.members])
                     msg = self.glossary.get_random(
@@ -57,10 +61,43 @@ class MyBot(Bot):
                     tts = await self.gtts.create_tts(msg, 'pl')
                     await self.play_on_channel(None, x, tts)
                     break
-            # task runs every 60 seconds
-            wait_time = random.randint(10*60, 15*60)
-            print(f'Joining in {wait_time} s')
+
+            wait_time = random.randint(5*60, 10*60)
+            when_join = datetime.now() + timedelta(seconds=wait_time)
+            print(f'Random join on {when_join.strftime("%H:%M:%S")}')
             await asyncio.sleep(wait_time)
+
+    async def random_poll(self, members):
+
+        def get_likes(msg):
+            # counts likes from messages
+            like_emoji = 'thumbsup'
+            if likes := [emoji for emoji in msg.reactions if emoji.name == like_emoji]:
+                return likes[0].count
+            return 0
+
+        await self.wait_until_ready()
+
+        print('Going into poll mode')
+        poll_end = members * 60 * 2  # poll end
+        end = datetime.now() + timedelta(seconds=poll_end)
+        end = end.strftime('%H:%M:%S')
+        to_send = f'Ankieta! Koniec o {end}'
+        self.poll_msg = await self.text_channel.send(to_send)
+
+        await asyncio.sleep(poll_end)
+
+        scores = {k: get_likes(v) for k, v in self.poll_msgs.items()}
+        best_author = max(scores, key=lambda x: scores[x])
+
+        print(
+            f'Poll has ended, best msg: {self.poll_msgs[best_author].content}')
+        self.text_channel.send(
+            f'Ankieta zakończona. Wygrał {best_author}')
+        # reset poll variables
+        self.poll_msgs = {}
+        self.poll_msg = None
+        return
 
     async def rito_check(self):
         await self.wait_until_ready()
@@ -71,7 +108,7 @@ class MyBot(Bot):
                 diff = await self.rito.compare_stats()
                 if diff and random.random() < 0.3:
                     tts = await self.gtts.create_tts(diff, 'pl')
-                    await self.play_on_channel(None, self.main_channel, tts)
+                    await self.play_on_channel(None, self.voice_channel, tts)
             else:
                 wait_time = 30
             await asyncio.sleep(wait_time)
@@ -98,6 +135,9 @@ class MyBot(Bot):
             else:
                 await message.channel.send(to_say, tts=True)
 
+        elif hasattr(self.poll_msg) and hasattr(msg, 'reference') and msg.reference.message_id == self.poll_msg.id:
+            self.poll_msgs[msg.author] = msg
+
         await self.process_commands(message)
 
     async def on_voice_state_update(self, member, before, after):
@@ -105,7 +145,7 @@ class MyBot(Bot):
             return
         if not hasattr(after, 'channel') and not hasattr(after.channel.name):
             return
-        if before.channel != after.channel and after.channel == self.main_channel:
+        if before.channel != after.channel and after.channel == self.voice_channel:
             to_say = self.glossary.get_random('greetings', user=member.name)
             tts = await self.gtts.create_tts(to_say, 'pl')
             await self.play_on_channel(None, after.channel, tts)
@@ -125,8 +165,6 @@ class MyBot(Bot):
         else:
             try:
                 await self.gtts.delete_tts(message)
-                if ctx:
-                    await ctx.delete()
             except Exception:
                 pass
 
@@ -134,8 +172,10 @@ class MyBot(Bot):
         print(f'{self.user.name} has connected to Discord!')
         for channel in self.get_all_channels():
             self.channel_list.append(channel)
-            if channel.name == '🍆💦💦💦💦':
-                self.main_channel = channel
+            if channel.name == self.voice_channel:
+                self.voice_channel = channel
+            elif channel.name == self.text_channel:
+                self.text_channel = channel
 
     async def on_command_error(self, context, exception):
         if type(exception) == discord.ext.commands.errors.CommandNotFound:
@@ -190,8 +230,5 @@ class MyBot(Bot):
 
 
 bot = MyBot(command_prefix='$')
-
-channel_list = []
-
 
 bot.run(TOKEN)
