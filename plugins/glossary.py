@@ -1,7 +1,6 @@
 import random
 import json
 from .common import BASEDIR
-import asyncio
 
 
 class Glossary:
@@ -15,6 +14,7 @@ class Glossary:
             return None
         to_ret = random.choice(glossary[section])
         to_ret = self.replace_placeholders(to_ret, **kwargs)
+        print(f'MESSAGE: {to_ret}')
         return to_ret
 
     def get_value(self, section, key, **kwargs):
@@ -23,6 +23,7 @@ class Glossary:
             return None
         to_ret = glossary[section].get(key, None)
         to_ret = self.replace_placeholders(to_ret, **kwargs)
+        print(f'MESSAGE: {to_ret}')
         return to_ret
 
     def get_file_json(self):

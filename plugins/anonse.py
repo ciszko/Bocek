@@ -33,6 +33,8 @@ class Anonse:
             page = randint(1, int(30/i))
             anonse_list = self.get_random_anonse(page, cat)
             if anonse_list:
+                to_ret = choice(anonse_list)
+                print(f'ANONSE: page={page}, cat={cat}, {to_ret}')
                 return choice(anonse_list)
         else:
             return 'Kurde belka, coś poszło nie tak'
