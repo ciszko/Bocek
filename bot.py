@@ -1,5 +1,5 @@
 import os
-from time import sleep
+from discord import state
 from discord.ext.commands import Bot
 import discord
 from discord.utils import get
@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 import random
 from datetime import timedelta, datetime
 
+from plugins.log import get_logger
 from plugins.scrape import LolCounter
 from plugins.tts import TTS
 from plugins.anonse import Anonse
@@ -21,6 +22,8 @@ from difflib import get_close_matches
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD = os.getenv('GUILD_ID')
+
+log = get_logger(__name__)
 
 if platform.system() == 'Windows':
     ffmpeg = 'D:/Projekt/Bocek/extras/ffmpeg.exe'
@@ -64,7 +67,13 @@ class MyBot(Bot):
 
             wait_time = random.randint(5*60, 10*60)
             when_join = datetime.now() + timedelta(seconds=wait_time)
-            print(f'Random join on {when_join.strftime("%H:%M:%S")}')
+            log.info(f'Random join on {when_join.strftime("%H:%M:%S")}')
+
+            activ_no = random.choice([0, 1, 2, 3, 5])
+            activ = discord.Activity(
+                type=activ_no,  name=self.glossary.get_random(f'activity_{activ_no}'))
+            await self.change_presence(activity=activ)
+
             await asyncio.sleep(wait_time)
 
     async def random_poll(self, members):
@@ -78,7 +87,7 @@ class MyBot(Bot):
 
         await self.wait_until_ready()
 
-        print('Going into poll mode')
+        log.info('Going into poll mode')
         poll_end = members * 60 * 2  # poll end
         end = datetime.now() + timedelta(seconds=poll_end)
         end = end.strftime('%H:%M:%S')
@@ -90,7 +99,7 @@ class MyBot(Bot):
         scores = {k: get_likes(v) for k, v in self.poll_msgs.items()}
         best_author = max(scores, key=lambda x: scores[x])
 
-        print(
+        log.info(
             f'Poll has ended, best msg: {self.poll_msgs[best_author].content}')
         self.text_channel.send(
             f'Ankieta zakończona. Wygrał {best_author}')
@@ -135,8 +144,8 @@ class MyBot(Bot):
             else:
                 await message.channel.send(to_say, tts=True)
 
-        elif hasattr(self.poll_msg) and hasattr(msg, 'reference') and msg.reference.message_id == self.poll_msg.id:
-            self.poll_msgs[msg.author] = msg
+        # elif hasattr(self.poll_msg) and hasattr(msg, 'reference') and msg.reference.message_id == self.poll_msg.id:
+        #     self.poll_msgs[msg.author] = msg
 
         await self.process_commands(message)
 
@@ -161,7 +170,7 @@ class MyBot(Bot):
         try:
             await vc.disconnect()
         except Exception as e:
-            print(e)
+            log.info(e)
         else:
             try:
                 await self.gtts.delete_tts(message)
@@ -169,7 +178,7 @@ class MyBot(Bot):
                 pass
 
     async def on_ready(self):
-        print(f'{self.user.name} has connected to Discord!')
+        log.info(f'{self.user.name} has connected to Discord!')
         for channel in self.get_all_channels():
             self.channel_list.append(channel)
             if channel.name == self.voice_channel:
@@ -189,6 +198,7 @@ class MyBot(Bot):
             else:
                 return await msg.reply(f'Masz tak grube paluszki, że nie wiem o co chodzi :(')
         else:
+            log.exception(exception)
             return await context.reply(f'Coś poszło nie tak, chyba się zebzdziałem 💩💩💩💩.\n Błąd: ``` {exception} ```')
 
     def add_commands(self):
