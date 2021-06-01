@@ -6,10 +6,11 @@ from discord.utils import get
 from dotenv import load_dotenv
 import random
 from datetime import timedelta, datetime
+import re
 
 from plugins.log import get_logger
 from plugins.scrape import LolCounter
-from plugins.tts import TTS
+from plugins.tts import Tts
 from plugins.anonse import Anonse
 from plugins.rito import Rito
 from plugins.glossary import Glossary
@@ -35,19 +36,26 @@ class MyBot(Bot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.glossary = Glossary(self, 'talk.json')
-        self.lol_counter = LolCounter()
-        self.gtts = TTS()
-        self.anonse = Anonse()
         self.rito = Rito()
-        self.channel_list = []
         self.path = pathlib.Path(__file__).parent.absolute()
+        self.channel_list = []
         self.voice_channel = '🍆💦💦💦💦'
         self.text_channel = 'piszemy'
+
+        cogs = [LolCounter, Tts, Anonse]
+        self.add_cogs(cogs)
+
+        self.add_commands()
 
         self.bg_task = self.loop.create_task(self.random_check())
         self.rito_task = self.loop.create_task(self.rito_check())
 
-        self.add_commands()
+    def add_cogs(self, cogs):
+        # cog registration
+        for cog in cogs:
+            self.add_cog(cog(self))
+            cog_name = re.sub(r'(?<!^)(?=[A-Z])', '_', cog.__name__).lower()
+            setattr(self, cog_name, self.get_cog(cog_name))
 
     async def random_check(self):
         await self.wait_until_ready()
@@ -61,7 +69,7 @@ class MyBot(Bot):
                     all_users = ', '.join([m.name for m in x.members])
                     msg = self.glossary.get_random(
                         user=user, all_users=all_users)
-                    tts = await self.gtts.create_tts(msg, 'pl')
+                    tts = await self.tts.create_tts(msg, 'pl')
                     await self.play_on_channel(None, x, tts)
                     break
 
@@ -116,7 +124,7 @@ class MyBot(Bot):
                 wait_time = 10
                 diff = await self.rito.compare_stats()
                 if diff and random.random() < 0.3:
-                    tts = await self.gtts.create_tts(diff, 'pl')
+                    tts = await self.tts.create_tts(diff, 'pl')
                     await self.play_on_channel(None, self.voice_channel, tts)
             else:
                 wait_time = 30
@@ -138,7 +146,7 @@ class MyBot(Bot):
 
             to_say = self.glossary.get_random(
                 'bocek_huju', user=message.author.name)
-            tts = await self.gtts.create_tts(to_say, 'pl')
+            tts = await self.tts.create_tts(to_say, 'pl')
             if hasattr(message.author.voice, 'channel') and message.author.voice.channel:
                 await self.play_on_channel(message, message.author.voice.channel, tts)
             else:
@@ -157,7 +165,7 @@ class MyBot(Bot):
             return
         if before.channel != after.channel and after.channel == self.voice_channel:
             to_say = self.glossary.get_random('greetings', user=member.name)
-            tts = await self.gtts.create_tts(to_say, 'pl')
+            tts = await self.tts.create_tts(to_say, 'pl', random=True)
             await self.play_on_channel(None, after.channel, tts)
 
     async def play_on_channel(self, ctx=None, voice_channel=None, message=None):
@@ -174,7 +182,7 @@ class MyBot(Bot):
             log.info(e)
         else:
             try:
-                await self.gtts.delete_tts(message)
+                await self.tts.delete_tts(message)
             except Exception:
                 pass
 
@@ -206,38 +214,9 @@ class MyBot(Bot):
 
         @self.command(name='siusiak', help='Powie Ci prawdę o siusiaku')
         async def siusiak(ctx):
-            types = ['potężnego', 'małego', 'brudnego',
-                     'paskudnego', 'ślicznego', 'krzywego', 'obszczanego']
-            response = f'{ctx.author.name} ma {random.choice(types)} siusiaka'
+            response = f'{ctx.author.name} ma {self.glossary.get_random("siusiak")} siusiaka'
             await ctx.send(response)
             await ctx.message.delete()
-
-        @self.command(name='counter', help='Zwraca x kontr na daną postać: $counter jinx x')
-        async def counter(ctx, *arg):
-            counters = await self.lol_counter.get_lol_counters(*arg)
-            response = f'**Kontry na {arg[0]}:**\n'
-            response += '\n'.join(f'{x}: {y}' for x, y in counters)
-            await ctx.send(response)
-            await ctx.message.delete()
-
-        @self.command(name='tts', help='Zwraca plik z nagraniem: $tts "tutaj tekst"')
-        async def tts(ctx, arg):
-            tts = await self.gtts.create_tts(arg, 'pl')
-
-            await ctx.send(file=discord.File(tts))
-            await ctx.message.delete()
-
-        @self.command(name='anonse', help='Zwraca losowe gejowe anonse')
-        async def anonse(ctx, arg='fetysze'):
-            # Gets voice channel of message author
-            if voice := ctx.author.voice:
-                voice_channel = voice.channel
-                msg = await self.anonse.get_anonse(arg)
-                tts = await self.gtts.create_tts(msg, 'pl')
-                await self.play_on_channel(ctx.message, voice_channel, tts)
-            else:
-                msg = (f'{ctx.author.name}, nie jesteś nawet na kanale...')
-                await ctx.channel.send(msg)
 
 
 bot = MyBot(command_prefix='$')
