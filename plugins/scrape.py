@@ -1,13 +1,23 @@
 from bs4 import BeautifulSoup
 import requests
+from discord.ext import commands
 from .common import async_wrap
 
 
-class LolCounter:
-    def __init__(self):
+class LolCounter(commands.Cog, name='lol_counter'):
+    def __init__(self,  bot):
+        self.bot = bot
         self.headers = {'User-Agent': 'Bocek/1.0'}
         self.session = requests.Session()
         self.session.headers.update(self.headers)
+
+    @commands.command(name='counter', help='Zwraca x kontr na daną postać: $counter jinx x')
+    async def counter(self, ctx, *arg):
+        counters = await self.get_lol_counters(*arg)
+        response = f'**Kontry na {arg[0]}:**\n'
+        response += '\n'.join(f'{x}: {y}' for x, y in counters)
+        await ctx.send(response)
+        await ctx.message.delete()
 
     @async_wrap
     def get_lol_counters(self, champion, limit=10):
