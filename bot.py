@@ -23,6 +23,8 @@ from difflib import get_close_matches
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD = os.getenv('GUILD_ID')
+GOOGLE_APPLICATION_CREDENTIALS = os.path.join(pathlib.Path(
+    __file__).parent.absolute(), os.getenv('GOOGLE_APPLICATION_CREDENTIALS'))
 
 log = get_logger(__name__)
 
