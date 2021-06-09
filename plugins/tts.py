@@ -21,17 +21,19 @@ class Tts(commands.Cog, name='tts'):
         self.client = texttospeech.TextToSpeechClient()
 
     @commands.command(name='tts', help='Wysyła plik z nagraniem. $tts "hejo" <pitch=0> <voice=1> <volume=0>')
-    async def tts(self, ctx, text, pitch=0, voice='1', volume=0, lang='pl-PL'):
-        log.info(f'{text}, {pitch}, {voice}, {volume}, {lang}')
-        tts = await self.create_tts(text, pitch, voice, volume)
+    async def tts(self, ctx, text, *args):
+        kwargs = self.process_args(args)
+        log.info(f'{text}, {kwargs}')
+        tts = await self.create_tts(text, **kwargs)
 
         await ctx.send(file=File(tts))
         await ctx.message.delete()
+        await self.delete_tts(tts)
 
     async def create_tts(self, *args, **kwargs):
         if 'random' in kwargs:
             kwargs.pop('random')
-        kwargs = self.get_random_voice()
+            kwargs = self.get_random_voice()
         if {'pitch', 'voice', 'volume'}.intersection(kwargs):
             return await self.tts_google(*args, **kwargs)
         else:
@@ -47,15 +49,17 @@ class Tts(commands.Cog, name='tts'):
 
     @async_wrap
     def tts_google(self, text, lang='pl-PL', pitch=0, voice=1, volume=0):
-        log.info(f'{text}, {lang}, {pitch}, {voice}, {volume}')
         if not text:
             return
+
+        pitch = int(pitch)
+        volume = int(volume)
 
         if not -20 < pitch < 20:
             log.warn(f'Wrong pitch value: {pitch}')
             text = 'Ej człeniu, picz może być od minus dwudziestu do plus dwudziestu'
 
-        if voice not in ['0', '1', '2', '3', 'gothic']:
+        if voice not in ['0', '1', '2', '3', 'gothic', 0, 1, 2, 3]:
             log.warn(f'Wrong voice value: {voice}')
             text = 'Wybrałeś zły głos'
             voice = 1
@@ -102,3 +106,15 @@ class Tts(commands.Cog, name='tts'):
                 'voice': random.randint(0, 3),
                 'pitch': random.randrange(-20, 20)
                 }
+
+    def process_args(self, args):
+        kwargs = {'lang': 'pl-PL',
+                  'pitch': 0,
+                  'voice': 1,
+                  'volume': 0}
+        for arg in args:
+            arg, value = arg.split('=')
+            if arg not in kwargs.keys():
+                continue
+            kwargs[arg] = value
+        return kwargs
