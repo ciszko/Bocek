@@ -1,7 +1,11 @@
 from bs4 import BeautifulSoup
 import requests
 from discord.ext import commands
+from tabulate import tabulate
 from .common import async_wrap
+from .log import get_logger
+
+log = get_logger(__name__)
 
 
 class LolCounter(commands.Cog, name='lol_counter'):
@@ -14,8 +18,10 @@ class LolCounter(commands.Cog, name='lol_counter'):
     @commands.command(name='counter', help='Zwraca x kontr na daną postać: $counter jinx x')
     async def counter(self, ctx, *arg):
         counters = await self.get_lol_counters(*arg)
-        response = f'**Kontry na {arg[0]}:**\n'
-        response += '\n'.join(f'{x}: {y}' for x, y in counters)
+        response = f'**Kontry na {arg[0]}:**\n```'
+        response += tabulate(
+            [['Champion', '% win'], *counters], headers="firstrow", tablefmt="fancy_grid")
+        response += '```'
         await ctx.send(response)
         await ctx.message.delete()
 

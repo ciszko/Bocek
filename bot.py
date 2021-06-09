@@ -69,8 +69,8 @@ class MyBot(Bot):
                     all_users = ', '.join([m.name for m in x.members])
                     msg = self.glossary.get_random(
                         user=user, all_users=all_users)
-                    tts = await self.tts.create_tts(msg, 'pl')
-                    await self.play_on_channel(None, x, tts)
+                    tts = await self.tts.create_tts(msg, 'pl', random=True)
+                    await self.play_on_channel(x, tts)
                     break
 
             wait_time = random.randint(5*60, 10*60)
@@ -125,7 +125,7 @@ class MyBot(Bot):
                 diff = await self.rito.compare_stats()
                 if diff and random.random() < 0.3:
                     tts = await self.tts.create_tts(diff, 'pl')
-                    await self.play_on_channel(None, self.voice_channel, tts)
+                    await self.play_on_channel(self.voice_channel, tts)
             else:
                 wait_time = 30
             await asyncio.sleep(wait_time)
@@ -148,7 +148,7 @@ class MyBot(Bot):
                 'bocek_huju', user=message.author.name)
             tts = await self.tts.create_tts(to_say, 'pl')
             if hasattr(message.author.voice, 'channel') and message.author.voice.channel:
-                await self.play_on_channel(message, message.author.voice.channel, tts)
+                await self.play_on_channel(message.author.voice.channel, tts)
             else:
                 await message.add_reaction(self.get_emoji(283294977969356800))
                 await message.reply(to_say)
@@ -166,22 +166,20 @@ class MyBot(Bot):
         if before.channel != after.channel and after.channel == self.voice_channel:
             to_say = self.glossary.get_random('greetings', user=member.name)
             tts = await self.tts.create_tts(to_say, 'pl', random=True)
-            await self.play_on_channel(None, after.channel, tts)
+            await self.play_on_channel(after.channel, tts)
 
-    async def play_on_channel(self, ctx=None, voice_channel=None, message=None):
+    async def play_on_channel(self, voice_channel=None, message=None):
         if self.voice_clients:
             return
         vc = await voice_channel.connect()
         vc.play(discord.FFmpegPCMAudio(executable=ffmpeg, source=message))
         # Sleep while audio is playing.
         while vc.is_connected() and vc.is_playing():
-            await asyncio.sleep(.1)
-        try:
-            await vc.disconnect()
-        except Exception as e:
-            log.info(e)
+            await asyncio.sleep(.2)
         else:
             try:
+                await asyncio.sleep(0.5)  # sometimes mp3 is still playing
+                await vc.disconnect()
                 await self.tts.delete_tts(message)
             except Exception:
                 pass
@@ -208,7 +206,7 @@ class MyBot(Bot):
                 return await msg.reply(f'Masz tak grube paluszki, że nie wiem o co chodzi :(')
         else:
             log.exception(exception)
-            return await context.reply(f'Coś poszło nie tak, chyba się zebzdziałem 💩💩💩💩.\n Błąd: ``` {exception} ```')
+            return await context.reply(f'Coś poszło nie tak, chyba się zebzdziałem 💩💩💩💩.\n Błąd: ```{exception}```')
 
     def add_commands(self):
 
