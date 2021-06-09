@@ -8,7 +8,6 @@ import random
 from .common import async_wrap
 from uuid import uuid4
 from .log import get_logger
-from typing import Optional
 
 log = get_logger(__name__)
 
@@ -20,7 +19,7 @@ class Tts(commands.Cog, name='tts'):
             __file__).parent.absolute(), '..', 'mp3')
         self.client = texttospeech.TextToSpeechClient()
 
-    @commands.command(name='tts', help='Wysyła plik z nagraniem. $tts "hejo" <pitch=0> <voice=1> <volume=0>')
+    @commands.command(name='tts', help='Wysyła plik z nagraniem. $tts "hejo" <pitch=0> <voice=1> <volume=0> <speaking_rate=0.9>')
     async def tts(self, ctx, text, *args):
         kwargs = self.process_args(args)
         log.info(f'{text}, {kwargs}')
@@ -48,7 +47,7 @@ class Tts(commands.Cog, name='tts'):
         return tts_path
 
     @async_wrap
-    def tts_google(self, text, lang='pl-PL', pitch=0, voice=1, volume=0):
+    def tts_google(self, text, lang='pl-PL', pitch=0, voice=1, volume=0, speaking_rate=0.9):
         if not text:
             return
 
@@ -58,11 +57,11 @@ class Tts(commands.Cog, name='tts'):
         if lang.lower() == 'pl':
             lang = 'pl-PL'
 
-        if not -20 < pitch < 20:
+        if not -20 <= pitch <= 20:
             log.warn(f'Wrong pitch value: {pitch}')
             text = 'Ej człeniu, picz może być od minus dwudziestu do plus dwudziestu'
 
-        if voice not in ['0', '1', '2', '3', 'gothic', 0, 1, 2, 3]:
+        if str(voice) not in ['0', '1', '2', '3', 'gothic']:
             log.warn(f'Wrong voice value: {voice}')
             text = 'Wybrałeś zły głos'
             voice = 1
@@ -87,7 +86,8 @@ class Tts(commands.Cog, name='tts'):
         audio_config = texttospeech.AudioConfig(
             audio_encoding=texttospeech.AudioEncoding.MP3,
             pitch=pitch,
-            volume_gain_db=volume
+            volume_gain_db=volume,
+            speaking_rate=speaking_rate
         )
         # generate response
         response = self.client.synthesize_speech(
@@ -114,7 +114,8 @@ class Tts(commands.Cog, name='tts'):
         kwargs = {'lang': 'pl-PL',
                   'pitch': 0,
                   'voice': 1,
-                  'volume': 0}
+                  'volume': 0,
+                  'speaking_rate': 0.9}
         for arg in args:
             arg, value = arg.split('=')
             if arg not in kwargs.keys():
