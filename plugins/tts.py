@@ -55,6 +55,9 @@ class Tts(commands.Cog, name='tts'):
         pitch = int(pitch)
         volume = int(volume)
 
+        if lang.lower() == 'pl':
+            lang = 'pl-PL'
+
         if not -20 < pitch < 20:
             log.warn(f'Wrong pitch value: {pitch}')
             text = 'Ej człeniu, picz może być od minus dwudziestu do plus dwudziestu'
