@@ -75,7 +75,8 @@ class Tts(commands.Cog, name='tts'):
         else:
             voice = int(voice)
 
-        log.info(f'pitch={pitch}, voice={voice}, volume={volume}')
+        log.info(
+            f'pitch={pitch}, voice={voice}, volume={volume}, speaking_rate={speaking_rate}')
 
         text = texttospeech.SynthesisInput(text=text)
         # voice creation
