@@ -1,14 +1,16 @@
 import aiohttp
-from random import choice
-from .common import async_wrap
+from discord.ext import commands
+from random import choice, random
+import asyncio
 from .glossary import Glossary
 from .log import get_logger
 
 log = get_logger(__name__)
 
 
-class Rito:
-    def __init__(self):
+class Rito(commands.Cog, name='rito'):
+    def __init__(self, bot):
+        self.bot = bot
         self.url_base = 'https://192.168.0.31:29999/liveclientdata/'
         self.connector = aiohttp.TCPConnector(ssl=False)
         self.to_look_for = ['kills', 'deaths', 'assists']
@@ -18,6 +20,20 @@ class Rito:
 
         self.stats = {}
         self.mode = 'idle'
+
+    async def rito_check(self):
+        await self.bot.wait_until_ready()
+        wait_time = 30
+        while not self.bot.is_closed():
+            if in_game := await self.in_game():
+                wait_time = 10
+                diff = await self.compare_stats()
+                if diff and random() < 0.3:
+                    tts = await self.bot.tts.create_tts(diff, 'pl')
+                    await self.bot.play_on_channel(self.bot.voice_channel, tts)
+            else:
+                wait_time = 30
+            await asyncio.sleep(wait_time)
 
     async def get_all_data(self):
         url = f'{self.url_base}allgamedata'
