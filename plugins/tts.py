@@ -58,11 +58,11 @@ class Tts(commands.Cog, name='tts'):
             lang = 'pl-PL'
 
         if not -20 <= pitch <= 20:
-            log.warn(f'Wrong pitch value: {pitch}')
+            log.warning(f'Wrong pitch value: {pitch}')
             text = 'Ej człeniu, picz może być od minus dwudziestu do plus dwudziestu'
 
         if str(voice) not in ['0', '1', '2', '3', 'gothic']:
-            log.warn(f'Wrong voice value: {voice}')
+            log.warning(f'Wrong voice value: {voice}')
             text = 'Wybrałeś zły głos'
             voice = 1
 

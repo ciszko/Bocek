@@ -96,7 +96,7 @@ class MyBot(Bot):
 
     async def play_on_channel(self, voice_channel=None, message=None):
         if self.voice_clients:
-            log.warn(f'Found voice clients: {self.voice_clients}')
+            log.warning(f'Found voice clients: {self.voice_clients}')
             return
         vc = await voice_channel.connect()
         vc.play(discord.FFmpegPCMAudio(executable=ffmpeg, source=message))
@@ -104,12 +104,9 @@ class MyBot(Bot):
         while vc.is_connected() and vc.is_playing():
             await asyncio.sleep(.2)
         else:
-            try:
-                await asyncio.sleep(0.5)  # sometimes mp3 is still playing
-                await vc.disconnect()
-                await self.tts.delete_tts(message)
-            except Exception:
-                pass
+            await asyncio.sleep(0.5)  # sometimes mp3 is still playing
+            await vc.disconnect()
+            await self.tts.delete_tts(message)
 
     async def on_ready(self):
         log.info(f'{self.user.name} has connected to Discord!')
