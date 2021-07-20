@@ -99,7 +99,7 @@ class MyBot(Bot):
             log.warning(f'Found voice clients: {self.voice_clients}')
             return
         vc = await voice_channel.connect()
-        vc.play(discord.FFmpegPCMAudio(executable=ffmpeg, source=message))
+        vc.play(discord.FFmpegOpusAudio(executable=ffmpeg, source=message))
         # Sleep while audio is playing.
         while vc.is_connected() and vc.is_playing():
             await asyncio.sleep(.2)
