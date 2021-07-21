@@ -1,5 +1,4 @@
 import os
-import random
 import re
 from dotenv import load_dotenv
 
@@ -18,6 +17,8 @@ import platform
 import asyncio
 import pathlib
 from difflib import get_close_matches
+from mutagen.mp3 import MP3
+from time import time
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -99,9 +100,12 @@ class MyBot(Bot):
             log.warning(f'Found voice clients: {self.voice_clients}')
             return
         vc = await voice_channel.connect()
+        duration = MP3(message).info.length
+        log.info(f'MP3 duration: {duration}')
         vc.play(discord.FFmpegOpusAudio(executable=ffmpeg, source=message))
+        timeout = time() + duration + 5  # timeout is audio duration + 5s
         # Sleep while audio is playing.
-        while vc.is_connected() and vc.is_playing():
+        while vc.is_connected() and vc.is_playing() and time() < timeout:
             await asyncio.sleep(.2)
         else:
             await asyncio.sleep(0.5)  # sometimes mp3 is still playing
