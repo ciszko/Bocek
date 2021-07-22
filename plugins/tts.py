@@ -1,10 +1,11 @@
 import pathlib
 from discord.ext import commands
 from discord import File
-from gtts import gTTS
+from gtts import gTTS, tts
 from google.cloud import texttospeech
 import os
 import random
+from pydub import AudioSegment
 from .common import async_wrap
 from uuid import uuid4
 from .log import get_logger
@@ -98,7 +99,10 @@ class Tts(commands.Cog, name='tts'):
         tts_path = os.path.join(self.path, f'{uuid4().hex[:10]}.mp3')
         with open(tts_path, 'wb') as out:
             out.write(response.audio_content)
-        return tts_path
+        ogg_path = tts_path.replace('.mp3', '.ogg')
+        AudioSegment.from_mp3(tts_path).export(ogg_path, format='ogg')
+        os.remove(tts_path)
+        return ogg_path
 
     @async_wrap
     def delete_tts(self, path):
