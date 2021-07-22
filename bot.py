@@ -100,7 +100,7 @@ class MyBot(Bot):
             log.warning(f'Found voice clients: {self.voice_clients}')
             return
         vc = await voice_channel.connect()
-        duration = MP3(message).info.lenght
+        duration = MP3(message).info.length
         vc.play(discord.FFmpegAudio(executable=ffmpeg, source=message))
         timeout = time() + duration + 5  # timeout is audio duration + 5s
         # Sleep while audio is playing.
