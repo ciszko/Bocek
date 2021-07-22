@@ -17,7 +17,7 @@ import platform
 import asyncio
 import pathlib
 from difflib import get_close_matches
-from mutagen.mp3 import MP3
+from mutagen.ogg import OggFileType
 from time import time
 
 load_dotenv()
@@ -100,8 +100,8 @@ class MyBot(Bot):
             log.warning(f'Found voice clients: {self.voice_clients}')
             return
         vc = await voice_channel.connect()
-        duration = MP3(message).info.length
-        log.info(f'MP3 duration: {duration}')
+        duration = OggFileType(message).info.lenght
+        log.info(f'OGG duration: {duration}')
         vc.play(discord.FFmpegOpusAudio(executable=ffmpeg, source=message))
         timeout = time() + duration + 5  # timeout is audio duration + 5s
         # Sleep while audio is playing.
