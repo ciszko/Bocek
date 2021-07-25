@@ -143,6 +143,14 @@ class MyBot(Bot):
             await ctx.send(response)
             await ctx.message.delete()
 
+        @self.command(name='anus', help='anus anus nostradamus')
+        async def anus(ctx):
+            to_say = f'anus anus nostradamus'
+            if hasattr(ctx.author.voice, 'channel') and ctx.author.voice.channel:
+                tts = await self.tts.create_tts(to_say, 'pl', random=True)
+                await self.play_on_channel(ctx.author.voice.channel, tts)
+                await ctx.message.delete()
+
 
 bot = MyBot(command_prefix='$')
 
