@@ -1,28 +1,122 @@
 {
-    "deaths": [
+    "ChampionDeath": [
         "%user% cioto",
         "%user% kiedy power spike?",
         "%user% znowu...",
         "%user% graj safe",
         "brawo %user%",
         "no super, %user%",
-        "%user% może kup więcej armora?"
+        "%user% może kup więcej armora?",
+        "%user% ty kutanopleksusie",
+        "%user% umiera, o cholera",
+        "no ile można umierac %user%?",
+        "%user% jest gnomem",
+        "%user% dostał wpierdol, iks de",
+        "%user% zrobił to dla dobra drużyny",
+        "ładna wyjebka %user%",
+        "%user% to cienias",
+        "%user% dostał na pape"
     ],
-    "kills": [
+    "ChampionKill": [
         "najs %user%",
         "jedziesz %user%!",
         "dawaj jeszcze jeden %user%",
-        "%user% dawaj teraz zgin",
-        "%user% oddaj fraga timowi"
+        "%user% dawaj teraz zgiń",
+        "%user% oddaj fraga timowi",
+        "%user% zgniata robale",
+        "%user% dobrze...  rozkurwiaj!",
+        "potężny %user%",
+        "%user% zabija frajera",
+        "%user% tłucze przeciwnik jak kotleta",
+        "%user% jest bezlitosny, śpiew radosny",
+        "%user% masakruje przeciwnik",
+        "%user% jest boski, ma ładne włoski"
     ],
-    "deaths_kills": [
-        "zawsze coś %user%"
+    "PentaKill": [
+        "%user% GIGA CZAD",
+        "Jezu co za mistrz",
+        "%user% jest mistrzem",
+        "Pe pe pe penta kill!",
+        "penta kill z nosa gil",
+        "penta kill, pedo fil"
+    ],
+    "QuadraKill": [
+        "Cztery trupy",
+        "Cztery trupy w wykonaniu %user%",
+        "Dawaj pente %user%",
+        "Cztery trupy właże Ci do dupy"
+    ],
+    "TripleKill": [
+        "Raz dwa trzy, kapitan %user% on djuti",
+        "%user% zamordował trzech typeczków",
+        "raz daw trzy, jebać kurwy"
+    ],
+    "DoubleKill": [
+        "%user% zabił dwóch człowiek",
+        "%user% to rasowy morderca!",
+        "%user% tłucze przeciwników!",
+        "%user% rozgniótł dwa robaki"
+    ],
+    "BaronSteal": [
+        "Mamy barona, brawo %user%",
+        "%user% to rasowy kradziej!",
+        "Łapcie złodzieja",
+        "%user% ukradnij mi matkę",
+        "trupy dwa, %user% sra"
+    ],
+    "DragonSteal": [
+        "%user% zabrał smoka!",
+        "%user% to rasowy kradziej",
+        "Smok ukradzion",
+        "No przyszedł i zabrał smoka"
+    ],
+    "HeraldSteal": [
+        "%user% zabrał heralda",
+        "mamy heralda, pusz pusz",
+        "Łapać złodzieja"
+    ],
+    "BaronKill": [
+        "%user% zabił barona",
+        "Baron leży, puszujemy",
+        "Brawo chłopacy"
+    ],
+    "DragonKill": [
+        "Smok poległ dla naszego dobra",
+        "Smok is ded",
+        "%user% zabił smoka, palec do oka",
+        "%user% smokobijec"
+    ],
+    "HeraldKill": [
+        "%user% zabił heralda",
+        "Tylko podnieś heralda %user%"
+    ],
+    "InhibKilled": [
+        "Inhibjitor",
+        "Super minionki nadchodzą!",
+        "Kończcie te kuropatfy"
+    ],
+    "TurretKilled": [
+        "%user% zniszczył tureta",
+        "%user% puszuje jak szalony",
+        "%user% zniszczył tóreta, zdjedz kotleta",
+        "%user% zniszczył tureta, zdejmij napleta"
+    ],
+    "Ace": [
+        "no i ejsik",
+        "ejs, żydy, pejs",
+        "wszyscy nie żyją, chłopacy się nie myją"
+    ],
+    "FirstBlood": [
+        "pierwsza krew, umyj zlew",
+        "ferst blaaadi faker",
+        "pierwsza krew, brudny jak chlew"
     ],
     "player_transcript": {
         "Ciszkoo": "ciszko",
         "LikeBanana": "lajk banana",
         "MEGACH0NKER": "megaczonker",
         "SwagettiYoloneze": "słagetti",
-        "Sabijak": "sabijak"
+        "Sabijak": "sabijak",
+        "Xubeks": "ksubek"
     }
 }

@@ -37,10 +37,12 @@ else:
 class MyBot(Bot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.ready = False
         self.glossary = Glossary(self, 'talk.json')
         self.path = pathlib.Path(__file__).parent.absolute()
         self.channel_list = []
         self.voice_channel = '🍆💦💦💦💦'  # later changed to Channel object
+        self.vc = None
         self.text_channel = 'piszemy'  # later changed to Channel object
 
         cogs = [LolCounter, Tts, Anonse, RandomEvent, Rito]
@@ -78,7 +80,7 @@ class MyBot(Bot):
                 'bocek_huju', user=message.author.name)
             tts = await self.tts.create_tts(to_say, 'pl')
             if hasattr(message.author.voice, 'channel') and message.author.voice.channel:
-                await self.play_on_channel(message.author.voice.channel, tts)
+                await self.play_on_channel(tts)
             else:
                 await message.add_reaction(self.get_emoji(283294977969356800))
                 await message.reply(to_say)
@@ -93,22 +95,31 @@ class MyBot(Bot):
         if before.channel != after.channel and after.channel == self.voice_channel:
             to_say = self.glossary.get_random('greetings', user=member.name)
             tts = await self.tts.create_tts(to_say, 'pl', random=True)
-            await self.play_on_channel(after.channel, tts)
+            await self.play_on_channel(tts)
+        if after.channel != self.voice_channel and len(self.voice_channel.members) <= 1 and self.vc:
+            await self.vc.disconnect()
+            self.vc = None
 
-    async def play_on_channel(self, voice_channel=None, message=None):
-        if self.voice_clients:
-            log.warning(f'Found voice clients: {self.voice_clients}')
+    async def play_on_channel(self, message=None):
+        # if self.voice_clients:
+        #     log.warning(f'Found voice clients: {self.voice_clients}')
+        #     return
+        if len(self.voice_channel.members) == 0:
             return
-        vc = await voice_channel.connect()
+        if not self.vc:
+            self.vc = await self.voice_channel.connect()
+        if self.vc.is_playing():
+            return
         duration = MP3(message).info.length
-        vc.play(discord.FFmpegOpusAudio(executable=ffmpeg, source=message))
-        timeout = time() + duration + 5  # timeout is audio duration + 5s
+        self.vc.play(discord.FFmpegOpusAudio(
+            executable=ffmpeg, source=message))
+        timeout = time() + duration + 1  # timeout is audio duration + 1s
         # Sleep while audio is playing.
-        while vc.is_connected() and vc.is_playing() and time() < timeout:
+        while self.vc.is_playing() and time() < timeout:
             await asyncio.sleep(.1)
         else:
             await asyncio.sleep(0.5)  # sometimes mp3 is still playing
-            await vc.disconnect()
+            # await self.vc.disconnect()
             await self.tts.delete_tts(message)
 
     async def on_ready(self):
@@ -119,6 +130,7 @@ class MyBot(Bot):
                 self.voice_channel = channel
             elif channel.name == self.text_channel:
                 self.text_channel = channel
+        self.ready = True
 
     async def on_command_error(self, context, exception):
         if type(exception) == discord.ext.commands.errors.CommandNotFound:
@@ -148,7 +160,15 @@ class MyBot(Bot):
             to_say = f'anus anus nostradamus'
             if hasattr(ctx.author.voice, 'channel') and ctx.author.voice.channel:
                 tts = await self.tts.create_tts(to_say, 'pl', random=True)
-                await self.play_on_channel(ctx.author.voice.channel, tts)
+                await self.play_on_channel(tts)
+                await ctx.message.delete()
+
+        @self.command(name='test')
+        async def test(ctx):
+            to_say = '<speak>cześć kluseczki<break time="400ms"/> <emphasis level="strong">pokaż majteczki</emphasis></speak>'
+            if hasattr(ctx.author.voice, 'channel') and ctx.author.voice.channel:
+                tts = await self.tts.create_tts(to_say, 'pl', voice=3)
+                await self.play_on_channel(tts)
                 await ctx.message.delete()
 
 

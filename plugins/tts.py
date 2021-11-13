@@ -33,10 +33,7 @@ class Tts(commands.Cog, name='tts'):
         if 'random' in kwargs:
             kwargs.pop('random')
             kwargs = self.get_random_voice()
-        if {'pitch', 'voice', 'volume'}.intersection(kwargs):
-            return await self.tts_google(*args, **kwargs)
-        else:
-            return await self.tts_gtts(*args, **kwargs)
+        return await self.tts_google(*args, **kwargs)
 
     @async_wrap
     def tts_gtts(self, text, lang):
@@ -77,8 +74,10 @@ class Tts(commands.Cog, name='tts'):
 
         log.info(
             f'pitch={pitch}, voice={voice}, volume={volume}, speaking_rate={speaking_rate}')
-
-        text = texttospeech.SynthesisInput(text=text)
+        if '<' in text:
+            text = texttospeech.SynthesisInput(ssml=text)
+        else:
+            text = texttospeech.SynthesisInput(text=text)
         # voice creation
         voice = texttospeech.VoiceSelectionParams(
             language_code=lang, ssml_gender=voice

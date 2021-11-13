@@ -39,7 +39,7 @@ class Anonse(commands.Cog, name='anonse'):
             voice_channel = voice.channel
             msg = await self.get_anonse(arg)
             tts = await self.bot.tts.create_tts(msg, 'pl')
-            await self.bot.play_on_channel(voice_channel, tts)
+            await self.bot.play_on_channel(tts)
         else:
             msg = (f'{ctx.author.name}, nie jesteś nawet na kanale...')
             await ctx.channel.send(msg)
