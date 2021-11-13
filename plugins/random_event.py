@@ -17,22 +17,28 @@ class RandomEvent(commands.Cog, name='random_event'):
 
     async def random_check(self):
         await self.bot.wait_until_ready()
-        while not self.bot.is_closed():
-            for x in self.bot.channel_list:
-                if x.members and str(x.type) == 'voice' and not self.bot.voice_clients:
-                    # if len(x.members) > 0:
-                    #     self.poll_task = self.loop.create_task(
-                    #         self.random_poll(len(x.members)))
-                    user = choice(x.members).display_name
-                    all_users = ', '.join([m.display_name for m in x.members]) if len(
-                        x.members) > 1 else x.members[0].display_name
-                    msg = self.glossary.get_random(
-                        user=user, all_users=all_users)
-                    tts = await self.bot.tts.create_tts(msg, 'pl', random=True)
-                    await self.bot.play_on_channel(x, tts)
-                    break
+        while True:
+            if not self.bot.ready:
+                await asyncio.sleep(1)
+                continue
+            break
 
-            wait_time = randint(5*60, 10*60)
+        while not self.bot.is_closed():
+            if len(self.bot.voice_channel.members) >= 1:
+                # if len(x.members) > 0:
+                #     self.poll_task = self.loop.create_task(
+                #         self.random_poll(len(x.members)))
+                members = [
+                    x for x in self.bot.voice_channel.members if x.display_name != 'Bocek']
+                user = choice(members).display_name
+                all_users = ', '.join([m.display_name for m in self.bot.voice_channel.members]) if len(
+                    members) > 1 else members[0].display_name
+                msg = self.glossary.get_random(
+                    user=user, all_users=all_users)
+                tts = await self.bot.tts.create_tts(msg, 'pl', random=True)
+                await self.bot.play_on_channel(tts)
+
+            wait_time = randint(5*5, 1*60)
             join_at = datetime.now() + timedelta(seconds=wait_time)
             self.join_at = join_at.strftime("%H:%M:%S")
             log.info(f'Random join on {self.join_at}')
