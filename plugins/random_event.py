@@ -28,17 +28,17 @@ class RandomEvent(commands.Cog, name='random_event'):
                 # if len(x.members) > 0:
                 #     self.poll_task = self.loop.create_task(
                 #         self.random_poll(len(x.members)))
-                members = [
-                    x for x in self.bot.voice_channel.members if x.display_name != 'Bocek']
-                user = choice(members).display_name
-                all_users = ', '.join([m.display_name for m in self.bot.voice_channel.members]) if len(
-                    members) > 1 else members[0].display_name
-                msg = self.glossary.get_random(
-                    user=user, all_users=all_users)
-                tts = await self.bot.tts.create_tts(msg, 'pl', random=True)
-                await self.bot.play_on_channel(tts)
+                if members := [
+                        x.display_name for x in self.bot.voice_channel.members if x.display_name != 'Bocek']:
+                    user = choice(members)
+                    all_users = ', '.join(members) if len(
+                        members) > 1 else members[0].display_name
+                    msg = self.glossary.get_random(
+                        user=user, all_users=all_users)
+                    tts = await self.bot.tts.create_tts(msg, 'pl', random=True)
+                    await self.bot.play_on_channel(tts)
 
-            wait_time = randint(5*5, 1*60)
+            wait_time = randint(8*60, 10*60)
             join_at = datetime.now() + timedelta(seconds=wait_time)
             self.join_at = join_at.strftime("%H:%M:%S")
             log.info(f'Random join on {self.join_at}')

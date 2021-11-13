@@ -163,14 +163,6 @@ class MyBot(Bot):
                 await self.play_on_channel(tts)
                 await ctx.message.delete()
 
-        @self.command(name='test')
-        async def test(ctx):
-            to_say = '<speak>cześć kluseczki<break time="400ms"/> <emphasis level="strong">pokaż majteczki</emphasis></speak>'
-            if hasattr(ctx.author.voice, 'channel') and ctx.author.voice.channel:
-                tts = await self.tts.create_tts(to_say, 'pl', voice=3)
-                await self.play_on_channel(tts)
-                await ctx.message.delete()
-
 
 bot = MyBot(command_prefix='$')
 
