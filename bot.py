@@ -88,7 +88,7 @@ class MyBot(Bot):
         await self.process_commands(message)
 
     async def on_voice_state_update(self, member, before, after):
-        if member == self.user:
+        if member == self.user or not self.ready:
             return
         if not hasattr(after, 'channel') and not hasattr(after.channel.name):
             return
@@ -104,7 +104,7 @@ class MyBot(Bot):
         # if self.voice_clients:
         #     log.warning(f'Found voice clients: {self.voice_clients}')
         #     return
-        if len(self.voice_channel.members) == 0:
+        if len(self.voice_channel.members) == 0 or not self.ready:
             return
         if not self.vc:
             self.vc = await self.voice_channel.connect()
