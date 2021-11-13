@@ -46,7 +46,7 @@ class Rito(commands.Cog, name='rito'):
             if in_game := await self.in_game():
                 wait_time = 5
                 diff = await self.compare_stats()
-                if diff and random() < 1:
+                if diff and random() < 0.3:
                     tts = await self.bot.tts.create_tts(diff, 'pl')
                     await self.bot.play_on_channel(tts)
             else:
