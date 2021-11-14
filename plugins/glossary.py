@@ -38,6 +38,6 @@ class Glossary:
         if 'user' in kwargs:
             text = text.replace('%user%', kwargs['user'])
         if 'all_users' in kwargs:
-            all_users = ", ".join(kwargs['all_users'])
+            all_users = kwargs['all_users']
             text = text.replace('%all%', all_users)
         return text

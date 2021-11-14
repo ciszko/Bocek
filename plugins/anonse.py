@@ -1,4 +1,4 @@
-from os import name
+import asyncio
 from bs4 import BeautifulSoup
 from discord.ext import commands
 import requests
@@ -45,22 +45,27 @@ class Anonse(commands.Cog, name='anonse'):
             await ctx.channel.send(msg)
             await ctx.message.delete()
 
-    @async_wrap
-    def get_anonse(self, cat='fetysze'):
+    async def get_anonse(self, cat='fetysze'):
         cat = self.categories[unidecode(cat)]
         for i in range(1, 5):
             page = randint(1, int(30/i))
-            anonse_list = self.get_random_anonse(page, cat)
+            anonse_list = await self.get_random_anonse(page, cat)
             if anonse_list:
                 to_ret = choice(anonse_list)
                 log.info(f'ANONSE: page={page}, cat={cat}, {to_ret}')
-                return choice(anonse_list)
+                return to_ret
         else:
             return 'Kurde belka, coś poszło nie tak'
 
-    def get_random_anonse(self, page, cat):
+    async def get_random_anonse(self, page, cat):
         url = f'https://anonse.inaczej.pl/?m=list&pg={page}&cat={cat}'
-        r = self.session.get(url)
+        for _ in range(3):
+            try:
+                r = self.session.get(url)
+                break
+            except Exception:
+                await asyncio.sleep(0.5)
+                continue
         dom = BeautifulSoup(r.content, 'html.parser')
         ads = dom.find_all('div', {'class': 'adcontent'})
         return [x.get_text().strip() for x in ads]
