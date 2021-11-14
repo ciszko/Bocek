@@ -15,7 +15,10 @@
         "%user% zrobił to dla dobra drużyny",
         "ładna wyjebka %user%",
         "%user% to cienias",
-        "%user% dostał na pape"
+        "%user% dostał na pape",
+        "nie przejmuj się %user%",
+        "następnym razem będzie lepiej %user%",
+        "nic się nie stało %user%"
     ],
     "ChampionKill": [
         "najs %user%",
