@@ -21,23 +21,23 @@ class Rito(commands.Cog, name='rito'):
 
         self.events = {}
         self.mode = 'idle'
-        self.event_priority = [
-            'PentaKill',
-            'QuadraKill',
-            'TripleKill',
-            'BaronSteal',
-            'DragonSteal',
-            'DoubleKill',
-            'BaronKill',
-            'Ace',
-            'DragonKill',
-            'HeraldKill',
-            'FirstBlood',
-            'ChampionKill',
-            'ChampionDeath',
-            'InhibKilled',
-            'TurretKilled',
-        ]
+        self.event_priority = {
+            'PentaKill': 1,
+            'QuadraKill': 0.8,
+            'TripleKill': 0.5,
+            'BaronSteal': 1,
+            'DragonSteal': 0.8,
+            'DoubleKill': 0.4,
+            'BaronKill': 0.5,
+            'Ace': 0.5,
+            'DragonKill': 0.3,
+            'HeraldKill': 0.3,
+            'FirstBlood': 0.5,
+            'ChampionKill': 0.3,
+            'ChampionDeath': 0.3,
+            'InhibKilled': 0.3,
+            'TurretKilled': 0.3,
+        }
 
     async def rito_check(self):
         await self.bot.wait_until_ready()
@@ -46,7 +46,7 @@ class Rito(commands.Cog, name='rito'):
             if in_game := await self.in_game():
                 wait_time = 5
                 diff = await self.compare_stats()
-                if diff and random() < 0.3:
+                if diff:
                     tts = await self.bot.tts.create_tts(diff, 'pl')
                     await self.bot.play_on_channel(tts)
             else:
@@ -137,12 +137,14 @@ class Rito(commands.Cog, name='rito'):
         return event
 
     def create_msg(self, events):
-        if not (event := next(
-                (event for event in events if event['EventName'] in self.event_priority), None)):
+        for event_name, prio in self.event_priority.items():
+            if event := next((e for e in events if e['EventName'] == event_name), None):
+                if random() < prio:
+                    player = event['Who']
+                    event_name = event['EventName']
+                    player = self.glossary.get_value(
+                        'player_transcript', player)
+                    if msg := self.glossary.get_random(event_name, user=player):
+                        return msg
+        else:
             return None
-        player = event['Who']
-        event_name = event['EventName']
-        player = self.glossary.get_value('player_transcript', player)
-        if msg := self.glossary.get_random(event_name, user=player):
-            return msg
-        return None

@@ -32,7 +32,7 @@ class RandomEvent(commands.Cog, name='random_event'):
                         x.display_name for x in self.bot.voice_channel.members if x.display_name != 'Bocek']:
                     user = choice(members)
                     all_users = ', '.join(members) if len(
-                        members) > 1 else members[0].display_name
+                        members) > 1 else members[0]
                     msg = self.glossary.get_random(
                         user=user, all_users=all_users)
                     tts = await self.bot.tts.create_tts(msg, 'pl', random=True)
