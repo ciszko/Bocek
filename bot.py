@@ -111,8 +111,13 @@ class MyBot(Bot):
         if self.vc.is_playing():
             return
         duration = MP3(message).info.length
-        self.vc.play(discord.FFmpegOpusAudio(
-            executable=ffmpeg, source=message))
+        try:
+            self.vc.play(discord.FFmpegOpusAudio(
+                executable=ffmpeg, source=message))
+        except discord.errors.ClientException:
+            self.vc = await self.voice_channel.connect()
+            self.vc.play(discord.FFmpegOpusAudio(
+                executable=ffmpeg, source=message))
         timeout = time() + duration + 1  # timeout is audio duration + 1s
         # Sleep while audio is playing.
         while self.vc.is_playing() and time() < timeout:
