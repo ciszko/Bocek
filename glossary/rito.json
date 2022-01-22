@@ -18,7 +18,8 @@
         "%user% dostał na pape",
         "nie przejmuj się %user%",
         "następnym razem będzie lepiej %user%",
-        "nic się nie stało %user%"
+        "nic się nie stało %user%",
+        "no i wylądował"
     ],
     "ChampionKill": [
         "najs %user%",

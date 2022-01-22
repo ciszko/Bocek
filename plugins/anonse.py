@@ -35,11 +35,11 @@ class Anonse(commands.Cog, name='anonse'):
     @commands.command(name='anonse', help='Zwraca losowe gejowe anonse')
     async def anonse(self, ctx, arg='fetysze'):
         # Gets voice channel of message author
-        if voice := ctx.author.voice:
-            voice_channel = voice.channel
+        if ctx.author.voice:
             msg = await self.get_anonse(arg)
             tts = await self.bot.tts.create_tts(msg, 'pl')
             await self.bot.play_on_channel(tts)
+            await self.bot.tts.delete_tts(msg)
         else:
             msg = (f'{ctx.author.name}, nie jesteś nawet na kanale...')
             await ctx.channel.send(msg)
