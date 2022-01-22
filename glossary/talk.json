@@ -66,7 +66,8 @@
         "Sprzedam riba, es-er 30, M1, kowal, fast, szept",
         "Szukam bufa na orki",
         "Euro Neuro don't bi sceptic, Hermetic, pathetic, analphabetic",
-        "Euro Neuro"
+        "Euro Neuro",
+        "%user% klaskaj czołem!"
     ],
     "greetings": [
         "Siemanko %user%",
@@ -79,8 +80,10 @@
         "No i po co tu wróciłeś %user%?, ić stond.",
         "Nie chcę przerywać, ale %user% znów przyszedł popsuć zabawę.",
         "Jeśli jest tu ulany ziom, przekażcie mu że wisi mi 50 złotych.",
+        "Jeśli jest tu %user%, przekażcie mu że wisi mi 50 złotych.",
         "Łaaazaaap!",
-        "%user% %user% ty chuju."
+        "%user% %user% ty chuju.",
+        "Dawaj %user% pokaż siurdolka"
     ],
     "bocek_huju": [
         "Ty obżydronie",
