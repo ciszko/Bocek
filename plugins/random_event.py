@@ -37,6 +37,7 @@ class RandomEvent(commands.Cog, name='random_event'):
                         user=user, all_users=all_users)
                     tts = await self.bot.tts.create_tts(msg, 'pl', random=True)
                     await self.bot.play_on_channel(tts)
+                    await self.bot.tts.delete_tts(msg)
 
             wait_time = randint(8*60, 10*60)
             join_at = datetime.now() + timedelta(seconds=wait_time)

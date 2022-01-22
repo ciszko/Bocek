@@ -12,6 +12,7 @@ from plugins.anonse import Anonse
 from plugins.rito import Rito
 from plugins.glossary import Glossary
 from plugins.random_event import RandomEvent
+from plugins.joke import Joke
 
 import platform
 import asyncio
@@ -45,7 +46,7 @@ class MyBot(Bot):
         self.vc = None
         self.text_channel = 'piszemy'  # later changed to Channel object
 
-        cogs = [LolCounter, Tts, Anonse, RandomEvent, Rito]
+        cogs = [LolCounter, Tts, Anonse, RandomEvent, Rito, Joke]
         self.add_cogs(cogs)
 
         self.add_commands()
@@ -84,6 +85,7 @@ class MyBot(Bot):
             else:
                 await message.add_reaction(self.get_emoji(283294977969356800))
                 await message.reply(to_say)
+            await self.bot.tts.delete_tts(msg)
 
         await self.process_commands(message)
 
@@ -93,9 +95,11 @@ class MyBot(Bot):
         if not hasattr(after, 'channel') and not hasattr(after.channel.name):
             return
         if before.channel != after.channel and after.channel == self.voice_channel:
+            await asyncio.sleep(0.75)
             to_say = self.glossary.get_random('greetings', user=member.name)
             tts = await self.tts.create_tts(to_say, 'pl', random=True)
             await self.play_on_channel(tts)
+            await self.bot.tts.delete_tts(tts)
         if after.channel != self.voice_channel and len(self.voice_channel.members) <= 1 and self.vc:
             await self.vc.disconnect()
             self.vc = None
@@ -167,6 +171,7 @@ class MyBot(Bot):
                 tts = await self.tts.create_tts(to_say, 'pl', random=True)
                 await self.play_on_channel(tts)
                 await ctx.message.delete()
+                await self.bot.tts.delete_tts(tts)
 
 
 bot = MyBot(command_prefix='$')
