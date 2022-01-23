@@ -27,7 +27,7 @@ class Rhyme(commands.Cog, name='rhyme'):
                     all_results.update(set(random.sample(result, population)))
                 if len(all_results) > limit:
                     break
-        return list(all_results[:limit])
+        return list(all_results)[:limit]
 
     @commands.command(name='rym', help='Zwraca rymy do słowa. Np. $rym dupa 5')
     async def rhyme(self, ctx, word, limit=10):
