@@ -23,12 +23,11 @@ class Rhyme(commands.Cog, name='rhyme'):
             ending = word[i:]
             if result := self.rhyme_dict.get(ending, None):
                 if result := [x for x in result if x != word]:
-                    limit = limit if len(result) > limit else len(result)
-                    # poprawic
-                    all_results.update(set(random.sample(result, limit)))
+                    population = limit if len(result) > limit else len(result)
+                    all_results.update(set(random.sample(result, population)))
                 if len(all_results) > limit:
-                    return list(all_results)
-        return list(all_results)
+                    break
+        return list(all_results[:limit])
 
     @commands.command(name='rym', help='Zwraca rymy do słowa. Np. $rym dupa 5')
     async def rhyme(self, ctx, word, limit=10):
