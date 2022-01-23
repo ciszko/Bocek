@@ -85,7 +85,7 @@ class MyBot(Bot):
             else:
                 await message.add_reaction(self.get_emoji(283294977969356800))
                 await message.reply(to_say)
-            await self.bot.tts.delete_tts(msg)
+            await self.tts.delete_tts(msg)
 
         await self.process_commands(message)
 
@@ -99,7 +99,7 @@ class MyBot(Bot):
             to_say = self.glossary.get_random('greetings', user=member.name)
             tts = await self.tts.create_tts(to_say, 'pl', random=True)
             await self.play_on_channel(tts)
-            await self.bot.tts.delete_tts(tts)
+            await self.tts.delete_tts(tts)
         if after.channel != self.voice_channel and len(self.voice_channel.members) <= 1 and self.vc:
             await self.vc.disconnect()
             self.vc = None
@@ -171,7 +171,7 @@ class MyBot(Bot):
                 tts = await self.tts.create_tts(to_say, 'pl', random=True)
                 await self.play_on_channel(tts)
                 await ctx.message.delete()
-                await self.bot.tts.delete_tts(tts)
+                await self.tts.delete_tts(tts)
 
 
 bot = MyBot(command_prefix='$')
