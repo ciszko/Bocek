@@ -27,7 +27,6 @@ class Tts(commands.Cog, name='tts'):
 
         await ctx.send(file=File(tts))
         await ctx.message.delete()
-        await self.delete_tts(tts)
 
     async def create_tts(self, *args, **kwargs):
         if 'random' in kwargs:
@@ -74,10 +73,10 @@ class Tts(commands.Cog, name='tts'):
 
         log.info(
             f'pitch={pitch}, voice={voice}, volume={volume}, speaking_rate={speaking_rate}')
-        if '<' in text:
-            text = texttospeech.SynthesisInput(ssml=text)
-        else:
-            text = texttospeech.SynthesisInput(text=text)
+        # if '<' in text:
+        #     text = texttospeech.SynthesisInput(ssml=text)
+        # else:
+        text = texttospeech.SynthesisInput(text=text)
         # voice creation
         voice = texttospeech.VoiceSelectionParams(
             language_code=lang, ssml_gender=voice
@@ -102,6 +101,7 @@ class Tts(commands.Cog, name='tts'):
     @async_wrap
     def delete_tts(self, path):
         os.remove(path)
+        log.info(f'Removed {path}')
         return
 
     def get_random_voice(self, **kwargs):
