@@ -13,6 +13,7 @@ from plugins.rito import Rito
 from plugins.glossary import Glossary
 from plugins.random_event import RandomEvent
 from plugins.joke import Joke
+from plugins.rhyme import Rhyme
 
 import platform
 import asyncio
@@ -46,7 +47,7 @@ class MyBot(Bot):
         self.vc = None
         self.text_channel = 'piszemy'  # later changed to Channel object
 
-        cogs = [LolCounter, Tts, Anonse, RandomEvent, Rito, Joke]
+        cogs = [LolCounter, Tts, Anonse, RandomEvent, Rito, Joke, Rhyme]
         self.add_cogs(cogs)
 
         self.add_commands()

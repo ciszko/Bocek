@@ -7,7 +7,7 @@ from discord.ext import commands
 log = get_logger(__name__)
 
 
-class Joke(commands.Cog, name='jokes'):
+class Joke(commands.Cog, name='joke'):
     def __init__(self, bot):
         self.bot = bot
         self.headers = {'User-Agent': 'Bocek/1.0'}
