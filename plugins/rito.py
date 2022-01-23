@@ -49,7 +49,6 @@ class Rito(commands.Cog, name='rito'):
                 if diff:
                     tts = await self.bot.tts.create_tts(diff, 'pl')
                     await self.bot.play_on_channel(tts)
-                    await self.bot.tts.delete_tts(tts)
             else:
                 wait_time = 30
             await asyncio.sleep(wait_time)

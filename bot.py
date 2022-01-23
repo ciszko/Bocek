@@ -85,7 +85,6 @@ class MyBot(Bot):
             else:
                 await message.add_reaction(self.get_emoji(283294977969356800))
                 await message.reply(to_say)
-            await self.tts.delete_tts(msg)
 
         await self.process_commands(message)
 
@@ -99,7 +98,6 @@ class MyBot(Bot):
             to_say = self.glossary.get_random('greetings', user=member.name)
             tts = await self.tts.create_tts(to_say, 'pl', random=True)
             await self.play_on_channel(tts)
-            await self.tts.delete_tts(tts)
         if after.channel != self.voice_channel and len(self.voice_channel.members) <= 1 and self.vc:
             await self.vc.disconnect()
             self.vc = None
@@ -129,7 +127,7 @@ class MyBot(Bot):
         else:
             await asyncio.sleep(0.5)  # sometimes mp3 is still playing
             # await self.vc.disconnect()
-            await self.tts.delete_tts(message)
+        await self.tts.delete_tts(message)
 
     async def on_ready(self):
         log.info(f'{self.user.name} has connected to Discord!')
@@ -171,7 +169,6 @@ class MyBot(Bot):
                 tts = await self.tts.create_tts(to_say, 'pl', random=True)
                 await self.play_on_channel(tts)
                 await ctx.message.delete()
-                await self.tts.delete_tts(tts)
 
 
 bot = MyBot(command_prefix='$')
