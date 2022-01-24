@@ -110,7 +110,12 @@ class MyBot(Bot):
         if len(self.voice_channel.members) == 0 or not self.ready:
             return
         if not self.vc:
-            self.vc = await self.voice_channel.connect()
+            try:
+                self.vc = await self.voice_channel.connect()
+            except Exception as e:
+                log.exception(e)
+                self.vc.disconnect()
+                self.vc = await self.voice_channel.connect()
         if self.vc.is_playing():
             return
         duration = MP3(message).info.length
