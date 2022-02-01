@@ -27,6 +27,7 @@ class Slang(commands.Cog, name='slang'):
         log.info(msg)
         if ctx.author.voice:
             tts = await self.bot.tts.create_tts(msg, 'pl')
+            await ctx.channel.send(msg)
             await self.bot.play_on_channel(tts)
         else:
             msg = (f'{ctx.author.name}, nie jesteś nawet na kanale...')
