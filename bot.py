@@ -116,7 +116,7 @@ class MyBot(Bot):
                 log.exception(e)
                 self.vc.disconnect()
                 self.vc = await self.voice_channel.connect()
-        if self.vc.is_playing():
+        if self.vc and self.vc.is_playing():
             return
         duration = MP3(message).info.length
         try:
