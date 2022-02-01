@@ -14,6 +14,7 @@ from plugins.glossary import Glossary
 from plugins.random_event import RandomEvent
 from plugins.joke import Joke
 from plugins.rhyme import Rhyme
+from plugins.slang import Slang
 
 import platform
 import asyncio
@@ -47,7 +48,7 @@ class MyBot(Bot):
         self.vc = None
         self.text_channel = 'piszemy'  # later changed to Channel object
 
-        cogs = [LolCounter, Tts, Anonse, RandomEvent, Rito, Joke, Rhyme]
+        cogs = [LolCounter, Tts, Anonse, RandomEvent, Rito, Joke, Rhyme, Slang]
         self.add_cogs(cogs)
 
         self.add_commands()
