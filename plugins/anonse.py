@@ -42,7 +42,7 @@ class Anonse(commands.Cog, name='anonse'):
         else:
             msg = (f'{ctx.author.name}, nie jesteś nawet na kanale...')
             await ctx.channel.send(msg)
-            await ctx.message.delete()
+        await ctx.message.delete()
 
     async def get_anonse(self, cat='fetysze'):
         cat = self.categories[unidecode(cat)]
