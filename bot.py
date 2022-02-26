@@ -1,10 +1,12 @@
 import os
 import re
+import random
 from dotenv import load_dotenv
 
 import discord
 from discord.ext.commands import Bot
 
+from plugins.common import replace_all
 from plugins.log import get_logger
 from plugins.lol_counter import LolCounter
 from plugins.tts import Tts
@@ -65,6 +67,12 @@ class MyBot(Bot):
             cog_name = re.sub(r'(?<!^)(?=[A-Z])', '_', cog.__name__).lower()
             setattr(self, cog_name, self.get_cog(cog_name))
 
+    def get_rhyme(self, text):
+        to_ret = ''
+        if (to_ret := self.rhyme.get_rhyme(text)):
+            to_ret = random.choice(to_ret)
+        return to_ret
+
     async def on_message(self, message):
         if message.author == self.user:
             return
@@ -79,8 +87,11 @@ class MyBot(Bot):
 
         elif msg == 'bocek huju':
 
-            to_say = self.glossary.get_random(
-                'bocek_huju', user=message.author.name)
+            to_say, placeholders = self.glossary.get_random('bocek_huju')
+            user = message.author.name
+            scope = locals()
+            to_say = replace_all(to_say, {f'{{{p}}}': eval(p, scope) for p in placeholders})
+
             tts = await self.tts.create_tts(to_say, 'pl')
             if hasattr(message.author.voice, 'channel') and message.author.voice.channel:
                 await self.play_on_channel(tts)
@@ -97,11 +108,15 @@ class MyBot(Bot):
             return
         if before.channel != after.channel and after.channel == self.voice_channel:
             await asyncio.sleep(0.75)
-            to_say = self.glossary.get_random('greetings', user=member.name)
+            to_say, placeholders = self.glossary.get_random('greetings')
+            user = member.nick if member.nick else member.name
+            scope = locals()
+            to_say = replace_all(to_say, {f'{{{p}}}': eval(p, scope) for p in placeholders})
             tts = await self.tts.create_tts(to_say, 'pl', random=True)
             await self.play_on_channel(tts)
         if after.channel != self.voice_channel and len(self.voice_channel.members) <= 1 and self.vc:
             await self.vc.disconnect()
+            await self.tts.delete_all_tts()
             self.vc = None
 
     async def play_on_channel(self, message=None):
@@ -165,7 +180,8 @@ class MyBot(Bot):
 
         @self.command(name='siusiak', help='Powie Ci prawdę o siusiaku')
         async def siusiak(ctx):
-            response = f'{ctx.author.name} ma {self.glossary.get_random("siusiak")} siusiaka'
+            siusiak, _ = self.glossary.get_random("siusiak")
+            response = f'{ctx.author.name} ma {siusiak} siusiaka'
             await ctx.send(response)
             await ctx.message.delete()
 
@@ -176,6 +192,16 @@ class MyBot(Bot):
                 tts = await self.tts.create_tts(to_say, 'pl', random=True)
                 await self.play_on_channel(tts)
                 await ctx.message.delete()
+
+        @self.command(name='powiedz', help='Coś se powiem')
+        async def powiedz(ctx, msg):
+            text = msg
+            placeholders = self.glossary.get_placeholders(text)
+            user = ctx.message.author.name
+            scope = locals()
+            response = replace_all(text, {f'{{{p}}}': eval(p, scope) for p in placeholders})
+            await ctx.send(response)
+            await ctx.message.delete()
 
 
 bot = MyBot(command_prefix='$')

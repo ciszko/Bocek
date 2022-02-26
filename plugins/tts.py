@@ -5,14 +5,14 @@ from gtts import gTTS
 from google.cloud import texttospeech
 import os
 import random
-from .common import async_wrap
+from .common import async_wrap, MyCog
 from uuid import uuid4
 from .log import get_logger
 
 log = get_logger(__name__)
 
 
-class Tts(commands.Cog, name='tts'):
+class Tts(MyCog, name='tts'):
     def __init__(self, bot):
         self.bot = bot
         self.path = os.path.join(pathlib.Path(
@@ -102,6 +102,13 @@ class Tts(commands.Cog, name='tts'):
     def delete_tts(self, path):
         os.remove(path)
         log.info(f'Removed {path}')
+        return
+
+    @async_wrap
+    def delete_all_tts(self):
+        log.info('Deleting all tts')
+        for file in os.listdir(self.path):
+            os.remove(os.path.join(self.path, file))
         return
 
     def get_random_voice(self, **kwargs):
