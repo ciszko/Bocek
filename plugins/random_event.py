@@ -5,11 +5,13 @@ import asyncio
 from .glossary import Glossary
 from random import choice, randint
 from .log import get_logger
+from .common import MyCog, replace_all
+
 
 log = get_logger(__name__)
 
 
-class RandomEvent(commands.Cog, name='random_event'):
+class RandomEvent(MyCog, name='random_event'):
     def __init__(self, bot):
         self.bot = bot
         self.glossary = Glossary(self, 'random_join.json')
@@ -29,12 +31,15 @@ class RandomEvent(commands.Cog, name='random_event'):
                 #     self.poll_task = self.loop.create_task(
                 #         self.random_poll(len(x.members)))
                 if members := [
-                        x.display_name for x in self.bot.voice_channel.members if x.display_name != 'Bocek']:
-                    user = choice(members)
-                    all_users = ', '.join(members) if len(
-                        members) > 1 else members[0]
-                    msg = self.glossary.get_random(
-                        user=user, all_users=all_users)
+                        x.name for x in self.bot.voice_channel.members if x.display_name != 'Bocek']:
+                    msg, placeholders = self.glossary.get_random()
+                    if 'user' in placeholders:
+                        user = choice(members)
+                    if 'all_users' in placeholders:
+                        all_users = ', '.join(members) if len(
+                            members) > 1 else members[0]
+                    scope = locals()
+                    msg = replace_all(msg, {f'{{{p}}}': eval(p, scope) for p in placeholders})
                     tts = await self.bot.tts.create_tts(msg, 'pl', random=True)
                     await self.bot.play_on_channel(tts)
 

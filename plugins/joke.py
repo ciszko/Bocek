@@ -2,12 +2,13 @@ import requests
 from bs4 import BeautifulSoup
 from .log import get_logger
 from discord.ext import commands
+from .common import MyCog
 
 
 log = get_logger(__name__)
 
 
-class Joke(commands.Cog, name='joke'):
+class Joke(MyCog, name='joke'):
     def __init__(self, bot):
         self.bot = bot
         self.headers = {'User-Agent': 'Bocek/1.0'}

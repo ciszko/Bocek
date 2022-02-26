@@ -15,7 +15,7 @@ class Rhyme(commands.Cog, name='rhyme'):
         with open(self.dict_path, 'r', encoding='utf-8') as dict_json:
             self.rhyme_dict = json.load(dict_json)
 
-    def get_rhyme(self, word, limit):
+    def get_rhyme(self, word, limit=5):
         all_results = set()
         for i in range(len(word) - 1):
             if not (2 <= len(word) - i <= 5):

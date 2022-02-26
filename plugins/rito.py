@@ -5,12 +5,13 @@ from random import choice, random
 import asyncio
 from .glossary import Glossary
 from .log import get_logger
+from .common import MyCog, replace_all
 
 
 log = get_logger(__name__)
 
 
-class Rito(commands.Cog, name='rito'):
+class Rito(MyCog, name='rito'):
     def __init__(self, bot):
         self.bot = bot
         self.url_base = 'https://192.168.0.31:29999/liveclientdata/'
@@ -142,9 +143,11 @@ class Rito(commands.Cog, name='rito'):
                 if random() < prio:
                     player = event['Who']
                     event_name = event['EventName']
-                    player = self.glossary.get_value(
-                        'player_transcript', player)
-                    if msg := self.glossary.get_random(event_name, user=player):
-                        return msg
+                    user, _ = self.glossary.get_value('player_transcript', player)
+                    msg, msg_placeholders = self.glossary.get_random(
+                        event_name, user=player)
+                    scope = locals()
+                    msg = replace_all(msg, {f'{{{p}}}': eval(p, scope) for p in msg_placeholders})
+                    return msg
         else:
             return None
