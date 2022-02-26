@@ -2,13 +2,13 @@ from bs4 import BeautifulSoup
 import requests
 from discord.ext import commands
 from tabulate import tabulate
-from .common import async_wrap
+from .common import async_wrap, MyCog
 from .log import get_logger
 
 log = get_logger(__name__)
 
 
-class LolCounter(commands.Cog, name='lol_counter'):
+class LolCounter(MyCog, name='lol_counter'):
     def __init__(self,  bot):
         self.bot = bot
         self.headers = {'User-Agent': 'Bocek/1.0'}

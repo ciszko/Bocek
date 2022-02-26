@@ -4,13 +4,13 @@ from discord.ext import commands
 import requests
 from unidecode import unidecode
 from random import choice, randint
-from .common import async_wrap
+from .common import MyCog
 from .log import get_logger
 
 log = get_logger(__name__)
 
 
-class Anonse(commands.Cog, name='anonse'):
+class Anonse(MyCog, name='anonse'):
     def __init__(self, bot):
         self.bot = bot
         self.headers = {'User-Agent': 'Bocek/1.0'}
