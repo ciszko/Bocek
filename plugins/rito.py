@@ -144,8 +144,7 @@ class Rito(MyCog, name='rito'):
                     player = event['Who']
                     event_name = event['EventName']
                     user, _ = self.glossary.get_value('player_transcript', player)
-                    msg, msg_placeholders = self.glossary.get_random(
-                        event_name, user=player)
+                    msg, msg_placeholders = self.glossary.get_random(event_name)
                     scope = locals()
                     msg = replace_all(msg, {f'{{{p}}}': eval(p, scope) for p in msg_placeholders})
                     return msg
