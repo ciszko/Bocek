@@ -26,7 +26,7 @@ class RandomEvent(MyCog, name='random_event'):
             break
 
         while not self.bot.is_closed():
-            if len(self.bot.voice_channel.members) >= 1:
+            if len(self.bot.voice_channel.members) > 1:
                 # if len(x.members) > 0:
                 #     self.poll_task = self.loop.create_task(
                 #         self.random_poll(len(x.members)))

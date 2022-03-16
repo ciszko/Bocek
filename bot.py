@@ -123,7 +123,13 @@ class MyBot(Bot):
         # if self.voice_clients:
         #     log.warning(f'Found voice clients: {self.voice_clients}')
         #     return
-        if len(self.voice_channel.members) == 0 or not self.ready:
+        if not self.ready:
+            return
+        if len(self.voice_channel.members) == 0:
+            try:
+                self.vc.disconnect()
+            except Exception as e:
+                log.exception(e)
             return
         if not self.vc:
             try:
