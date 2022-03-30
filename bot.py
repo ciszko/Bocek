@@ -46,9 +46,9 @@ class MyBot(Bot):
         self.glossary = Glossary(self, 'talk.json')
         self.path = pathlib.Path(__file__).parent.absolute()
         self.channel_list = []
-        self.voice_channel = '🍆💦💦💦💦'  # later changed to Channel object
+        self.voice_channel_id = 283292201579184128
+        self.text_channel_id = 283292201109159947
         self.vc = None
-        self.text_channel = 'piszemy'  # later changed to Channel object
 
         cogs = [LolCounter, Tts, Anonse, RandomEvent, Rito, Joke, Rhyme, Slang]
         self.add_cogs(cogs)
@@ -57,6 +57,14 @@ class MyBot(Bot):
 
         self.bg_task = self.loop.create_task(self.random_event.random_check())
         self.rito_task = self.loop.create_task(self.rito.rito_check())
+
+    @property
+    def voice_channel(self):
+        return next((c for c in self.channel_list if c.id == self.voice_channel_id), None)
+
+    @property
+    def text_channel(self):
+        return next((c for c in self.channel_list if c.id == self.id), None)
 
     def add_cogs(self, cogs):
         # cog registration
@@ -125,7 +133,7 @@ class MyBot(Bot):
         #     return
         if not self.ready:
             return
-        if len(self.voice_channel.members) == 0:
+        if len(self.voice_channel.members) == 0 and self.vc:
             try:
                 self.vc.disconnect()
             except Exception as e:
@@ -150,7 +158,7 @@ class MyBot(Bot):
                 executable=ffmpeg, source=message))
         timeout = time() + duration + 1  # timeout is audio duration + 1s
         # Sleep while audio is playing.
-        while self.vc.is_playing() and time() < timeout:
+        while self.vc and self.vc.is_playing() and time() < timeout:
             await asyncio.sleep(.1)
         else:
             await asyncio.sleep(0.5)  # sometimes mp3 is still playing
@@ -158,14 +166,9 @@ class MyBot(Bot):
         await self.tts.delete_tts(message)
 
     async def on_ready(self):
-        log.info(f'{self.user.name} has connected to Discord!')
-        for channel in self.get_all_channels():
-            self.channel_list.append(channel)
-            if channel.name == self.voice_channel:
-                self.voice_channel = channel
-            elif channel.name == self.text_channel:
-                self.text_channel = channel
+        self.channel_list = [c for c in self.get_all_channels()]
         self.ready = True
+        log.info(f'{self.user.name} has connected to Discord!')
 
     async def on_command_error(self, context, exception):
         if type(exception) == discord.ext.commands.errors.CommandNotFound:
