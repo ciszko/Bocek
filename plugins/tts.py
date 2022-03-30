@@ -100,15 +100,21 @@ class Tts(MyCog, name='tts'):
 
     @async_wrap
     def delete_tts(self, path):
-        os.remove(path)
-        log.info(f'Removed {path}')
+        try:
+            os.remove(path)
+            log.info(f'Removed {path}')
+        except FileNotFoundError:
+            log.warning(f'{path} was already deleted')
         return
 
     @async_wrap
     def delete_all_tts(self):
         log.info('Deleting all tts')
         for file in os.listdir(self.path):
-            os.remove(os.path.join(self.path, file))
+            try:
+                os.remove(os.path.join(self.path, file))
+            except PermissionError:
+                log.warning(f'{file} is still in use')
         return
 
     def get_random_voice(self, **kwargs):
