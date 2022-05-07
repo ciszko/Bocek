@@ -6,8 +6,7 @@ import random
 from discord.ext.commands import Cog
 
 
-BASEDIR = os.path.join(pathlib.Path(
-    __file__).parent.absolute(), '..')
+BASEDIR = os.path.join(pathlib.Path(__file__).parent.absolute(), '..')
 
 
 def async_wrap(func):

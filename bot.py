@@ -202,16 +202,6 @@ class MyBot(Bot):
                 await self.play_on_channel(tts)
                 await ctx.message.delete()
 
-        @self.command(name='powiedz', help='Coś se powiem')
-        async def powiedz(ctx, msg):
-            text = msg
-            placeholders = self.glossary.get_placeholders(text)
-            user = ctx.message.author.name
-            scope = locals()
-            response = replace_all(text, {f'{{{p}}}': eval(p, scope) for p in placeholders})
-            await ctx.send(response)
-            await ctx.message.delete()
-
 
 bot = MyBot(command_prefix='$')
 

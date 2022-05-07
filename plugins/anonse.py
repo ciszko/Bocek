@@ -32,31 +32,41 @@ class Anonse(MyCog, name='anonse'):
             'widzialem cie': '18',
         }
 
-    @commands.command(name='anonse', help='Zwraca losowe gejowe anonse')
+    @commands.command(name='anonse', help='Zwraca losowe gejowe anonse z wybranej kategorii. Default: $anonse "fetysze"')
     async def anonse(self, ctx, arg='fetysze'):
         # Gets voice channel of message author
         if ctx.author.voice:
-            msg = await self.get_anonse(arg)
+            author, msg, img = await self.get_anonse(arg)
+            n = '\n'
+            await ctx.message.reply(f'**{author}**{msg}{n + img if img else ""}')
             tts = await self.bot.tts.create_tts(msg, 'pl')
             await self.bot.play_on_channel(tts)
         else:
             msg = (f'{ctx.author.name}, nie jesteś nawet na kanale...')
-            await ctx.channel.send(msg)
-        await ctx.message.delete()
+            await ctx.message.reply(msg)
+
+    @commands.command(name='kategorie', help='Zwraca możliwe kategorie')
+    async def kategorie(self, ctx):
+        categories = '```' + '\n'.join(f'"{c}"' for c in self.categories.keys()) + '```'
+        await ctx.message.reply(categories)
 
     async def get_anonse(self, cat='fetysze'):
         cat = self.categories[unidecode(cat)]
         for i in range(1, 5):
             page = randint(1, int(30/i))
-            anonse_list = await self.get_random_anonse(page, cat)
+            anonse_list = await self.get_anonses(page, cat)
             if anonse_list:
-                to_ret = choice(anonse_list)
-                log.info(f'ANONSE: page={page}, cat={cat}, {to_ret}')
-                return to_ret
+                anonse_item = choice(anonse_list)
+                anonse_image = anonse_item.find('a', {'class': 'fancybox'})
+                anonse_image = 'https://anonse.inaczej.pl/' + anonse_image['href'] if anonse_image else None
+                anonse_text = anonse_item.find('div', {'class': 'adcontent'}).get_text().strip()
+                anonse_author = anonse_item.find('i', {'class': 'icon-user'}).next_sibling
+                log.info(f'ANONSE: page={page}, cat={cat}, {anonse_text}')
+                return anonse_author, anonse_text, anonse_image
         else:
             return 'Kurde belka, coś poszło nie tak'
 
-    async def get_random_anonse(self, page, cat):
+    async def get_anonses(self, page, cat):
         url = f'https://anonse.inaczej.pl/?m=list&pg={page}&cat={cat}'
         for _ in range(3):
             try:
@@ -66,5 +76,4 @@ class Anonse(MyCog, name='anonse'):
                 await asyncio.sleep(0.5)
                 continue
         dom = BeautifulSoup(r.content, 'html.parser')
-        ads = dom.find_all('div', {'class': 'adcontent'})
-        return [x.get_text().strip() for x in ads]
+        return dom.find_all('div', {'class': 'listaditem'})

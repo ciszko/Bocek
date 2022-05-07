@@ -19,7 +19,10 @@
         "nie przejmuj się {user}",
         "następnym razem będzie lepiej {user}",
         "nic się nie stało {user}",
-        "no i wylądował"
+        "no i wylądował",
+        "oj {user}",
+        "{user} może już nie wychodź z respa",
+        "{user} weź się ogarnij"
     ],
     "ChampionKill": [
         "najs {user}",
@@ -34,7 +37,10 @@
         "{user} tłucze przeciwnik jak kotleta",
         "{user} jest bezlitosny, śpiew radosny",
         "{user} masakruje przeciwnik",
-        "{user} jest boski, ma ładne włoski"
+        "{user} jest boski, ma ładne włoski",
+        "{user} jest chyba dobry",
+        "{user} jest twardy",
+        "{user} {self.get_rhyme(user)}"
     ],
     "PentaKill": [
         "{user} GIGA CZAD",
@@ -108,12 +114,14 @@
     "Ace": [
         "no i ejsik",
         "ejs, żydy, pejs",
-        "wszyscy nie żyją, chłopacy się nie myją"
+        "wszyscy nie żyją, chłopacy się nie myją",
+        "wszystko zabite, myje swoją pyte"
     ],
     "FirstBlood": [
         "pierwsza krew, umyj zlew",
-        "ferst blaaadi faker",
-        "pierwsza krew, brudny jak chlew"
+        "ferst blaaadi fejker",
+        "pierwsza krew, brudny jak chlew",
+        "zaczęło się mordowanko"
     ],
     "player_transcript": {
         "Ciszkoo": "ciszko",
