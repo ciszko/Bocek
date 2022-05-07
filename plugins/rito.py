@@ -21,7 +21,6 @@ class Rito(MyCog, name='rito'):
         self.glossary = Glossary(self, 'rito.json')
 
         self.events = {}
-        self.mode = 'idle'
         self.event_priority = {
             'PentaKill': 1,
             'QuadraKill': 0.8,
@@ -45,7 +44,7 @@ class Rito(MyCog, name='rito'):
         wait_time = 30
         while not self.bot.is_closed():
             if in_game := await self.in_game():
-                wait_time = 5
+                wait_time = 3
                 diff = await self.compare_stats()
                 if diff:
                     tts = await self.bot.tts.create_tts(diff, 'pl')

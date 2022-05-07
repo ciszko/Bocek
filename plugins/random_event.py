@@ -17,6 +17,20 @@ class RandomEvent(MyCog, name='random_event'):
         self.glossary = Glossary(self, 'random_join.json')
         self.join_at = None
 
+    def random_say(self):
+        if members := [
+                x.name for x in self.bot.voice_channel.members if x.display_name != 'Bocek']:
+            msg, placeholders = self.glossary.get_random()
+            if 'user' in placeholders:
+                user = choice(members)
+            if 'all_users' in placeholders:
+                all_users = ', '.join(members) if len(
+                    members) > 1 else members[0]
+            scope = locals()
+            msg = replace_all(msg, {f'{{{p}}}': eval(p, scope) for p in placeholders})
+            return msg
+        return None
+
     async def random_check(self):
         await self.bot.wait_until_ready()
         while True:
@@ -27,19 +41,7 @@ class RandomEvent(MyCog, name='random_event'):
 
         while not self.bot.is_closed():
             if len(self.bot.voice_channel.members) > 1:
-                # if len(x.members) > 0:
-                #     self.poll_task = self.loop.create_task(
-                #         self.random_poll(len(x.members)))
-                if members := [
-                        x.name for x in self.bot.voice_channel.members if x.display_name != 'Bocek']:
-                    msg, placeholders = self.glossary.get_random()
-                    if 'user' in placeholders:
-                        user = choice(members)
-                    if 'all_users' in placeholders:
-                        all_users = ', '.join(members) if len(
-                            members) > 1 else members[0]
-                    scope = locals()
-                    msg = replace_all(msg, {f'{{{p}}}': eval(p, scope) for p in placeholders})
+                if msg := self.random_say():
                     tts = await self.bot.tts.create_tts(msg, 'pl', random=True)
                     await self.bot.play_on_channel(tts)
 
@@ -55,45 +57,13 @@ class RandomEvent(MyCog, name='random_event'):
 
             await asyncio.sleep(wait_time)
 
-    @commands.command(name='kiedy', help='Informacja kiedy bot znowu zrobi random join')
+    @commands.command(name='kiedy', help='Informacja kiedy bocek coś se powie')
     async def when_join(self, ctx, *args):
         return await ctx.message.reply(f'Będe z powrotem o {self.join_at}')
 
-    async def random_poll(self, members):
-
-        def get_likes(msg):
-            # counts likes from messages
-            like_emoji = 'thumbsup'
-            if likes := [emoji for emoji in msg.reactions if emoji.name == like_emoji]:
-                return likes[0].count
-            return 0
-
-        await self.wait_until_ready()
-
-        log.info('Going into poll mode')
-        poll_end = members * 60 * 2  # poll end
-        end = datetime.now() + timedelta(seconds=poll_end)
-        end = end.strftime('%H:%M:%S')
-        to_send = f'Ankieta! Koniec o {end}'
-        self.poll_msg = await self.bot.text_channel.send(to_send)
-
-        await asyncio.sleep(poll_end)
-
-        scores = {k: get_likes(v) for k, v in self.poll_msgs.items()}
-        best_author = max(scores, key=lambda x: scores[x])
-
-        log.info(
-            f'Poll has ended, best msg: {self.poll_msgs[best_author].content}')
-        self.bot.text_channel.send(
-            f'Ankieta zakończona. Wygrał {best_author}')
-        # reset poll variables
-        self.poll_msgs = {}
-        self.poll_msg = None
-        return
-
-    @commands.Cog.listener()
-    async def on_message(self, message):
-        return
-        msg = message.content.lower()
-        if hasattr(self.poll_msg) and hasattr(msg, 'reference') and msg.reference.message_id == self.poll_msg.id:
-            self.poll_msgs[msg.author] = msg
+    @commands.command(name='powiedz', help='Coś se powiem')
+    async def powiedz(self, ctx):
+        msg = self.random_say()
+        tts = await self.bot.tts.create_tts(msg, 'pl', random=True)
+        await self.bot.play_on_channel(tts)
+        await ctx.message.delete()
