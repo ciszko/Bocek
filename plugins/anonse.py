@@ -1,9 +1,11 @@
+import re
 import asyncio
+import requests
 from bs4 import BeautifulSoup
 from discord.ext import commands
-import requests
 from unidecode import unidecode
 from random import choice, randint
+
 from .common import MyCog
 from .log import get_logger
 
@@ -77,3 +79,11 @@ class Anonse(MyCog, name='anonse'):
                 continue
         dom = BeautifulSoup(r.content, 'html.parser')
         return dom.find_all('div', {'class': 'listaditem'})
+
+    def replace_numbers(self, msg):
+        pattern = r'(\d+)[\/,l ]*(\d+)[\/,l ]*(\d+)[\/,l ]?(\d+)?'
+        groups = [int(x) for x in re.search(pattern, msg).groups() if x]
+        groups = sorted(groups, reverse=True)
+        if len(groups) == 3:
+            return f'{groups[0]}cm, {groups[1]}lat, siurdol {groups[2]}cm'
+        return f'{groups[0]}cm, {groups[1]}kg, {groups[2]}lat, siurdol {groups[3]}cm'
