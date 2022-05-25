@@ -2,6 +2,8 @@ from bs4 import BeautifulSoup
 import requests
 from discord.ext import commands
 from tabulate import tabulate
+from difflib import get_close_matches
+from functools import cached_property
 from .common import async_wrap, MyCog
 from .log import get_logger
 
@@ -15,10 +17,30 @@ class LolCounter(MyCog, name='lol_counter'):
         self.session = requests.Session()
         self.session.headers.update(self.headers)
 
+    @cached_property
+    def champions(self):
+        url = f'https://www.counterstats.net'
+        for _ in range(3):
+            try:
+                r = self.session.get(url)
+                break
+            except ConnectionError:
+                continue
+        else:
+            raise Exception('Kurcze jakiś problem z serwerem jest :(')
+
+        dom = BeautifulSoup(r.content, 'html.parser')
+        return [x['url'] for x in dom.find_all('div', {'class': 'champion-icon champList'})]
+
+    def get_closest_champion(self, champion):
+        if not (champ := next(iter(get_close_matches(champion, self.champions)), None)):
+            raise Exception(f'Kurde, nie znam takiego czempiona jak {champion}')
+        return champ
+
     @commands.command(name='counter', help='Zwraca x kontr na daną postać: $counter jinx x')
     async def counter(self, ctx, *arg):
-        counters = await self.get_lol_counters(*arg)
-        response = f'**Kontry na {arg[0]}:**\n```mma\n'
+        champion, counters = await self.get_lol_counters(*arg)
+        response = f'**Kontry na {champion}:**\n```mma\n'
         response += self.print_tables_side_by_side(counters)
         response += '```'
         await ctx.send(response)
@@ -26,8 +48,17 @@ class LolCounter(MyCog, name='lol_counter'):
 
     @async_wrap
     def get_lol_counters(self, champion, limit=10):
+        champion = self.get_closest_champion(champion)
         url = f'https://www.counterstats.net/league-of-legends/{champion}'
-        r = self.session.get(url)
+        for _ in range(3):
+            try:
+                r = self.session.get(url)
+                break
+            except ConnectionError:
+                continue
+        else:
+            raise Exception('Kurcze jakiś problem z serwerem jest :(')
+
         dom = BeautifulSoup(r.content, 'html.parser')
         all_h3 = dom.find_all('h3')
         best_champion_dom = next(
@@ -47,7 +78,7 @@ class LolCounter(MyCog, name='lol_counter'):
         table2 = tabulate([['Champion', 'Punkty', '% win'], *worst[:limit]],
                           headers="firstrow", tablefmt="github", floatfmt=".1f")
 
-        return [table1, table2]
+        return champion, [table1, table2]
 
     def get_champs_percentage(self, picks):
         out = []
