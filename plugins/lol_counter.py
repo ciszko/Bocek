@@ -24,7 +24,7 @@ class LolCounter(MyCog, name='lol_counter'):
             try:
                 r = self.session.get(url)
                 break
-            except ConnectionError:
+            except (ConnectionError, ConnectionResetError):
                 continue
         else:
             raise Exception('Kurcze jakiś problem z serwerem jest :(')
@@ -54,7 +54,7 @@ class LolCounter(MyCog, name='lol_counter'):
             try:
                 r = self.session.get(url)
                 break
-            except ConnectionError:
+            except (ConnectionError, ConnectionResetError):
                 continue
         else:
             raise Exception('Kurcze jakiś problem z serwerem jest :(')
