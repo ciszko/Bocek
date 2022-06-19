@@ -6,6 +6,7 @@ from difflib import get_close_matches
 from functools import cached_property
 from .common import async_wrap, MyCog
 from .log import get_logger
+from core.session import Session
 
 log = get_logger(__name__)
 
@@ -13,18 +14,17 @@ log = get_logger(__name__)
 class LolCounter(MyCog, name='lol_counter'):
     def __init__(self,  bot):
         self.bot = bot
-        self.headers = {'User-Agent': 'Bocek/1.0'}
-        self.session = requests.Session()
-        self.session.headers.update(self.headers)
+        headers = {'User-Agent': 'Bocek/1.0'}
+        base_url = 'https://www.counterstats.net'
+        self.session = Session(base_url, headers)
 
     @cached_property
     def champions(self):
-        url = f'https://www.counterstats.net'
         for _ in range(3):
             try:
-                r = self.session.get(url)
+                r = self.session.get('')
                 break
-            except (ConnectionError, ConnectionResetError):
+            except Exception:
                 continue
         else:
             raise Exception('Kurcze jakiś problem z serwerem jest :(')
@@ -49,12 +49,12 @@ class LolCounter(MyCog, name='lol_counter'):
     @async_wrap
     def get_lol_counters(self, champion, limit=10):
         champion = self.get_closest_champion(champion)
-        url = f'https://www.counterstats.net/league-of-legends/{champion}'
+        url = f'/league-of-legends/{champion}'
         for _ in range(3):
             try:
                 r = self.session.get(url)
                 break
-            except (ConnectionError, ConnectionResetError):
+            except Exception:
                 continue
         else:
             raise Exception('Kurcze jakiś problem z serwerem jest :(')
