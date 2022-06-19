@@ -14,7 +14,6 @@ class Joke(MyCog, name='joke'):
         headers = {'User-Agent': 'Bocek/1.0'}
         url = 'https://perelki.net'
         self.session = Session(url, headers)
-        self.session.headers.update(self.headers)
 
     @commands.command(name='żart', help='Losowy żarcik')
     async def random_joke(self, ctx):
