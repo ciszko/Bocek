@@ -1,8 +1,8 @@
-import requests
 from bs4 import BeautifulSoup
 from .log import get_logger
 from discord.ext import commands
 from .common import MyCog
+from core.session import Session
 
 
 log = get_logger(__name__)
@@ -11,15 +11,13 @@ log = get_logger(__name__)
 class Slang(MyCog, name='slang'):
     def __init__(self, bot):
         self.bot = bot
-        self.headers = {'User-Agent': 'Bocek/1.0'}
-        self.session = requests.Session()
-        self.session.headers.update(self.headers)
-
-        self.url = 'https://www.miejski.pl/losuj'
+        headers = {'User-Agent': 'Bocek/1.0'}
+        url = 'https://www.miejski.pl'
+        self.session = Session(url, headers)
 
     @commands.command(name='slang', help='Losowy miejski.pl')
     async def random_joke(self, ctx):
-        r = self.session.get(self.url)
+        r = self.session.get('/losuj')
         dom = BeautifulSoup(r.content, 'html.parser')
         article = dom.find('article')
         word = article.find('h1').text

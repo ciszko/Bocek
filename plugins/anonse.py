@@ -1,6 +1,5 @@
 import re
 import asyncio
-import requests
 from bs4 import BeautifulSoup
 from discord.ext import commands
 from unidecode import unidecode
@@ -8,6 +7,7 @@ from random import choice, randint
 
 from .common import MyCog
 from .log import get_logger
+from core.session import Session
 
 log = get_logger(__name__)
 
@@ -15,9 +15,9 @@ log = get_logger(__name__)
 class Anonse(MyCog, name='anonse'):
     def __init__(self, bot):
         self.bot = bot
-        self.headers = {'User-Agent': 'Bocek/1.0'}
-        self.session = requests.Session()
-        self.session.headers.update(self.headers)
+        self.base_url = 'https://anonse.inaczej.pl'
+        headers = {'User-Agent': 'Bocek/1.0'}
+        self.session = Session(self.base_url, headers)
         self.categories = {
             'ogolne': '1',
             'praca - szukam': '2',
@@ -60,7 +60,7 @@ class Anonse(MyCog, name='anonse'):
             if anonse_list:
                 anonse_item = choice(anonse_list)
                 anonse_image = anonse_item.find('a', {'class': 'fancybox'})
-                anonse_image = 'https://anonse.inaczej.pl/' + anonse_image['href'] if anonse_image else None
+                anonse_image = f'{self.base_url}/' + anonse_image['href'] if anonse_image else None
                 anonse_text = anonse_item.find('div', {'class': 'adcontent'}).get_text().strip()
                 anonse_author = anonse_item.find('i', {'class': 'icon-user'}).next_sibling
                 log.info(f'ANONSE: page={page}, cat={cat}, {anonse_text}')
@@ -69,7 +69,7 @@ class Anonse(MyCog, name='anonse'):
             return 'Kurde belka, coś poszło nie tak'
 
     async def get_anonses(self, page, cat):
-        url = f'https://anonse.inaczej.pl/?m=list&pg={page}&cat={cat}'
+        url = f'/?m=list&pg={page}&cat={cat}'
         for _ in range(3):
             try:
                 r = self.session.get(url)

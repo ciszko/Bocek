@@ -10,7 +10,7 @@ class Session(requests.Session):
 
         retries = Retry(total=5,
                         backoff_factor=0.1,
-                        status_forcelist=[500, 502, 503, 504])
+                        status_forcelist=list(range(500, 600)))
 
         self.mount('http://', HTTPAdapter(max_retries=retries))
         self.mount('https://', HTTPAdapter(max_retries=retries))
