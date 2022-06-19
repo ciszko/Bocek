@@ -13,7 +13,7 @@ class Minecraft(MyCog, name='minecraft'):
     def __init__(self, bot):
         self.bot = bot
         base_url = 'https://api.exaroton.com/v1'
-        token = 'KPl47p7jwWo9hWdW2oz4U8qI4AGY4lBWtZnGY223BwAs91Zeic90T5yEEBe2tjJylI2yvkmNaXtCBFgGPAKLKJ11pIt94M3LrVTU'
+        token = 'PtMEZyjpNIWJMjM810JXljz4atVKpmLstGbmkevpzFOSHEVJUT6c65c4f92vc53GyhInFKMD18NfJgMVMDtYQZWBFPp2uwoxMvHX'
         headers = {'User-Agent': 'Bocek/1.0', 'Authorization': f'Bearer {token}'}
         self.session = Session(base_url, headers)
 
@@ -28,6 +28,7 @@ class Minecraft(MyCog, name='minecraft'):
         if resp['success'] is False:
             await ctx.message.reply('Kurde, nie mogę włączyć serwerka :(')
             return
+        log.info('Turning on minecraft server')
         await ctx.message.reply('Serwer minkraft działa!')
 
     @commands.command(name='minecraft_stop', help='Stopuje serwer minkraft')
@@ -36,4 +37,15 @@ class Minecraft(MyCog, name='minecraft'):
         if resp['success'] is False:
             await ctx.message.reply('Kurde, nie mogę wyłączyć serwerka :(')
             return
+        log.info('Turning off minecraft server')
         await ctx.message.reply('Serwer minkraft zamknięty!')
+
+    @commands.command(name='minecraft_kredyty', help='Zwraca ilość pozostałych kredytów')
+    async def minecraft_credit(self, ctx):
+        resp = self.session.get(f'/account').json()
+        if resp['success'] is False:
+            await ctx.message.reply('Kurde, nie mogę wyłączyć serwerka :(')
+            return
+        credits = resp['data']['credits']
+        log.info(f'Remaining credits for server: {credits}')
+        await ctx.message.reply(f'Zostało **{credits}** kredytów.')
