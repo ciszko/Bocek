@@ -4,6 +4,7 @@ import random
 from dotenv import load_dotenv
 
 import discord
+from discord import app_commands
 from discord.ext.commands import Bot
 
 from plugins.common import replace_all
@@ -51,6 +52,7 @@ class MyBot(Bot):
         self.text_channel_id = 283292201109159947
         self.vc = None
 
+    async def setup_hook(self):
         cogs = [
             LolCounter,
             Tts,
@@ -61,12 +63,16 @@ class MyBot(Bot):
             Rhyme,
             Slang,
             Minecraft]
-        self.add_cogs(cogs)
 
+        await self.add_cogs(cogs)
         self.add_commands()
 
         self.bg_task = self.loop.create_task(self.random_event.random_check())
         self.rito_task = self.loop.create_task(self.rito.rito_check())
+
+        guild = discord.Object(id=GUILD)
+        self.tree.copy_global_to(guild=guild)
+        await self.tree.sync(guild=guild)
 
     @property
     def voice_channel(self):
@@ -76,12 +82,12 @@ class MyBot(Bot):
     def text_channel(self):
         return next((c for c in self.channel_list if c.id == self.id), None)
 
-    def add_cogs(self, cogs):
+    async def add_cogs(self, cogs):
         # cog registration
         # name Cogs with PascalCase, then bot will have snake_case attribute
         # LolCounter -> self.lol_counter
         for cog in cogs:
-            self.add_cog(cog(self))
+            await self.add_cog(cog(self))
             cog_name = re.sub(r'(?<!^)(?=[A-Z])', '_', cog.__name__).lower()
             setattr(self, cog_name, self.get_cog(cog_name))
 
@@ -197,22 +203,22 @@ class MyBot(Bot):
 
     def add_commands(self):
 
-        @self.command(name='siusiak', help='Powie Ci prawdę o siusiaku')
-        async def siusiak(ctx):
+        @self.tree.command(name='siusiak', description='powie prawde o siusiaku')
+        async def siusiak(interaction: discord.Interaction):
+            """ /siusiak """
             siusiak, _ = self.glossary.get_random("siusiak")
-            response = f'{ctx.author.name} ma {siusiak} siusiaka'
-            await ctx.send(response)
-            await ctx.message.delete()
+            response = f'{interaction.user.name} ma {siusiak} siusiaka'
+            await interaction.response.send_message(response)
 
-        @self.command(name='anus', help='anus anus nostradamus')
-        async def anus(ctx):
+        @self.tree.command(name='anus', description='anus anus nostradamus')
+        async def anus(interaction: discord.Interaction):
             to_say = f'anus anus nostradamus'
-            if hasattr(ctx.author.voice, 'channel') and ctx.author.voice.channel:
+            if hasattr(interaction.user.voice, 'channel') and interaction.user.voice.channel:
                 tts = await self.tts.create_tts(to_say, 'pl', random=True)
                 await self.play_on_channel(tts)
-                await ctx.message.delete()
 
 
-bot = MyBot(command_prefix='$')
+intents = discord.Intents.default()
+bot = MyBot(command_prefix='$', intents=intents)
 
 bot.run(TOKEN)

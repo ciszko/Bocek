@@ -1,4 +1,5 @@
 from datetime import timedelta, datetime
+from discord import app_commands, Interaction
 from discord.ext import commands
 from discord import Activity
 import asyncio
@@ -50,20 +51,20 @@ class RandomEvent(MyCog, name='random_event'):
             self.join_at = join_at.strftime("%H:%M:%S")
             log.info(f'Random join on {self.join_at}')
 
-            activ_no = choice([0, 1, 2, 3, 5])  # 4 is not supported :P
-            activ = Activity(
-                type=activ_no,  name=self.glossary.get_random(f'activity_{activ_no}'))
-            await self.bot.change_presence(activity=activ)
+            # TODO: fix activity
+            # activ_no = choice([0, 1, 2, 3, 5])  # 4 is not supported :P
+            # activ = Activity(
+            #     type=activ_no,  name=self.glossary.get_random(f'activity_{activ_no}'))
+            # await self.bot.change_presence(activity=activ)
 
             await asyncio.sleep(wait_time)
 
-    @commands.command(name='kiedy', help='Informacja kiedy bocek coś se powie')
-    async def when_join(self, ctx, *args):
-        return await ctx.message.reply(f'Będe z powrotem o {self.join_at}')
+    @app_commands.command(name='kiedy', description='Informacja kiedy bocek coś se powie')
+    async def when_join(self, interaction: Interaction):
+        return await interaction.response.send_message(f'Będe z powrotem o {self.join_at}')
 
-    @commands.command(name='powiedz', help='Coś se powiem')
-    async def powiedz(self, ctx):
+    @app_commands.command(name='powiedz', description='Coś se powiem')
+    async def powiedz(self, interaction: Interaction):
         msg = self.random_say()
         tts = await self.bot.tts.create_tts(msg, 'pl', random=True)
         await self.bot.play_on_channel(tts)
-        await ctx.message.delete()

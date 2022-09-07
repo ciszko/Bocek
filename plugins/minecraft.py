@@ -1,4 +1,5 @@
 import asyncio
+from discord import app_commands, Interaction
 from discord.ext import commands
 from functools import cached_property
 
@@ -22,30 +23,30 @@ class Minecraft(MyCog, name='minecraft'):
         resp = self.session.get('/servers').json()
         return next(s['id'] for s in resp['data'] if s['name'] == 'Xubek')
 
-    @commands.command(name='minecraft_start', help='Startuje serwer minkraft')
-    async def minecraft_start(self, ctx):
+    @app_commands.command(name='minecraft_start', description='Startuje serwer minkraft')
+    async def minecraft_start(self, interaction: Interaction):
         resp = self.session.get(f'/servers/{self.server_id}/start').json()
         if resp['success'] is False:
-            await ctx.message.reply('Kurde, nie mogę włączyć serwerka :(')
+            await interaction.response.send_message('Kurde, nie mogę włączyć serwerka :(')
             return
         log.info('Turning on minecraft server')
-        await ctx.message.reply('Serwer minkraft działa!')
+        await interaction.response.send_message('Serwer minkraft działa!')
 
-    @commands.command(name='minecraft_stop', help='Stopuje serwer minkraft')
-    async def minecraft_stop(self, ctx):
+    @app_commands.command(name='minecraft_stop', description='Stopuje serwer minkraft')
+    async def minecraft_stop(self, interaction: Interaction):
         resp = self.session.get(f'/servers/{self.server_id}/stop').json()
         if resp['success'] is False:
-            await ctx.message.reply('Kurde, nie mogę wyłączyć serwerka :(')
+            await interaction.response.send_message('Kurde, nie mogę wyłączyć serwerka :(')
             return
         log.info('Turning off minecraft server')
-        await ctx.message.reply('Serwer minkraft zamknięty!')
+        await interaction.response.send_message('Serwer minkraft zamknięty!')
 
-    @commands.command(name='minecraft_kredyty', help='Zwraca ilość pozostałych kredytów')
-    async def minecraft_credit(self, ctx):
+    @app_commands.command(name='minecraft_kredyty', description='Zwraca ilość pozostałych kredytów')
+    async def minecraft_credit(self, interaction: Interaction):
         resp = self.session.get(f'/account').json()
         if resp['success'] is False:
-            await ctx.message.reply('Kurde, nie mogę wyłączyć serwerka :(')
+            await interaction.response.send_message('Kurde, nie mogę wyłączyć serwerka :(')
             return
         credits = resp['data']['credits']
         log.info(f'Remaining credits for server: {credits}')
-        await ctx.message.reply(f'Zostało **{credits}** kredytów.')
+        await interaction.response.send_message(f'Zostało **{credits}** kredytów.')
