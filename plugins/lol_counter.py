@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
 import requests
+from discord import app_commands, Interaction
 from discord.ext import commands
 from tabulate import tabulate
 from difflib import get_close_matches
@@ -37,14 +38,14 @@ class LolCounter(MyCog, name='lol_counter'):
             raise Exception(f'Kurde, nie znam takiego czempiona jak {champion}')
         return champ
 
-    @commands.command(name='counter', help='Zwraca x kontr na daną postać: $counter jinx x')
-    async def counter(self, ctx, *arg):
-        champion, counters = await self.get_lol_counters(*arg)
-        response = f'**Kontry na {champion}:**\n```mma\n'
-        response += self.print_tables_side_by_side(counters)
-        response += '```'
-        await ctx.send(response)
-        await ctx.message.delete()
+    @app_commands.command(name='counter', description='Zwraca x kontr na daną postać: $counter jinx x')
+    async def counter(self, interaction: Interaction, champion: str, limit: int = 10):
+        await interaction.response.defer()
+        champion, counters = await self.get_lol_counters(champion, limit)
+        msg = f'**Kontry na {champion}:**\n```mma\n'
+        msg += self.print_tables_side_by_side(counters)
+        msg += '```'
+        await interaction.followup.send(msg)
 
     @async_wrap
     def get_lol_counters(self, champion, limit=10):
