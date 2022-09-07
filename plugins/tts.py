@@ -1,4 +1,5 @@
 import pathlib
+from discord import app_commands, Interaction
 from discord.ext import commands
 from discord import File
 from gtts import gTTS
@@ -19,14 +20,20 @@ class Tts(MyCog, name='tts'):
             __file__).parent.absolute(), '..', 'mp3')
         self.client = texttospeech.TextToSpeechClient()
 
-    @commands.command(name='tts', help='Wysyła plik z nagraniem. $tts "hejo" <pitch=0> <voice=1> <volume=0> <speaking_rate=0.9>')
-    async def tts(self, ctx, text, *args):
-        kwargs = self.process_args(args)
+    @app_commands.command(name='tts', description='Wysyła plik z nagraniem. $tts "hejo" <pitch=0> <voice=1> <volume=0> <speaking_rate=0.9>')
+    async def tts(self, interaction, text: str):
+        # add args
+        # kwargs = self.process_args(args)
+        kwargs = {'lang': 'pl-PL',
+                  'pitch': 0,
+                  'voice': 1,
+                  'volume': 0,
+                  'speaking_rate': 0.9}
         log.info(f'{text}, {kwargs}')
         tts = await self.create_tts(text, **kwargs)
 
-        await ctx.send(file=File(tts))
-        await ctx.message.delete()
+        await interaction.send(file=File(tts))
+        await interaction.message.delete()
 
     async def create_tts(self, *args, **kwargs):
         if 'random' in kwargs:

@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
 from .log import get_logger
+from discord import app_commands, Interaction
 from discord.ext import commands
 from .common import MyCog
 from core.session import Session
@@ -15,8 +16,8 @@ class Joke(MyCog, name='joke'):
         url = 'https://perelki.net'
         self.session = Session(url, headers)
 
-    @commands.command(name='żart', help='Losowy żarcik')
-    async def random_joke(self, ctx):
+    @app_commands.command(name='żart', description='Losowy żarcik')
+    async def random_joke(self, interaction: Interaction):
         r = self.session.get('/random')
         dom = BeautifulSoup(r.content, 'html.parser')
         joke = dom.find('div', {'class': 'content'}).find(
@@ -24,10 +25,7 @@ class Joke(MyCog, name='joke'):
         msg = joke[:joke.find('Dowcip:')].replace(
             '\r', '').replace('\n', ' ').replace('\t', '')
         log.info(msg)
-        if ctx.author.voice:
+        await interaction.response.send_message(msg)
+        if interaction.user.voice:
             tts = await self.bot.tts.create_tts(msg, 'pl')
             await self.bot.play_on_channel(tts)
-        else:
-            msg = (f'{ctx.author.name}, nie jesteś nawet na kanale...')
-            await ctx.channel.send(msg)
-        await ctx.message.delete()

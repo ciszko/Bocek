@@ -1,4 +1,5 @@
 import json
+from discord import app_commands, Interaction
 from discord.ext import commands
 from .common import BASEDIR
 import random
@@ -29,10 +30,9 @@ class Rhyme(commands.Cog, name='rhyme'):
                     break
         return list(all_results)[:limit]
 
-    @commands.command(name='rym', help='Zwraca rymy do słowa. Np. $rym dupa 5')
-    async def rhyme(self, ctx, word, limit=10):
+    @app_commands.command(name='rym', description='Zwraca rymy do słowa. Np. $rym dupa 5')
+    async def rhyme(self, interaction, word: str, limit: int = 10):
         rhymes = self.get_rhyme(word, limit)
         formatted = ', '.join(rhymes)
         response = f'Rymy do słowa "**{word}**":\n{formatted}'
-        await ctx.message.delete()
-        await ctx.send(response)
+        await interaction.response.send_message(response)

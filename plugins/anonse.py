@@ -1,6 +1,8 @@
 import re
 import asyncio
 from bs4 import BeautifulSoup
+import discord
+from discord import app_commands, Interaction
 from discord.ext import commands
 from unidecode import unidecode
 from random import choice, randint
@@ -18,58 +20,101 @@ class Anonse(MyCog, name='anonse'):
         self.base_url = 'https://anonse.inaczej.pl'
         headers = {'User-Agent': 'Bocek/1.0'}
         self.session = Session(self.base_url, headers)
-        self.categories = {
-            'ogolne': '1',
-            'praca - szukam': '2',
-            'seks': '3',
-            'wakacje': '4',
-            'szukam partnera': '5',
-            'mieszkania': '6',
-            'fetysze': '7',
-            'komercyjne': '8',
-            'szukam przyjaciela': '9',
-            'szukam kobiety': '14',
-            'korepetycje': '16',
-            'praca - dam': '17',
-            'widzialem cie': '18',
-        }
 
-    @commands.command(name='anonse', help='Zwraca losowe gejowe anonse z wybranej kategorii. Default: $anonse "fetysze"')
-    async def anonse(self, ctx, arg='fetysze'):
-        # Gets voice channel of message author
-        if ctx.author.voice:
-            author, msg, img = await self.get_anonse(arg)
-            n = '\n'
-            await ctx.message.reply(f'**{author}**{msg}{n + img if img else ""}')
+    class DeleteImageButton(discord.ui.View):
+        def __init__(self, *, msg=None, img=None):
+            self.msg = msg
+            self.img = img
+            super().__init__()
+
+        @discord.ui.button(label="Usuń siurdolka", style=discord.ButtonStyle.red, emoji='<:siusiak:283294977969356800>')
+        async def on_click(self, interaction: Interaction, button: discord.ui.Button):
+            button.disabled = True
+            button.label = 'Siurdolek usunięty'
+            self.add_item(
+                discord.ui.Button(
+                    label='Zobacz siurdolka', url=self.img, style=discord.ButtonStyle.green, emoji='<:siusiak:283294977969356800>')
+            )
+            await interaction.response.edit_message(content=self.msg, view=self)
+
+    @app_commands.command(name='anonse', description='Zwraca losowe gejowe anonse z wybranej kategorii. Default: $anonse "fetysze"')
+    @app_commands.describe(kategoria='Kategoria z której szukać anonsa')
+    @app_commands.describe(region='Region z którego szukać anonsa')
+    @app_commands.choices(kategoria=[
+        app_commands.Choice(name='ogolne', value='1'),
+        app_commands.Choice(name='praca - szukam', value='2'),
+        app_commands.Choice(name='seks', value='3'),
+        app_commands.Choice(name='wakacje', value='4'),
+        app_commands.Choice(name='szukam partnera', value='5'),
+        app_commands.Choice(name='mieszkania', value='6'),
+        app_commands.Choice(name='fetysze', value='7'),
+        app_commands.Choice(name='komercyjne', value='8'),
+        app_commands.Choice(name='szukam przyjaciela', value='9'),
+        app_commands.Choice(name='szukam kobiety', value='14'),
+        app_commands.Choice(name='korepetycje', value='16'),
+        app_commands.Choice(name='praca - dam', value='17'),
+        app_commands.Choice(name='widzialem cie', value='18')])
+    @app_commands.choices(region=[
+        app_commands.Choice(name='wszystko', value='0'),
+        app_commands.Choice(name='dolnoslaskie', value='1'),
+        app_commands.Choice(name='kujawsko - pomorskie', value='2'),
+        app_commands.Choice(name='lubelskie', value='3'),
+        app_commands.Choice(name='lubuskie', value='4'),
+        app_commands.Choice(name='łódzkie', value='5'),
+        app_commands.Choice(name='małopolskie', value='6'),
+        app_commands.Choice(name='mazowieckie', value='7'),
+        app_commands.Choice(name='opolskie', value='8'),
+        app_commands.Choice(name='podkarpackie', value='9'),
+        app_commands.Choice(name='podlaskie', value='10'),
+        app_commands.Choice(name='pomorskie', value='11'),
+        app_commands.Choice(name='śląskie', value='12'),
+        app_commands.Choice(name='świętokrzyskie', value='13'),
+        app_commands.Choice(name='warmińsko-mazurskie', value='14'),
+        app_commands.Choice(name='wielkopolskie', value='15'),
+        app_commands.Choice(name='zachodniopomorskie', value='16'),
+        app_commands.Choice(name='cała Polska', value='17'),
+        app_commands.Choice(name='zagranica', value='18')])
+    async def anonse(self,
+                     interaction: Interaction,
+                     kategoria: app_commands.Choice[str] = '7',
+                     region: app_commands.Choice[str] = '0'):
+        await interaction.response.defer()
+        if interaction.user.voice:
+            kategoria = kategoria if type(kategoria) == str else kategoria.value
+            region = region if type(region) == str else region.value
+            author, loc, date, msg, img = await self.get_anonse(interaction, kategoria, region)
+            nl = '\n'
+            # add button only when image pops up
+            view = Anonse.DeleteImageButton(msg=msg, img=img) if img else discord.utils.MISSING
+            text = f'**{author}**    *{loc}*    {date}{nl} {msg}{nl + img if img else ""}'
+            await interaction.followup.send(text, view=view)
             tts = await self.bot.tts.create_tts(msg, 'pl')
             await self.bot.play_on_channel(tts)
         else:
-            msg = (f'{ctx.author.name}, nie jesteś nawet na kanale...')
-            await ctx.message.reply(msg)
+            msg = (f'{interaction.user.name}, nie jesteś nawet na kanale...')
+            await interaction.response.send_message(msg)
 
-    @commands.command(name='kategorie', help='Zwraca możliwe kategorie')
-    async def kategorie(self, ctx):
-        categories = '```' + '\n'.join(f'"{c}"' for c in self.categories.keys()) + '```'
-        await ctx.message.reply(categories)
-
-    async def get_anonse(self, cat='fetysze'):
-        cat = self.categories[unidecode(cat)]
-        for i in range(1, 5):
+    async def get_anonse(self, interaction, cat, region):
+        for i in [1, 2, 3, 4, 30]:
             page = randint(1, int(30/i))
-            anonse_list = await self.get_anonses(page, cat)
+            anonse_list = await self.get_anonses(page, cat, region)
             if anonse_list:
                 anonse_item = choice(anonse_list)
-                anonse_image = anonse_item.find('a', {'class': 'fancybox'})
-                anonse_image = f'{self.base_url}/' + anonse_image['href'] if anonse_image else None
-                anonse_text = anonse_item.find('div', {'class': 'adcontent'}).get_text().strip()
-                anonse_author = anonse_item.find('i', {'class': 'icon-user'}).next_sibling
-                log.info(f'ANONSE: page={page}, cat={cat}, {anonse_text}')
-                return anonse_author, anonse_text, anonse_image
+                image = anonse_item.find('a', {'class': 'fancybox'})
+                image = f'{self.base_url}/' + image['href'] if image else None
+                text = anonse_item.find('div', {'class': 'adcontent'}).get_text().strip()
+                author = anonse_item.find('i', {'class': 'icon-user'}).next_sibling.strip()
+                location = anonse_item.find('i', {'class': 'icon-location-arrow'}).next_sibling
+                date = anonse_item.find('i', {'class': 'icon-calendar'}).next_sibling
+                log.info(f'ANONSE: page={page}, cat={cat}, {text}')
+                return author, location, date, text, image
         else:
-            return 'Kurde belka, coś poszło nie tak'
+            return await interaction.followup.send('Kurde, zebzdziałem się')
 
-    async def get_anonses(self, page, cat):
+    async def get_anonses(self, page, cat, region):
         url = f'/?m=list&pg={page}&cat={cat}'
+        if region != '0':
+            url += f'{url}&region={region}'
         for _ in range(3):
             try:
                 r = self.session.get(url)
