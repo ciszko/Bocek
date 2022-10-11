@@ -12,16 +12,17 @@ mutagen = "*"
 python-dotenv = "*"
 bs4 = "*"
 google-cloud = "*"
+google-api-core = {version = "==2.9.0"}
 google-api-python-client = "*"
 google-cloud-texttospeech = "*"
 unidecode = "*"
 deepdiff = "*"
 pynacl = "*"
-grpcio = {version = "==1.44.0", sys_platform = "=='linux'"}
-grpcio-tools = {version = "==1.44.0", sys_platform = "=='linux'"}
+grpcio = {version = "==1.44.0"}
+grpcio-tools = {version = "==1.44.0"}
 
 [dev-packages]
 autopep8 = "*"
 
 [requires]
-python_version = "3.9"
+python_version = "3.10"

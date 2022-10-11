@@ -1,12 +1,8 @@
 from bs4 import BeautifulSoup
-from .log import get_logger
+from .log import log
 from discord import app_commands, Interaction
-from discord.ext import commands
 from .common import MyCog
 from core.session import Session
-
-
-log = get_logger(__name__)
 
 
 class Slang(MyCog, name='slang'):
@@ -18,6 +14,7 @@ class Slang(MyCog, name='slang'):
 
     @app_commands.command(name='slang', description='Losowy miejski.pl')
     async def random_joke(self, interaction: Interaction):
+        await interaction.response.defer()
         r = self.session.get('/losuj')
         dom = BeautifulSoup(r.content, 'html.parser')
         article = dom.find('article')
@@ -26,7 +23,7 @@ class Slang(MyCog, name='slang'):
         msg = f'{word} - {desc}'
         log.info(msg)
         if interaction.user.voice:
-            tts = await self.bot.tts.create_tts(msg, 'pl')
+            tts = await self.bot.tts.create_tts(msg)
             await interaction.response.send_message(msg)
             await self.bot.play_on_channel(tts)
         else:

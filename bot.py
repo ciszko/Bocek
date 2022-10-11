@@ -8,7 +8,7 @@ from discord import app_commands
 from discord.ext.commands import Bot
 
 from plugins.common import replace_all
-from plugins.log import get_logger
+from plugins.log import log
 from plugins.lol_counter import LolCounter
 from plugins.tts import Tts
 from plugins.anonse import Anonse
@@ -32,8 +32,6 @@ TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD = os.getenv('GUILD_ID')
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = os.path.join(pathlib.Path(
     __file__).parent.absolute(), os.getenv('GOOGLE_APPLICATION_CREDENTIALS'))
-
-log = get_logger(__name__)
 
 if platform.system() == 'Windows':
     ffmpeg = 'D:/Projekt/Bocek/extras/ffmpeg.exe'
@@ -90,6 +88,7 @@ class MyBot(Bot):
             await self.add_cog(cog(self))
             cog_name = re.sub(r'(?<!^)(?=[A-Z])', '_', cog.__name__).lower()
             setattr(self, cog_name, self.get_cog(cog_name))
+            log.info(f'Registered {cog.__name__} as a cog')
 
     def get_rhyme(self, text):
         to_ret = ''
@@ -116,7 +115,7 @@ class MyBot(Bot):
             scope = locals()
             to_say = replace_all(to_say, {f'{{{p}}}': eval(p, scope) for p in placeholders})
 
-            tts = await self.tts.create_tts(to_say, 'pl')
+            tts = await self.tts.create_tts(to_say)
             if hasattr(message.author.voice, 'channel') and message.author.voice.channel:
                 await self.play_on_channel(tts)
             else:
@@ -136,7 +135,7 @@ class MyBot(Bot):
             user = member.nick if member.nick else member.name
             scope = locals()
             to_say = replace_all(to_say, {f'{{{p}}}': eval(p, scope) for p in placeholders})
-            tts = await self.tts.create_tts(to_say, 'pl', random=True)
+            tts = await self.tts.create_tts(to_say, random=True)
             await self.play_on_channel(tts)
         if after.channel != self.voice_channel and len(self.voice_channel.members) <= 1 and self.vc:
             await self.vc.disconnect()
@@ -167,11 +166,11 @@ class MyBot(Bot):
         duration = MP3(message).info.length
         try:
             self.vc.play(discord.FFmpegOpusAudio(
-                executable=ffmpeg, source=message))
+                executable=ffmpeg, source=message, options='-loglevel panic'))
         except discord.errors.ClientException:
             self.vc = await self.voice_channel.connect()
             self.vc.play(discord.FFmpegOpusAudio(
-                executable=ffmpeg, source=message))
+                executable=ffmpeg, source=message, options='-loglevel panic'))
         timeout = time() + duration + 1  # timeout is audio duration + 1s
         # Sleep while audio is playing.
         while self.vc and self.vc.is_playing() and time() < timeout:
@@ -214,11 +213,11 @@ class MyBot(Bot):
         async def anus(interaction: discord.Interaction):
             to_say = f'anus anus nostradamus'
             if hasattr(interaction.user.voice, 'channel') and interaction.user.voice.channel:
-                tts = await self.tts.create_tts(to_say, 'pl', random=True)
+                tts = await self.tts.create_tts(to_say,  random=True)
                 await self.play_on_channel(tts)
 
 
-intents = discord.Intents.default()
+intents = discord.Intents.all()
 bot = MyBot(command_prefix='$', intents=intents)
 
-bot.run(TOKEN)
+bot.run(TOKEN, log_handler=None)

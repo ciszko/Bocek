@@ -1,17 +1,52 @@
+from enum import Enum
 import re
 import asyncio
 from bs4 import BeautifulSoup
 import discord
 from discord import app_commands, Interaction
-from discord.ext import commands
-from unidecode import unidecode
+from discord.app_commands import Choice
 from random import choice, randint
 
 from .common import MyCog
-from .log import get_logger
+from .log import log
 from core.session import Session
 
-log = get_logger(__name__)
+
+CategoryChoices = [
+    Choice(name='ogolne', value='1'),
+    Choice(name='praca - szukam', value='2'),
+    Choice(name='seks', value='3'),
+    Choice(name='wakacje', value='4'),
+    Choice(name='szukam partnera', value='5'),
+    Choice(name='mieszkania', value='6'),
+    Choice(name='fetysze', value='7'),
+    Choice(name='komercyjne', value='8'),
+    Choice(name='szukam przyjaciela', value='9'),
+    Choice(name='szukam kobiety', value='14'),
+    Choice(name='korepetycje', value='16'),
+    Choice(name='praca - dam', value='17'),
+    Choice(name='widzialem cie', value='18')]
+
+RegionChoices = [
+    Choice(name='wszystko', value='0'),
+    Choice(name='dolnoslaskie', value='1'),
+    Choice(name='kujawsko - pomorskie', value='2'),
+    Choice(name='lubelskie', value='3'),
+    Choice(name='lubuskie', value='4'),
+    Choice(name='łódzkie', value='5'),
+    Choice(name='małopolskie', value='6'),
+    Choice(name='mazowieckie', value='7'),
+    Choice(name='opolskie', value='8'),
+    Choice(name='podkarpackie', value='9'),
+    Choice(name='podlaskie', value='10'),
+    Choice(name='pomorskie', value='11'),
+    Choice(name='śląskie', value='12'),
+    Choice(name='świętokrzyskie', value='13'),
+    Choice(name='warmińsko-mazurskie', value='14'),
+    Choice(name='wielkopolskie', value='15'),
+    Choice(name='zachodniopomorskie', value='16'),
+    Choice(name='cała Polska', value='17'),
+    Choice(name='zagranica', value='18')]
 
 
 class Anonse(MyCog, name='anonse'):
@@ -40,40 +75,8 @@ class Anonse(MyCog, name='anonse'):
     @app_commands.command(name='anonse', description='Zwraca losowe gejowe anonse z wybranej kategorii. Default: $anonse "fetysze"')
     @app_commands.describe(kategoria='Kategoria z której szukać anonsa')
     @app_commands.describe(region='Region z którego szukać anonsa')
-    @app_commands.choices(kategoria=[
-        app_commands.Choice(name='ogolne', value='1'),
-        app_commands.Choice(name='praca - szukam', value='2'),
-        app_commands.Choice(name='seks', value='3'),
-        app_commands.Choice(name='wakacje', value='4'),
-        app_commands.Choice(name='szukam partnera', value='5'),
-        app_commands.Choice(name='mieszkania', value='6'),
-        app_commands.Choice(name='fetysze', value='7'),
-        app_commands.Choice(name='komercyjne', value='8'),
-        app_commands.Choice(name='szukam przyjaciela', value='9'),
-        app_commands.Choice(name='szukam kobiety', value='14'),
-        app_commands.Choice(name='korepetycje', value='16'),
-        app_commands.Choice(name='praca - dam', value='17'),
-        app_commands.Choice(name='widzialem cie', value='18')])
-    @app_commands.choices(region=[
-        app_commands.Choice(name='wszystko', value='0'),
-        app_commands.Choice(name='dolnoslaskie', value='1'),
-        app_commands.Choice(name='kujawsko - pomorskie', value='2'),
-        app_commands.Choice(name='lubelskie', value='3'),
-        app_commands.Choice(name='lubuskie', value='4'),
-        app_commands.Choice(name='łódzkie', value='5'),
-        app_commands.Choice(name='małopolskie', value='6'),
-        app_commands.Choice(name='mazowieckie', value='7'),
-        app_commands.Choice(name='opolskie', value='8'),
-        app_commands.Choice(name='podkarpackie', value='9'),
-        app_commands.Choice(name='podlaskie', value='10'),
-        app_commands.Choice(name='pomorskie', value='11'),
-        app_commands.Choice(name='śląskie', value='12'),
-        app_commands.Choice(name='świętokrzyskie', value='13'),
-        app_commands.Choice(name='warmińsko-mazurskie', value='14'),
-        app_commands.Choice(name='wielkopolskie', value='15'),
-        app_commands.Choice(name='zachodniopomorskie', value='16'),
-        app_commands.Choice(name='cała Polska', value='17'),
-        app_commands.Choice(name='zagranica', value='18')])
+    @app_commands.choices(kategoria=CategoryChoices)
+    @app_commands.choices(region=RegionChoices)
     async def anonse(self,
                      interaction: Interaction,
                      kategoria: app_commands.Choice[str] = '7',
@@ -88,7 +91,7 @@ class Anonse(MyCog, name='anonse'):
             view = Anonse.DeleteImageButton(msg=msg, img=img) if img else discord.utils.MISSING
             text = f'**{author}**    *{loc}*    {date}{nl} {msg}{nl + img if img else ""}'
             await interaction.followup.send(text, view=view)
-            tts = await self.bot.tts.create_tts(msg, 'pl')
+            tts = await self.bot.tts.create_tts(msg)
             await self.bot.play_on_channel(tts)
         else:
             msg = (f'{interaction.user.name}, nie jesteś nawet na kanale...')

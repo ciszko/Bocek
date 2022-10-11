@@ -1,13 +1,10 @@
 import asyncio
 from discord import app_commands, Interaction
-from discord.ext import commands
 from functools import cached_property
 
 from .common import MyCog
-from .log import get_logger
+from .log import log
 from core.session import Session
-
-log = get_logger(__name__)
 
 
 class Minecraft(MyCog, name='minecraft'):
