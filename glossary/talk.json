@@ -67,7 +67,9 @@
         "Szukam bufa na orki",
         "Euro Neuro don't bi sceptic, Hermetic, pathetic, analphabetic",
         "Euro Neuro",
-        "{user} klaskaj czołem!"
+        "{user} klaskaj czołem!",
+        "cisne tego cwela, dzisiaj wskrzeszamy adolfa hitlera",
+        "czy ktoś chcę laktokontrol?"
     ],
     "greetings": [
         "Siemanko {user}",
@@ -128,6 +130,16 @@
         "paskudnego",
         "ślicznego",
         "krzywego",
-        "obszczanego"
+        "obszczanego",
+        "mini",
+        "gigant",
+        "najkrótszego",
+        "największego",
+        "świętego",
+        "zawiniętego",
+        "brak",
+        "pół",
+        "monstrualnego",
+        "obrzezanego"
     ]
 }

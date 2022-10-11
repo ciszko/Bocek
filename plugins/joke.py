@@ -1,12 +1,9 @@
 from bs4 import BeautifulSoup
-from .log import get_logger
+from .log import log
 from discord import app_commands, Interaction
 from discord.ext import commands
 from .common import MyCog
 from core.session import Session
-
-
-log = get_logger(__name__)
 
 
 class Joke(MyCog, name='joke'):
@@ -24,8 +21,7 @@ class Joke(MyCog, name='joke'):
             'div', {'class': 'container'}).get_text()
         msg = joke[:joke.find('Dowcip:')].replace(
             '\r', '').replace('\n', ' ').replace('\t', '')
-        log.info(msg)
         await interaction.response.send_message(msg)
         if interaction.user.voice:
-            tts = await self.bot.tts.create_tts(msg, 'pl')
+            tts = await self.bot.tts.create_tts(msg)
             await self.bot.play_on_channel(tts)
