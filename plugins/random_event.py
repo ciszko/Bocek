@@ -1,20 +1,15 @@
 from datetime import timedelta, datetime
 from discord import app_commands, Interaction
 from discord.ext import commands
-from discord import Activity
 import asyncio
 from .glossary import Glossary
 from random import choice, randint
-from .log import get_logger
+from .log import log
 from .common import MyCog, replace_all
 
-
-log = get_logger(__name__)
-
-
 class RandomEvent(MyCog, name='random_event'):
-    def __init__(self, bot):
-        self.bot = bot
+    def __init__(self, bot: commands.Bot):
+        self.bot: commands.Bot = bot
         self.glossary = Glossary(self, 'random_join.json')
         self.join_at = None
 
@@ -43,7 +38,7 @@ class RandomEvent(MyCog, name='random_event'):
         while not self.bot.is_closed():
             if len(self.bot.voice_channel.members) > 1:
                 if msg := self.random_say():
-                    tts = await self.bot.tts.create_tts(msg, 'pl', random=True)
+                    tts = await self.bot.tts.create_tts(msg, random=True)
                     await self.bot.play_on_channel(tts)
 
             wait_time = randint(8*60, 10*60)
@@ -65,6 +60,8 @@ class RandomEvent(MyCog, name='random_event'):
 
     @app_commands.command(name='powiedz', description='Coś se powiem')
     async def powiedz(self, interaction: Interaction):
+        await interaction.response.defer(ephemeral=True)
         msg = self.random_say()
-        tts = await self.bot.tts.create_tts(msg, 'pl', random=True)
+        tts = await self.bot.tts.create_tts(msg, random=True)
         await self.bot.play_on_channel(tts)
+        await interaction.followup.send(msg)

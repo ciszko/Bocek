@@ -1,15 +1,11 @@
 from bs4 import BeautifulSoup
-import requests
 from discord import app_commands, Interaction
-from discord.ext import commands
 from tabulate import tabulate
 from difflib import get_close_matches
 from functools import cached_property
 from .common import async_wrap, MyCog
-from .log import get_logger
+from .log import log
 from core.session import Session
-
-log = get_logger(__name__)
 
 
 class LolCounter(MyCog, name='lol_counter'):

@@ -1,12 +1,9 @@
 import json
-from discord import app_commands, Interaction
+from discord import app_commands
 from discord.ext import commands
 from .common import BASEDIR
 import random
-from .log import get_logger
-
-
-log = get_logger(__name__)
+from .log import log
 
 
 class Rhyme(commands.Cog, name='rhyme'):

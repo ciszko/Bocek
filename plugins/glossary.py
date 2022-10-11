@@ -2,9 +2,7 @@ import random
 import json
 import string
 from .common import BASEDIR
-from .log import get_logger
-
-log = get_logger(__name__)
+from .log import log
 
 
 class Glossary:

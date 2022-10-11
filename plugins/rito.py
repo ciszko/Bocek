@@ -1,14 +1,10 @@
 import aiohttp
 from deepdiff import DeepDiff
-from discord.ext import commands
-from random import choice, random
+from random import random
 import asyncio
 from .glossary import Glossary
-from .log import get_logger
+from .log import log
 from .common import MyCog, replace_all
-
-
-log = get_logger(__name__)
 
 
 class Rito(MyCog, name='rito'):
@@ -47,7 +43,7 @@ class Rito(MyCog, name='rito'):
                 wait_time = 3
                 diff = await self.compare_stats()
                 if diff:
-                    tts = await self.bot.tts.create_tts(diff, 'pl')
+                    tts = await self.bot.tts.create_tts(diff)
                     await self.bot.play_on_channel(tts)
             else:
                 wait_time = 30
