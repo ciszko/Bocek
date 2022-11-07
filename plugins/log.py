@@ -13,15 +13,15 @@ class CustomFormatter(logging.Formatter):
     pink = "\x1b[35;1m"
     green = "\x1b[32:20m"
     reset = "\x1b[0m"
-    date = blue + '%(asctime)s ' + reset
-    msg = f'{pink} [%(filename)s:%(lineno)d]{reset} %(message)s'
+    date = blue + "%(asctime)s " + reset
+    msg = f"{pink} [%(filename)s:%(lineno)d]{reset} %(message)s"
 
     FORMATS = {
-        logging.DEBUG: date + grey + '%(levelname)-8s' +  msg,
-        logging.INFO: date + green + '%(levelname)-8s' +  msg,
-        logging.WARNING: date + yellow + '%(levelname)-8s' +  msg,
-        logging.ERROR: date + red + '%(levelname)-8s' +  msg,
-        logging.CRITICAL: date + bold_red + '%(levelname)-8s' +  msg
+        logging.DEBUG: date + grey + "%(levelname)-8s" + msg,
+        logging.INFO: date + green + "%(levelname)-8s" + msg,
+        logging.WARNING: date + yellow + "%(levelname)-8s" + msg,
+        logging.ERROR: date + red + "%(levelname)-8s" + msg,
+        logging.CRITICAL: date + bold_red + "%(levelname)-8s" + msg,
     }
 
     def format(self, record):
@@ -29,6 +29,7 @@ class CustomFormatter(logging.Formatter):
         formatter = logging.Formatter(log_fmt, self.datefmt)
         return formatter.format(record)
 
-dt_fmt = '%Y-%m-%d %H:%M:%S'
+
+dt_fmt = "%Y-%m-%d %H:%M:%S"
 discord.utils.setup_logging(formatter=CustomFormatter(datefmt=dt_fmt))
-log = logging.getLogger('discord')
+log = logging.getLogger("discord")

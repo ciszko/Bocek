@@ -20,6 +20,7 @@ deepdiff = "*"
 pynacl = "*"
 grpcio = {version = "==1.44.0"}
 grpcio-tools = {version = "==1.44.0"}
+black = "*"
 
 [dev-packages]
 autopep8 = "*"

@@ -28,22 +28,23 @@ from mutagen.mp3 import MP3
 from time import time
 
 load_dotenv()
-TOKEN = os.getenv('DISCORD_TOKEN')
-GUILD = os.getenv('GUILD_ID')
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = os.path.join(pathlib.Path(
-    __file__).parent.absolute(), os.getenv('GOOGLE_APPLICATION_CREDENTIALS'))
+TOKEN = os.getenv("DISCORD_TOKEN")
+GUILD = os.getenv("GUILD_ID")
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.path.join(
+    pathlib.Path(__file__).parent.absolute(), os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+)
 
-if platform.system() == 'Windows':
-    ffmpeg = 'D:/Projekt/Bocek/extras/ffmpeg.exe'
+if platform.system() == "Windows":
+    ffmpeg = "D:/Projekt/Bocek/extras/ffmpeg.exe"
 else:
-    ffmpeg = '/usr/bin/ffmpeg'
+    ffmpeg = "/usr/bin/ffmpeg"
 
 
 class MyBot(Bot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.ready = False
-        self.glossary = Glossary(self, 'talk.json')
+        self.glossary = Glossary(self, "talk.json")
         self.path = pathlib.Path(__file__).parent.absolute()
         self.channel_list = []
         self.voice_channel_id = 283292201579184128
@@ -51,16 +52,7 @@ class MyBot(Bot):
         self.vc = None
 
     async def setup_hook(self):
-        cogs = [
-            LolCounter,
-            Tts,
-            Anonse,
-            RandomEvent,
-            Rito,
-            Joke,
-            Rhyme,
-            Slang,
-            Minecraft]
+        cogs = [LolCounter, Tts, Anonse, RandomEvent, Rito, Joke, Rhyme, Slang, Minecraft]
 
         await self.add_cogs(cogs)
         self.add_commands()
@@ -86,13 +78,13 @@ class MyBot(Bot):
         # LolCounter -> self.lol_counter
         for cog in cogs:
             await self.add_cog(cog(self))
-            cog_name = re.sub(r'(?<!^)(?=[A-Z])', '_', cog.__name__).lower()
+            cog_name = re.sub(r"(?<!^)(?=[A-Z])", "_", cog.__name__).lower()
             setattr(self, cog_name, self.get_cog(cog_name))
-            log.info(f'Registered {cog.__name__} as a cog')
+            log.info(f"Registered {cog.__name__} as a cog")
 
     def get_rhyme(self, text):
-        to_ret = ''
-        if (to_ret := self.rhyme.get_rhyme(text)):
+        to_ret = ""
+        if to_ret := self.rhyme.get_rhyme(text):
             to_ret = random.choice(to_ret)
         return to_ret
 
@@ -102,21 +94,20 @@ class MyBot(Bot):
 
         msg = message.content.lower()
 
-        greetings = ['cześć bocek', 'czesc bocek',
-                     'czesć bocek', 'cześc bocek']
+        greetings = ["cześć bocek", "czesc bocek", "czesć bocek", "cześc bocek"]
 
         if any(x in msg for x in greetings):
-            await message.channel.send(f'Siemano {message.author.name}!')
+            await message.channel.send(f"Siemano {message.author.name}!")
 
-        elif msg == 'bocek huju':
+        elif msg == "bocek huju":
 
-            to_say, placeholders = self.glossary.get_random('bocek_huju')
+            to_say, placeholders = self.glossary.get_random("bocek_huju")
             user = message.author.name
             scope = locals()
-            to_say = replace_all(to_say, {f'{{{p}}}': eval(p, scope) for p in placeholders})
+            to_say = replace_all(to_say, {f"{{{p}}}": eval(p, scope) for p in placeholders})
 
             tts = await self.tts.create_tts(to_say)
-            if hasattr(message.author.voice, 'channel') and message.author.voice.channel:
+            if hasattr(message.author.voice, "channel") and message.author.voice.channel:
                 await self.play_on_channel(tts)
             else:
                 await message.add_reaction(self.get_emoji(283294977969356800))
@@ -127,14 +118,14 @@ class MyBot(Bot):
     async def on_voice_state_update(self, member, before, after):
         if member == self.user or not self.ready:
             return
-        if not hasattr(after, 'channel') and not hasattr(after.channel.name):
+        if not hasattr(after, "channel") and not hasattr(after.channel.name):
             return
         if before.channel != after.channel and after.channel == self.voice_channel:
             await asyncio.sleep(0.75)
-            to_say, placeholders = self.glossary.get_random('greetings')
+            to_say, placeholders = self.glossary.get_random("greetings")
             user = member.nick if member.nick else member.name
             scope = locals()
-            to_say = replace_all(to_say, {f'{{{p}}}': eval(p, scope) for p in placeholders})
+            to_say = replace_all(to_say, {f"{{{p}}}": eval(p, scope) for p in placeholders})
             tts = await self.tts.create_tts(to_say, random=True)
             await self.play_on_channel(tts)
         if after.channel != self.voice_channel and len(self.voice_channel.members) <= 1 and self.vc:
@@ -165,16 +156,14 @@ class MyBot(Bot):
             return
         duration = MP3(message).info.length
         try:
-            self.vc.play(discord.FFmpegOpusAudio(
-                executable=ffmpeg, source=message, options='-loglevel panic'))
+            self.vc.play(discord.FFmpegOpusAudio(executable=ffmpeg, source=message, options="-loglevel panic"))
         except discord.errors.ClientException:
             self.vc = await self.voice_channel.connect()
-            self.vc.play(discord.FFmpegOpusAudio(
-                executable=ffmpeg, source=message, options='-loglevel panic'))
+            self.vc.play(discord.FFmpegOpusAudio(executable=ffmpeg, source=message, options="-loglevel panic"))
         timeout = time() + duration + 1  # timeout is audio duration + 1s
         # Sleep while audio is playing.
         while self.vc and self.vc.is_playing() and time() < timeout:
-            await asyncio.sleep(.1)
+            await asyncio.sleep(0.1)
         else:
             await asyncio.sleep(0.5)  # sometimes mp3 is still playing
             # await self.vc.disconnect()
@@ -183,41 +172,39 @@ class MyBot(Bot):
     async def on_ready(self):
         self.channel_list = [c for c in self.get_all_channels()]
         self.ready = True
-        log.info(f'{self.user.name} has connected to Discord!')
+        log.info(f"{self.user.name} has connected to Discord!")
 
     async def on_command_error(self, context, exception):
         if type(exception) == discord.ext.commands.errors.CommandNotFound:
             all_commands = [x.name for x in self.commands]
             msg = context.message
-            closest_match = get_close_matches(
-                msg.content, all_commands, n=1)
-            await context.message.add_reaction('❓')
+            closest_match = get_close_matches(msg.content, all_commands, n=1)
+            await context.message.add_reaction("❓")
             if closest_match:
-                return await msg.reply(f'Grube paluszki :( Czy chodziło Ci o **${closest_match[0]}**?')
+                return await msg.reply(f"Grube paluszki :( Czy chodziło Ci o **${closest_match[0]}**?")
             else:
-                return await msg.reply(f'Masz tak grube paluszki, że nie wiem o co chodzi :(')
+                return await msg.reply(f"Masz tak grube paluszki, że nie wiem o co chodzi :(")
         else:
             log.exception(exception)
-            return await context.reply(f'Coś poszło nie tak, chyba się zebzdziałem 💩💩💩💩.\nBłąd: ```{exception}```')
+            return await context.reply(f"Coś poszło nie tak, chyba się zebzdziałem 💩💩💩💩.\nBłąd: ```{exception}```")
 
     def add_commands(self):
-
-        @self.tree.command(name='siusiak', description='powie prawde o siusiaku')
+        @self.tree.command(name="siusiak", description="powie prawde o siusiaku")
         async def siusiak(interaction: discord.Interaction):
-            """ /siusiak """
+            """/siusiak"""
             siusiak, _ = self.glossary.get_random("siusiak")
-            response = f'{interaction.user.name} ma {siusiak} siusiaka'
+            response = f"{interaction.user.name} ma {siusiak} siusiaka"
             await interaction.response.send_message(response)
 
-        @self.tree.command(name='anus', description='anus anus nostradamus')
+        @self.tree.command(name="anus", description="anus anus nostradamus")
         async def anus(interaction: discord.Interaction):
-            to_say = f'anus anus nostradamus'
-            if hasattr(interaction.user.voice, 'channel') and interaction.user.voice.channel:
-                tts = await self.tts.create_tts(to_say,  random=True)
+            to_say = f"anus anus nostradamus"
+            if hasattr(interaction.user.voice, "channel") and interaction.user.voice.channel:
+                tts = await self.tts.create_tts(to_say, random=True)
                 await self.play_on_channel(tts)
 
 
 intents = discord.Intents.all()
-bot = MyBot(command_prefix='$', intents=intents)
+bot = MyBot(command_prefix="$", intents=intents)
 
 bot.run(TOKEN, log_handler=None)
