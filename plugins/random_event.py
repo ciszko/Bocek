@@ -7,23 +7,22 @@ from random import choice, randint
 from .log import log
 from .common import MyCog, replace_all
 
-class RandomEvent(MyCog, name='random_event'):
+
+class RandomEvent(MyCog, name="random_event"):
     def __init__(self, bot: commands.Bot):
         self.bot: commands.Bot = bot
-        self.glossary = Glossary(self, 'random_join.json')
+        self.glossary = Glossary(self, "random_join.json")
         self.join_at = None
 
     def random_say(self):
-        if members := [
-                x.name for x in self.bot.voice_channel.members if x.display_name != 'Bocek']:
+        if members := [x.name for x in self.bot.voice_channel.members if x.display_name != "Bocek"]:
             msg, placeholders = self.glossary.get_random()
-            if 'user' in placeholders:
+            if "user" in placeholders:
                 user = choice(members)
-            if 'all_users' in placeholders:
-                all_users = ', '.join(members) if len(
-                    members) > 1 else members[0]
+            if "all_users" in placeholders:
+                all_users = ", ".join(members) if len(members) > 1 else members[0]
             scope = locals()
-            msg = replace_all(msg, {f'{{{p}}}': eval(p, scope) for p in placeholders})
+            msg = replace_all(msg, {f"{{{p}}}": eval(p, scope) for p in placeholders})
             return msg
         return None
 
@@ -41,10 +40,10 @@ class RandomEvent(MyCog, name='random_event'):
                     tts = await self.bot.tts.create_tts(msg, random=True)
                     await self.bot.play_on_channel(tts)
 
-            wait_time = randint(8*60, 10*60)
+            wait_time = randint(8 * 60, 10 * 60)
             join_at = datetime.now() + timedelta(seconds=wait_time)
             self.join_at = join_at.strftime("%H:%M:%S")
-            log.info(f'Random join on {self.join_at}')
+            log.info(f"Random join on {self.join_at}")
 
             # TODO: fix activity
             # activ_no = choice([0, 1, 2, 3, 5])  # 4 is not supported :P
@@ -54,11 +53,11 @@ class RandomEvent(MyCog, name='random_event'):
 
             await asyncio.sleep(wait_time)
 
-    @app_commands.command(name='kiedy', description='Informacja kiedy bocek coś se powie')
+    @app_commands.command(name="kiedy", description="Informacja kiedy bocek coś se powie")
     async def when_join(self, interaction: Interaction):
-        return await interaction.response.send_message(f'Będe z powrotem o {self.join_at}')
+        return await interaction.response.send_message(f"Będe z powrotem o {self.join_at}")
 
-    @app_commands.command(name='powiedz', description='Coś se powiem')
+    @app_commands.command(name="powiedz", description="Coś se powiem")
     async def powiedz(self, interaction: Interaction):
         await interaction.response.defer(ephemeral=True)
         msg = self.random_say()

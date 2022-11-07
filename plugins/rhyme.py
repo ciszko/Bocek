@@ -6,11 +6,11 @@ import random
 from .log import log
 
 
-class Rhyme(commands.Cog, name='rhyme'):
+class Rhyme(commands.Cog, name="rhyme"):
     def __init__(self, bot):
         self.bot = bot
-        self.dict_path = f'{BASEDIR}/glossary/rhymes2.json'
-        with open(self.dict_path, 'r', encoding='utf-8') as dict_json:
+        self.dict_path = f"{BASEDIR}/glossary/rhymes2.json"
+        with open(self.dict_path, "r", encoding="utf-8") as dict_json:
             self.rhyme_dict = json.load(dict_json)
 
     def get_rhyme(self, word, limit=5):
@@ -27,9 +27,9 @@ class Rhyme(commands.Cog, name='rhyme'):
                     break
         return list(all_results)[:limit]
 
-    @app_commands.command(name='rym', description='Zwraca rymy do słowa. Np. $rym dupa 5')
+    @app_commands.command(name="rym", description="Zwraca rymy do słowa. Np. $rym dupa 5")
     async def rhyme(self, interaction, word: str, limit: int = 10):
         rhymes = self.get_rhyme(word, limit)
-        formatted = ', '.join(rhymes)
+        formatted = ", ".join(rhymes)
         response = f'Rymy do słowa "**{word}**":\n{formatted}'
         await interaction.response.send_message(response)
