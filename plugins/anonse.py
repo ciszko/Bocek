@@ -120,7 +120,7 @@ class Anonse(MyCog, name="anonse"):
             )
 
             await interaction.followup.send(embed=embed, view=view)
-            tts = await self.bot.tts.create_tts(anonse["text"])
+            tts = await self.bot.tts.create_tts(anonse["text"], random=True)
             await self.bot.play_on_channel(tts)
         else:
             msg = f"{interaction.user.name}, nie jesteś nawet na kanale..."
