@@ -129,9 +129,12 @@ class MyBot(Bot):
             tts = await self.tts.create_tts(to_say, random=True)
             await self.play_on_channel(tts)
         if after.channel != self.voice_channel and len(self.voice_channel.members) <= 1 and self.vc:
-            await self.vc.disconnect()
+            await self.disconnect_from_voice()
             await self.tts.delete_all_tts()
-            self.vc = None
+
+    async def disconnect_from_voice(self):
+        [await vc.disconnect(force=True) for vc in self.voice_clients if not vc.is_playing()]
+        self.vc = None
 
     async def play_on_channel(self, message=None):
         # if self.voice_clients:
@@ -141,23 +144,25 @@ class MyBot(Bot):
             return
         if len(self.voice_channel.members) == 0 and self.vc:
             try:
-                self.vc.disconnect()
+                await self.disconnect_from_voice()
             except Exception as e:
                 log.exception(e)
             return
         if not self.vc:
             try:
                 self.vc = await self.voice_channel.connect()
-            except Exception as e:
-                log.exception(e)
-                self.vc.disconnect()
+            except discord.ClientException:
+                log.error("Already connected to voice channel")
+                await self.disconnect_from_voice()
                 self.vc = await self.voice_channel.connect()
         if self.vc and self.vc.is_playing():
+            log.error("Already playing")
             return
         duration = MP3(message).info.length
         try:
             self.vc.play(discord.FFmpegOpusAudio(executable=ffmpeg, source=message, options="-loglevel panic"))
         except discord.errors.ClientException:
+            log.error("Got disconnected from the channel")
             self.vc = await self.voice_channel.connect()
             self.vc.play(discord.FFmpegOpusAudio(executable=ffmpeg, source=message, options="-loglevel panic"))
         timeout = time() + duration + 1  # timeout is audio duration + 1s

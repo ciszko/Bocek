@@ -4,7 +4,6 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-"discord.py" = "*"
 gtts = "*"
 tabulate = "*"
 requests = "*"
@@ -18,9 +17,10 @@ google-cloud-texttospeech = "*"
 unidecode = "*"
 deepdiff = "*"
 pynacl = "*"
-grpcio = {version = "==1.44.0"}
-grpcio-tools = {version = "==1.44.0"}
+grpcio = "*"
+grpcio-tools = "*"
 black = "*"
+"discord.py" = {extras = ["voice"], version = "*"}
 
 [dev-packages]
 autopep8 = "*"
