@@ -1,11 +1,10 @@
-import pathlib
+from pathlib import Path
 from discord import app_commands, Interaction
 from discord.app_commands import Choice
 from discord import File
 from google.cloud import texttospeech
-import os
 import random
-from .common import async_wrap, MyCog
+from .common import async_wrap, MyCog, MP3_DIR
 from uuid import uuid4
 from .log import log
 
@@ -30,7 +29,6 @@ VoiceChoices = [
 class Tts(MyCog, name="tts"):
     def __init__(self, bot):
         self.bot = bot
-        self.path = os.path.join(pathlib.Path(__file__).parent.absolute(), "..", "mp3")
         self.client = texttospeech.TextToSpeechClient()
 
     @app_commands.command(name="tts", description="Wysyła plik z nagraniem.")
@@ -62,7 +60,15 @@ class Tts(MyCog, name="tts"):
         return await self.tts_google(*args, **kwargs)
 
     @async_wrap
-    def tts_google(self, text, pitch=0.0, voice="pl-PL-Wavenet-B", volume=0.0, speaking_rate=0.9, lang="pl-PL"):
+    def tts_google(
+        self,
+        text,
+        pitch=0.0,
+        voice="pl-PL-Wavenet-B",
+        volume=0.0,
+        speaking_rate=0.9,
+        lang="pl-PL",
+    ):
         if not text:
             return
 
@@ -84,20 +90,25 @@ class Tts(MyCog, name="tts"):
         )
         # generate response
         try:
-            response = self.client.synthesize_speech(input=tts, voice=voice_params, audio_config=audio_config)
+            response = self.client.synthesize_speech(
+                input=tts, voice=voice_params, audio_config=audio_config
+            )
         except Exception as exc:
             log.exception(exc)
-            response = self.client.synthesize_speech(input=tts, voice=voice_params, audio_config=audio_config)
+            response = self.client.synthesize_speech(
+                input=tts, voice=voice_params, audio_config=audio_config
+            )
         # save the response
-        tts_path = os.path.join(self.path, f"{uuid4().hex[:10]}.mp3")
-        with open(tts_path, "wb") as out:
+        tts_path = MP3_DIR / f"{uuid4().hex[:10]}.mp3"
+        with tts_path.open("wb") as out:
             out.write(response.audio_content)
         return tts_path
 
     @async_wrap
     def delete_tts(self, path):
+        path = Path(path)
         try:
-            os.remove(path)
+            path.unlink()
             log.info(f"Removed {path}")
         except FileNotFoundError:
             log.warning(f"{path} was already deleted")
@@ -106,9 +117,9 @@ class Tts(MyCog, name="tts"):
     @async_wrap
     def delete_all_tts(self):
         log.info("Deleting all tts")
-        for file in os.listdir(self.path):
+        for file in MP3_DIR.iterdir():
             try:
-                os.remove(os.path.join(self.path, file))
+                file.unlink()
             except PermissionError:
                 log.warning(f"{file} is still in use")
         return

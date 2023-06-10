@@ -88,7 +88,13 @@
         "{user} {self.get_rhyme(user)}",
         "{user} {user} {self.get_rhyme(user)}",
         "{user} bardziej jak {self.get_rhyme(user)}",
-        "Dawaj {user} pokaż siurdolka"
+        "Dawaj {user} pokaż siurdolka",
+        "Witaj przywoływaczu",
+        "Hej {user}, często tu bywasz?",
+        "{user} jestem tu specjalnie dla ciebie!",
+        "Cześc {user}, jestem Bocek, mor lajk {self.get_rhyme('bocek')}",
+        "Halo halo",
+        "Nooooooooooo, w końcu wszedłeś {user}"
     ],
     "bocek_huju": [
         "Ty obżydronie",
@@ -140,6 +146,10 @@
         "brak",
         "pół",
         "monstrualnego",
-        "obrzezanego"
+        "obrzezanego",
+        "takiego o",
+        "wklęsłego",
+        "malutkiego",
+        "niezłego"
     ]
 }

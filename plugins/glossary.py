@@ -1,14 +1,14 @@
 import random
 import json
 import string
-from .common import BASEDIR
+from .common import BASE_DIR
 from .log import log
 
 
 class Glossary:
     def __init__(self, plugin, glossary):
         self.plugin = plugin
-        self.glossary_path = f"{BASEDIR}/glossary/{glossary}"
+        self.glossary_path = BASE_DIR / "glossary" / glossary
 
     def get_random(self, section="default"):
         glossary = self.get_file_json()
@@ -29,10 +29,13 @@ class Glossary:
         return to_ret, placeholders
 
     def get_file_json(self):
-        with open(self.glossary_path, "r+", encoding="utf-8") as f:
+        with self.glossary_path.open("r+", encoding="utf-8") as f:
             data = json.load(f)
         return data
 
     def get_placeholders(self, text):
-
-        return [name for text, name, spec, conv in string.Formatter().parse(text) if name != None]
+        return [
+            name
+            for text, name, spec, conv in string.Formatter().parse(text)
+            if name != None
+        ]

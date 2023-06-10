@@ -53,6 +53,8 @@ RegionChoices = [
 
 
 class Anonse(MyCog, name="anonse"):
+    name = "anonse"
+
     def __init__(self, bot):
         self.bot = bot
         self.base_url = "https://anonse.inaczej.pl"
@@ -66,7 +68,11 @@ class Anonse(MyCog, name="anonse"):
             self.embed = embed
             super().__init__()
 
-        @discord.ui.button(label="Usuń siurdolka", style=discord.ButtonStyle.red, emoji="<:siusiak:283294977969356800>")
+        @discord.ui.button(
+            label="Usuń siurdolka",
+            style=discord.ButtonStyle.red,
+            emoji="<:siusiak:283294977969356800>",
+        )
         async def on_click(self, interaction: Interaction, button: discord.ui.Button):
             button.disabled = True
             button.label = "Siurdolek usunięty"
@@ -82,7 +88,8 @@ class Anonse(MyCog, name="anonse"):
             await interaction.response.edit_message(embed=self.embed, view=self)
 
     @app_commands.command(
-        name="anonse", description='Zwraca losowe gejowe anonse z wybranej kategorii. Default: $anonse "fetysze"'
+        name="anonse",
+        description='Zwraca losowe gejowe anonse z wybranej kategorii. Default: $anonse "fetysze"',
     )
     @app_commands.describe(kategoria="Kategoria z której szukać anonsa")
     @app_commands.describe(region="Region z którego szukać anonsa")
@@ -105,8 +112,12 @@ class Anonse(MyCog, name="anonse"):
             reg = next(r.name for r in RegionChoices if r.value == region)
 
             title = f"Kategoria: *{cat}*, region: *{reg}*"
-            footer = "\n".join((x for x in [anonse["age"], anonse["location"], anonse["date"]] if x))
-            embed = discord.Embed(title=title, description=anonse["text"], color=discord.Color.fuchsia())
+            footer = "\n".join(
+                (x for x in [anonse["age"], anonse["location"], anonse["date"]] if x)
+            )
+            embed = discord.Embed(
+                title=title, description=anonse["text"], color=discord.Color.fuchsia()
+            )
             embed.set_author(name=anonse["author"])
             log.info(anonse["image"])
             embed.set_image(url=anonse["image"])
@@ -114,7 +125,9 @@ class Anonse(MyCog, name="anonse"):
 
             # add button only when image pops up
             view = (
-                Anonse.DeleteImageButton(msg=anonse["text"], img=anonse["image"], embed=deepcopy(embed))
+                Anonse.DeleteImageButton(
+                    msg=anonse["text"], img=anonse["image"], embed=deepcopy(embed)
+                )
                 if anonse["image"]
                 else discord.utils.MISSING
             )
@@ -135,10 +148,18 @@ class Anonse(MyCog, name="anonse"):
                 anonse_item = choice(anonse_list)
                 image = anonse_item.find("a", {"class": "fancybox"})
                 to_ret["image"] = f"{self.base_url}/" + image["href"] if image else None
-                to_ret["text"] = anonse_item.find("div", {"class": "adcontent"}).get_text().strip()
-                to_ret["author"] = anonse_item.find("i", {"class": "icon-user"}).next_sibling.strip()
-                to_ret["location"] = anonse_item.find("i", {"class": "icon-location-arrow"}).next_sibling
-                to_ret["date"] = anonse_item.find("i", {"class": "icon-calendar"}).next_sibling
+                to_ret["text"] = (
+                    anonse_item.find("div", {"class": "adcontent"}).get_text().strip()
+                )
+                to_ret["author"] = anonse_item.find(
+                    "i", {"class": "icon-user"}
+                ).next_sibling.strip()
+                to_ret["location"] = anonse_item.find(
+                    "i", {"class": "icon-location-arrow"}
+                ).next_sibling
+                to_ret["date"] = anonse_item.find(
+                    "i", {"class": "icon-calendar"}
+                ).next_sibling
                 age = anonse_item.find("i", {"class": "icon-leaf"})
                 to_ret["age"] = age.next_sibling if age else ""
 

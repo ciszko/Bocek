@@ -7,7 +7,7 @@ import discord
 from discord import app_commands
 from discord.ext.commands import Bot
 
-from plugins.common import replace_all
+from plugins.common import replace_all, BASE_DIR
 from plugins.log import log
 from plugins.lol_counter import LolCounter
 from plugins.tts import Tts
@@ -22,7 +22,6 @@ from plugins.minecraft import Minecraft
 
 import platform
 import asyncio
-import pathlib
 from difflib import get_close_matches
 from mutagen.mp3 import MP3
 from time import time
@@ -30,8 +29,8 @@ from time import time
 load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
 GUILD = os.getenv("GUILD_ID")
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.path.join(
-    pathlib.Path(__file__).parent.absolute(), os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = str(
+    BASE_DIR / os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
 )
 
 if platform.system() == "Windows":
@@ -45,14 +44,23 @@ class MyBot(Bot):
         super().__init__(*args, **kwargs)
         self.ready = False
         self.glossary = Glossary(self, "talk.json")
-        self.path = pathlib.Path(__file__).parent.absolute()
         self.channel_list = []
         self.voice_channel_id = 283292201579184128
         self.text_channel_id = 283292201109159947
         self.vc = None
 
     async def setup_hook(self):
-        cogs = [LolCounter, Tts, Anonse, RandomEvent, Rito, Joke, Rhyme, Slang, Minecraft]
+        cogs = [
+            LolCounter,
+            Tts,
+            Anonse,
+            RandomEvent,
+            Rito,
+            Joke,
+            Rhyme,
+            Slang,
+            Minecraft,
+        ]
 
         await self.add_cogs(cogs)
         self.add_commands()
@@ -66,7 +74,9 @@ class MyBot(Bot):
 
     @property
     def voice_channel(self):
-        return next((c for c in self.channel_list if c.id == self.voice_channel_id), None)
+        return next(
+            (c for c in self.channel_list if c.id == self.voice_channel_id), None
+        )
 
     @property
     def text_channel(self):
@@ -78,7 +88,7 @@ class MyBot(Bot):
         # LolCounter -> self.lol_counter
         for cog in cogs:
             await self.add_cog(cog(self))
-            cog_name = re.sub(r"(?<!^)(?=[A-Z])", "_", cog.__name__).lower()
+            cog_name = cog.__cog_name__
             setattr(self, cog_name, self.get_cog(cog_name))
             log.info(f"Registered {cog.__name__} as a cog")
 
@@ -100,14 +110,18 @@ class MyBot(Bot):
             await message.channel.send(f"Siemano {message.author.name}!")
 
         elif msg == "bocek huju":
-
             to_say, placeholders = self.glossary.get_random("bocek_huju")
             user = message.author.name
             scope = locals()
-            to_say = replace_all(to_say, {f"{{{p}}}": eval(p, scope) for p in placeholders})
+            to_say = replace_all(
+                to_say, {f"{{{p}}}": eval(p, scope) for p in placeholders}
+            )
 
             tts = await self.tts.create_tts(to_say)
-            if hasattr(message.author.voice, "channel") and message.author.voice.channel:
+            if (
+                hasattr(message.author.voice, "channel")
+                and message.author.voice.channel
+            ):
                 await self.play_on_channel(tts)
             else:
                 await message.add_reaction(self.get_emoji(283294977969356800))
@@ -125,15 +139,25 @@ class MyBot(Bot):
             to_say, placeholders = self.glossary.get_random("greetings")
             user = member.nick if member.nick else member.name
             scope = locals()
-            to_say = replace_all(to_say, {f"{{{p}}}": eval(p, scope) for p in placeholders})
+            to_say = replace_all(
+                to_say, {f"{{{p}}}": eval(p, scope) for p in placeholders}
+            )
             tts = await self.tts.create_tts(to_say, random=True)
             await self.play_on_channel(tts)
-        if after.channel != self.voice_channel and len(self.voice_channel.members) <= 1 and self.vc:
+        if (
+            after.channel != self.voice_channel
+            and len(self.voice_channel.members) <= 1
+            and self.vc
+        ):
             await self.disconnect_from_voice()
             await self.tts.delete_all_tts()
 
     async def disconnect_from_voice(self):
-        [await vc.disconnect(force=True) for vc in self.voice_clients if not vc.is_playing()]
+        [
+            await vc.disconnect(force=True)
+            for vc in self.voice_clients
+            if not vc.is_playing()
+        ]
         self.vc = None
 
     async def play_on_channel(self, message=None):
@@ -160,11 +184,19 @@ class MyBot(Bot):
             return
         duration = MP3(message).info.length
         try:
-            self.vc.play(discord.FFmpegOpusAudio(executable=ffmpeg, source=message, options="-loglevel panic"))
+            self.vc.play(
+                discord.FFmpegOpusAudio(
+                    executable=ffmpeg, source=message, options="-loglevel panic"
+                )
+            )
         except discord.errors.ClientException:
             log.error("Got disconnected from the channel")
             self.vc = await self.voice_channel.connect()
-            self.vc.play(discord.FFmpegOpusAudio(executable=ffmpeg, source=message, options="-loglevel panic"))
+            self.vc.play(
+                discord.FFmpegOpusAudio(
+                    executable=ffmpeg, source=message, options="-loglevel panic"
+                )
+            )
         timeout = time() + duration + 1  # timeout is audio duration + 1s
         # Sleep while audio is playing.
         while self.vc and self.vc.is_playing() and time() < timeout:
@@ -186,12 +218,20 @@ class MyBot(Bot):
             closest_match = get_close_matches(msg.content, all_commands, n=1)
             await context.message.add_reaction("❓")
             if closest_match:
-                return await msg.reply(f"Grube paluszki :( Czy chodziło Ci o **${closest_match[0]}**?")
+                return await msg.reply(
+                    f"Grube paluszki :( Czy chodziło Ci o **${closest_match[0]}**?"
+                )
             else:
-                return await msg.reply(f"Masz tak grube paluszki, że nie wiem o co chodzi :(")
+                return await msg.reply(
+                    f"Masz tak grube paluszki, że nie wiem o co chodzi :("
+                )
         else:
             log.exception(exception)
-            return await context.reply(f"Coś poszło nie tak, chyba się zebzdziałem 💩💩💩💩.\nBłąd: ```{exception}```")
+            return await context.reply(
+                "Coś poszło nie tak, chyba się zebzdziałem 💩💩💩💩."
+                "Błąd:\n" 
+                f"```{exception}```"
+            )
 
     def add_commands(self):
         @self.tree.command(name="siusiak", description="powie prawde o siusiaku")
@@ -200,11 +240,20 @@ class MyBot(Bot):
             siusiak, _ = self.glossary.get_random("siusiak")
             response = f"{interaction.user.name} ma {siusiak} siusiaka"
             await interaction.response.send_message(response)
+            if (
+                hasattr(interaction.user.voice, "channel")
+                and interaction.user.voice.channel
+            ):
+                tts = await self.tts.create_tts(response, random=True)
+                await self.play_on_channel(tts)
 
         @self.tree.command(name="anus", description="anus anus nostradamus")
         async def anus(interaction: discord.Interaction):
             to_say = f"anus anus nostradamus"
-            if hasattr(interaction.user.voice, "channel") and interaction.user.voice.channel:
+            if (
+                hasattr(interaction.user.voice, "channel")
+                and interaction.user.voice.channel
+            ):
                 tts = await self.tts.create_tts(to_say, random=True)
                 await self.play_on_channel(tts)
 
