@@ -6,7 +6,8 @@ import random
 from discord.ext.commands import Cog
 
 
-BASEDIR = os.path.join(pathlib.Path(__file__).parent.absolute(), "..")
+BASE_DIR = pathlib.Path(__file__).parent.parent
+MP3_DIR = BASE_DIR / "mp3"
 
 
 def async_wrap(func):
