@@ -12,6 +12,7 @@ class RandomEvent(MyCog, name="random_event"):
     def __init__(self, bot: commands.Bot):
         self.bot: commands.Bot = bot
         self.glossary = Glossary(self, "random_join.json")
+        self.tzinfo = datetime.now().astimezone().tzinfo
         self.join_at = None
 
     def random_say(self):
@@ -41,7 +42,7 @@ class RandomEvent(MyCog, name="random_event"):
                     await self.bot.play_on_channel(tts)
 
             wait_time = randint(8 * 60, 10 * 60)
-            join_at = datetime.now() + timedelta(seconds=wait_time)
+            join_at = datetime.now(self.tzinfo) + timedelta(seconds=wait_time)
             self.join_at = join_at.strftime("%H:%M:%S")
             log.info(f"Random join on {self.join_at}")
 
