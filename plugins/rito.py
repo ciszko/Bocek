@@ -12,7 +12,16 @@ class Rito(MyCog, name="rito"):
         self.bot = bot
         self.url_base = "https://192.168.0.31:29999/liveclientdata/"
         self.connector = aiohttp.TCPConnector(ssl=False)
-        self.players = ["Ciszkoo", "LikeBanana", "MEGACH0NKER", "SwagettiYoloneze", "Sabijak", "Xubeks"]
+        self.players = [
+            "Ciszkoo",
+            "LikeBanana",
+            "MEGACH0NKER",
+            "SwagettiYoloneze",
+            "Sabijak",
+            "Xubeks",
+            "Nowik6300",
+            "GodRevi"
+        ]
         self.glossary = Glossary(self, "rito.json")
 
         self.events = {}
@@ -50,13 +59,17 @@ class Rito(MyCog, name="rito"):
 
     async def get_all_data(self):
         url = f"{self.url_base}allgamedata"
-        async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=False)) as session:
+        async with aiohttp.ClientSession(
+            connector=aiohttp.TCPConnector(ssl=False)
+        ) as session:
             async with session.get(url) as resp:
                 return await resp.json()
 
     async def get_all_events(self):
         url = f"{self.url_base}eventdata"
-        async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=False)) as session:
+        async with aiohttp.ClientSession(
+            connector=aiohttp.TCPConnector(ssl=False)
+        ) as session:
             async with session.get(url) as resp:
                 try:
                     data = await resp.json()
@@ -70,7 +83,9 @@ class Rito(MyCog, name="rito"):
     async def in_game(self):
         url = f"{self.url_base}eventdata"
         try:
-            async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=False)) as session:
+            async with aiohttp.ClientSession(
+                connector=aiohttp.TCPConnector(ssl=False)
+            ) as session:
                 async with session.get(url, timeout=3) as resp:
                     x = await resp.json()
                     if x:
@@ -92,7 +107,9 @@ class Rito(MyCog, name="rito"):
             return None
         to_ret = []
         try:
-            if not (diff := DeepDiff(events_prev, events).get("iterable_item_added", None)):
+            if not (
+                diff := DeepDiff(events_prev, events).get("iterable_item_added", None)
+            ):
                 return None
             for event in diff.values():
                 if not (processed := self.handle_event(event)):
@@ -124,10 +141,15 @@ class Rito(MyCog, name="rito"):
                 event["EventName"] = "QuadraKill"
             elif int(event["KillStreak"]) == 5:
                 event["EventName"] = "PentaKill"
-        elif event["EventName"] == "ChampionKill" and event["VictimName"] in self.players:
+        elif (
+            event["EventName"] == "ChampionKill" and event["VictimName"] in self.players
+        ):
             event["EventName"] = "ChampionDeath"
             event["Who"] = event["VictimName"]
-        elif event["EventName"] in ["DragonKill", "HeraldKill", "BaronKill"] and event["Stolen"] == "True":
+        elif (
+            event["EventName"] in ["DragonKill", "HeraldKill", "BaronKill"]
+            and event["Stolen"] == "True"
+        ):
             event["EventName"] = event["EventName"].replace("Kill", "Steal")
         return event
 
@@ -140,7 +162,9 @@ class Rito(MyCog, name="rito"):
                     user, _ = self.glossary.get_value("player_transcript", player)
                     msg, msg_placeholders = self.glossary.get_random(event_name)
                     scope = locals()
-                    msg = replace_all(msg, {f"{{{p}}}": eval(p, scope) for p in msg_placeholders})
+                    msg = replace_all(
+                        msg, {f"{{{p}}}": eval(p, scope) for p in msg_placeholders}
+                    )
                     return msg
         else:
             return None

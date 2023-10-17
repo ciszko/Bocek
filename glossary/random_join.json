@@ -95,6 +95,33 @@
         "Gdzie mnie z tym szprajem, gamoniu!",
         "Kaczka to max, co może z ciebie być, {user}",
         "{user} jest miękki",
-        "tak właśnie spierdalam, ssijcie kutwy moje smocze jaja"
+        "tak właśnie spierdalam, ssijcie kutwy moje smocze jaja",
+        "ej {user} weź stąd wyjdź",
+        "ej {user} chodź na priw",
+        "proces samodestrukcji nastąpi za pięć. cztery. trzy. dwa. jeden.",
+        "ale bym ojebał kebsa",
+        "mieszkańcy korinis ogłasza się co następuje: {user} ma małego pindolka.",
+        "{user}, zostaniesz moim kolegą?",
+        "gdybym tylko miał siurdolka to bym sobie go dotknął",
+        "lubię chłopców",
+        "jesteś taka ładna {user}",
+        "bosz, {user} jaki ty jesteś brzydki"
+    ],
+    "activity_game": [
+        "Masturbator 2020",
+        "Jakieś hentajce",
+        "gre",
+        "gejowe anonse",
+        "na fortepianie"
+    ],
+    "activity_streaming": [
+        "Just chatting",
+        "Pornoski"
+    ],
+    "activity_custom": [
+        "przyglądam się ludziom",
+        "planuje jak zniszczyć świat",
+        "dawaj wejdź na kanał",
+        "no cześć maleńka"
     ]
 }
