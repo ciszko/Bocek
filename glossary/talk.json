@@ -94,7 +94,8 @@
         "{user} jestem tu specjalnie dla ciebie!",
         "Cześc {user}, jestem Bocek, mor lajk {self.get_rhyme('bocek')}",
         "Halo halo",
-        "Nooooooooooo, w końcu wszedłeś {user}"
+        "Nooooooooooo, w końcu wszedłeś {user}",
+        "Cześć maleńka, jestem bocek."
     ],
     "bocek_huju": [
         "Ty obżydronie",
@@ -107,27 +108,6 @@
         "{user} gnido",
         "A ty masz małego pindolka {user}",
         "Jeszcze cię dopadnę {user}"
-    ],
-    "activity_0": [
-        "Masturbator 2020",
-        "Jakieś hentajce"
-    ],
-    "activity_1": [
-        "Just chatting",
-        "Pornoski"
-    ],
-    "activity_2": [
-        "dałnów z kanału",
-        "ASMR"
-    ],
-    "activity_3": [
-        "siusiaki",
-        "twojego starego"
-    ],
-    "activity_5": [
-        "Masturbacji na czas",
-        "Rzyganiu na odległość",
-        "Zawodach na najkrótszego członka"
     ],
     "siusiak": [
         "potężnego",
@@ -150,6 +130,13 @@
         "takiego o",
         "wklęsłego",
         "malutkiego",
-        "niezłego"
+        "niezłego",
+        "obślizgłego",
+        "w ręce",
+        "w dupie",
+        "gładkiego",
+        "czarnego",
+        "fioletowego",
+        "obrzydliwego"
     ]
 }

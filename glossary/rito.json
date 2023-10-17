@@ -40,7 +40,8 @@
         "{user} jest boski, ma ładne włoski",
         "{user} jest chyba dobry",
         "{user} jest twardy",
-        "{user} {self.get_rhyme(user)}"
+        "{user} {self.get_rhyme(user)}",
+        "{user} {self.get_rhyme(user)} {self.get_rhyme(user)}"
     ],
     "PentaKill": [
         "{user} GIGA CZAD",
@@ -54,25 +55,27 @@
         "Cztery trupy",
         "Cztery trupy w wykonaniu {user}",
         "Dawaj pente {user}",
-        "Cztery trupy właże Ci do dupy"
+        "Cztery trupy właże Ci do dupy",
+        "Trupów cztery do cholery"
     ],
     "TripleKill": [
         "Raz dwa trzy, kapitan {user} on djuti",
         "{user} zamordował trzech typeczków",
-        "raz daw trzy, jebać kurwy"
+        "raz daw trzy, jebać kurwy",
+        "Trzy trupy w wykonaniu {user}"
     ],
     "DoubleKill": [
         "{user} zabił dwóch człowiek",
         "{user} to rasowy morderca!",
         "{user} tłucze przeciwników!",
-        "{user} rozgniótł dwa robaki"
+        "{user} rozgniótł dwa robaki",
+        "trupy dwa, {user} sra"
     ],
     "BaronSteal": [
         "Mamy barona, brawo {user}",
         "{user} to rasowy kradziej!",
         "Łapcie złodzieja",
-        "{user} ukradnij mi matkę",
-        "trupy dwa, {user} sra"
+        "{user} ukradnij mi matkę"
     ],
     "DragonSteal": [
         "{user} zabrał smoka!",
@@ -88,7 +91,8 @@
     "BaronKill": [
         "{user} zabił barona",
         "Baron leży, puszujemy",
-        "Brawo chłopacy"
+        "Brawo chłopacy",
+        "Baron is ded"
     ],
     "DragonKill": [
         "Smok poległ dla naszego dobra",
@@ -103,7 +107,8 @@
     "InhibKilled": [
         "Inhibjitor",
         "Super minionki nadchodzą!",
-        "Kończcie te kuropatfy"
+        "Kończcie te kuropatfy",
+        "Sorbitol maltitol inhibjitor"
     ],
     "TurretKilled": [
         "{user} zniszczył tureta",
@@ -121,7 +126,9 @@
         "pierwsza krew, umyj zlew",
         "ferst blaaadi fejker",
         "pierwsza krew, brudny jak chlew",
-        "zaczęło się mordowanko"
+        "zaczęło się mordowanko",
+        "pierwsza krew rozlana, otwieramy szampana!",
+        "o bogowie! Walka!"
     ],
     "player_transcript": {
         "Ciszkoo": "ciszko",
@@ -129,6 +136,8 @@
         "MEGACH0NKER": "megaczonker",
         "SwagettiYoloneze": "słagetti",
         "Sabijak": "sabijak",
-        "Xubeks": "ksubek"
+        "Xubeks": "ksubek",
+        "Nowik6300": "nowik",
+        "GodRevi": "stolarz"
     }
 }

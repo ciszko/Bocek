@@ -229,7 +229,7 @@ class MyBot(Bot):
             log.exception(exception)
             return await context.reply(
                 "Coś poszło nie tak, chyba się zebzdziałem 💩💩💩💩."
-                "Błąd:\n" 
+                "Błąd:\n"
                 f"```{exception}```"
             )
 
@@ -239,23 +239,26 @@ class MyBot(Bot):
             """/siusiak"""
             siusiak, _ = self.glossary.get_random("siusiak")
             response = f"{interaction.user.name} ma {siusiak} siusiaka"
-            await interaction.response.send_message(response)
+            await interaction.response.defer()
             if (
                 hasattr(interaction.user.voice, "channel")
                 and interaction.user.voice.channel
             ):
                 tts = await self.tts.create_tts(response, random=True)
                 await self.play_on_channel(tts)
+            await interaction.followup.send(response)
 
         @self.tree.command(name="anus", description="anus anus nostradamus")
         async def anus(interaction: discord.Interaction):
             to_say = f"anus anus nostradamus"
+            await interaction.response.defer(ephemeral=True)
             if (
                 hasattr(interaction.user.voice, "channel")
                 and interaction.user.voice.channel
             ):
                 tts = await self.tts.create_tts(to_say, random=True)
                 await self.play_on_channel(tts)
+            await interaction.followup.send("anus")
 
 
 intents = discord.Intents.all()

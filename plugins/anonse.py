@@ -177,7 +177,7 @@ class Anonse(MyCog, name="anonse"):
                 r = self.session.get(url)
                 break
             except Exception:
-                await asyncio.sleep(0.5)
+                await asyncio.sleep(0.2)
                 continue
         dom = BeautifulSoup(r.content, "html.parser")
         return dom.find_all("div", {"class": "listaditem"})
