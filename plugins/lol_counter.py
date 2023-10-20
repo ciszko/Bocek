@@ -27,14 +27,18 @@ class LolCounter(MyCog, name="lol_counter"):
             raise Exception("Kurcze jakiś problem z serwerem jest :(")
 
         dom = BeautifulSoup(r.content, "html.parser")
-        return [x["url"] for x in dom.find_all("div", {"class": "champion-icon champList"})]
+        return [
+            x["url"] for x in dom.find_all("div", {"class": "champion-icon champList"})
+        ]
 
     def get_closest_champion(self, champion):
         if not (champ := next(iter(get_close_matches(champion, self.champions)), None)):
             raise Exception(f"Kurde, nie znam takiego czempiona jak {champion}")
         return champ
 
-    @app_commands.command(name="counter", description="Zwraca x kontr na daną postać: $counter jinx x")
+    @app_commands.command(
+        name="counter", description="Zwraca X kontr na daną postać: /counter jinx X"
+    )
     async def counter(self, interaction: Interaction, champion: str, limit: int = 10):
         await interaction.response.defer()
         champion, counters = await self.get_lol_counters(champion, limit)
@@ -67,10 +71,16 @@ class LolCounter(MyCog, name="lol_counter"):
         worst = self.get_champs_percentage(worst_picks)
 
         table1 = tabulate(
-            [["Champion", "Punkty", "% win"], *best[:limit]], headers="firstrow", tablefmt="github", floatfmt=".1f"
+            [["Champion", "Punkty", "% win"], *best[:limit]],
+            headers="firstrow",
+            tablefmt="github",
+            floatfmt=".1f",
         )
         table2 = tabulate(
-            [["Champion", "Punkty", "% win"], *worst[:limit]], headers="firstrow", tablefmt="github", floatfmt=".1f"
+            [["Champion", "Punkty", "% win"], *worst[:limit]],
+            headers="firstrow",
+            tablefmt="github",
+            floatfmt=".1f",
         )
 
         return champion, [table1, table2]

@@ -15,12 +15,12 @@ class Rito(MyCog, name="rito"):
         self.players = [
             "Ciszkoo",
             "LikeBanana",
-            "MEGACH0NKER",
+            "Chonkey",
             "SwagettiYoloneze",
             "Sabijak",
             "Xubeks",
             "Nowik6300",
-            "GodRevi"
+            "GodRevi",
         ]
         self.glossary = Glossary(self, "rito.json")
 
