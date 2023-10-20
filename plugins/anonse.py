@@ -1,6 +1,9 @@
-from enum import Enum
+from __future__ import annotations
+
+from dataclasses import dataclass, field
 import re
 import asyncio
+from typing import Optional
 from bs4 import BeautifulSoup
 import discord
 from discord import app_commands, Interaction
@@ -12,6 +15,7 @@ from .common import MyCog
 from .log import log
 from core.session import Session
 
+BASE_URL = "https://anonse.inaczej.pl"
 
 CategoryChoices = [
     Choice(name="ogolne", value="1"),
@@ -52,14 +56,47 @@ RegionChoices = [
 ]
 
 
+@dataclass
+class AnonseAd:
+    author: str
+    text: str
+    image: Optional[str]
+    location: str
+    date: str
+    age: Optional[str]
+    footer: str = field(init=False)
+
+    def __post_init__(self):
+        self.footer = "\n".join((x for x in [self.age, self.location, self.date] if x))
+
+    @classmethod
+    def from_html(cls, html) -> AnonseAd:
+        image = html.find("a", {"class": "fancybox"})
+        image = BASE_URL + image["href"] if image else None
+        text = html.find("div", {"class": "adcontent"}).get_text().strip()
+        author = html.find("i", {"class": "icon-user"}).next_sibling.strip()
+        location = html.find("i", {"class": "icon-location-arrow"}).next_sibling
+        date = html.find("i", {"class": "icon-calendar"}).next_sibling
+        age = html.find("i", {"class": "icon-leaf"})
+        age = age.next_sibling if age else ""
+
+        return cls(
+            author=author,
+            text=text,
+            image=image,
+            location=location,
+            date=date,
+            age=age,
+        )
+
+
 class Anonse(MyCog, name="anonse"):
     name = "anonse"
 
     def __init__(self, bot):
         self.bot = bot
-        self.base_url = "https://anonse.inaczej.pl"
         headers = {"User-Agent": "Bocek/1.0"}
-        self.session = Session(self.base_url, headers)
+        self.session = Session(BASE_URL, headers)
 
     class DeleteImageButton(discord.ui.View):
         def __init__(self, *, msg=None, img=None, embed=None):
@@ -112,28 +149,25 @@ class Anonse(MyCog, name="anonse"):
             reg = next(r.name for r in RegionChoices if r.value == region)
 
             title = f"Kategoria: *{cat}*, region: *{reg}*"
-            footer = "\n".join(
-                (x for x in [anonse["age"], anonse["location"], anonse["date"]] if x)
-            )
             embed = discord.Embed(
-                title=title, description=anonse["text"], color=discord.Color.fuchsia()
+                title=title, description=anonse.text, color=discord.Color.fuchsia()
             )
-            embed.set_author(name=anonse["author"])
-            log.info(anonse["image"])
-            embed.set_image(url=anonse["image"])
-            embed.set_footer(text=footer)
+            embed.set_author(name=anonse.author)
+            log.info(anonse.image)
+            embed.set_image(url=anonse.image)
+            embed.set_footer(text=anonse.footer)
 
             # add button only when image pops up
             view = (
                 Anonse.DeleteImageButton(
-                    msg=anonse["text"], img=anonse["image"], embed=deepcopy(embed)
+                    msg=anonse.text, img=anonse.image, embed=deepcopy(embed)
                 )
-                if anonse["image"]
+                if anonse.image
                 else discord.utils.MISSING
             )
 
             await interaction.followup.send(embed=embed, view=view)
-            tts = await self.bot.tts.create_tts(anonse["text"], random=True)
+            tts = await self.bot.tts.create_tts(anonse.text, random=True)
             await self.bot.play_on_channel(tts)
         else:
             msg = f"{interaction.user.name}, nie jesteś nawet na kanale..."
@@ -143,28 +177,12 @@ class Anonse(MyCog, name="anonse"):
         for i in [1, 2, 3, 4, 30]:
             page = randint(1, int(30 / i))
             anonse_list = await self.get_anonses(page, cat, region)
-            to_ret = {}
             if anonse_list:
                 anonse_item = choice(anonse_list)
-                image = anonse_item.find("a", {"class": "fancybox"})
-                to_ret["image"] = f"{self.base_url}/" + image["href"] if image else None
-                to_ret["text"] = (
-                    anonse_item.find("div", {"class": "adcontent"}).get_text().strip()
-                )
-                to_ret["author"] = anonse_item.find(
-                    "i", {"class": "icon-user"}
-                ).next_sibling.strip()
-                to_ret["location"] = anonse_item.find(
-                    "i", {"class": "icon-location-arrow"}
-                ).next_sibling
-                to_ret["date"] = anonse_item.find(
-                    "i", {"class": "icon-calendar"}
-                ).next_sibling
-                age = anonse_item.find("i", {"class": "icon-leaf"})
-                to_ret["age"] = age.next_sibling if age else ""
+                anonse_ad = AnonseAd.from_html(anonse_item)
 
-                log.info(f"ANONSE: page={page}, cat={cat}, {to_ret['text']}")
-                return to_ret
+                log.info(f"ANONSE: page={page}, cat={cat}, {anonse_ad}")
+                return anonse_ad
         else:
             return await interaction.followup.send("Kurde, zebzdziałem się")
 
