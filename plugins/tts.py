@@ -53,8 +53,7 @@ class Tts(MyCog, name="tts"):
         await interaction.followup.send(file=File(tts))
 
     async def create_tts(self, *args, **kwargs):
-        if "random" in kwargs:
-            kwargs.pop("random")
+        if kwargs.pop("random", None):
             kwargs = self.get_random_voice()
         log.info(f"TTS args {args=}, {kwargs=}")
         return await self.tts_google(*args, **kwargs)
@@ -89,15 +88,14 @@ class Tts(MyCog, name="tts"):
             speaking_rate=speaking_rate,
         )
         # generate response
-        try:
-            response = self.client.synthesize_speech(
-                input=tts, voice=voice_params, audio_config=audio_config
-            )
-        except Exception as exc:
-            log.exception(exc)
-            response = self.client.synthesize_speech(
-                input=tts, voice=voice_params, audio_config=audio_config
-            )
+        for _ in range(2):
+            try:
+                response = self.client.synthesize_speech(
+                    input=tts, voice=voice_params, audio_config=audio_config
+                )
+                break
+            except Exception as exc:
+                log.exception(exc)
         # save the response
         tts_path = MP3_DIR / f"{uuid4().hex[:10]}.mp3"
         with tts_path.open("wb") as out:
