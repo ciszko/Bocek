@@ -69,7 +69,11 @@
         "Euro Neuro",
         "{user} klaskaj czołem!",
         "cisne tego cwela, dzisiaj wskrzeszamy adolfa hitlera",
-        "czy ktoś chcę laktokontrol?"
+        "czy ktoś chcę laktokontrol?",
+        "wbijam na bombsajt A., kolejny terro padł",
+        "Ale jesteś piękny {user}",
+        "Jestem raperem, prawie jak {self.get_rhyme('raperem')}",
+        "Mam ochotę uderzyć cię w jajko {user}"
     ],
     "greetings": [
         "Siemanko {user}",
