@@ -228,7 +228,7 @@ class MyBot(Bot):
         else:
             log.exception(exception)
             return await context.reply(
-                "Coś poszło nie tak, chyba się zebzdziałem 💩💩💩💩."
+                "Coś poszło nie tak, chyba się zebzdziałem :shaking_face:."
                 "Błąd:\n"
                 f"```{exception}```"
             )

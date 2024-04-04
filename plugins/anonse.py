@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 import re
 import asyncio
-from typing import Optional
+from typing import List, Optional
 from bs4 import BeautifulSoup
 import discord
 from discord import app_commands, Interaction
@@ -55,6 +55,8 @@ RegionChoices = [
     Choice(name="zagranica", value="18"),
 ]
 
+SiurdolChoices = [Choice(name="tak", value="tak"), Choice(name="może", value="może")]
+
 
 @dataclass
 class AnonseAd:
@@ -72,7 +74,7 @@ class AnonseAd:
     @classmethod
     def from_html(cls, html) -> AnonseAd:
         image = html.find("a", {"class": "fancybox"})
-        image = BASE_URL + image["href"] if image else None
+        image = "/".join((BASE_URL, image["href"])) if image else None
         text = html.find("div", {"class": "adcontent"}).get_text().strip()
         author = html.find("i", {"class": "icon-user"}).next_sibling.strip()
         location = html.find("i", {"class": "icon-location-arrow"}).next_sibling
@@ -130,20 +132,23 @@ class Anonse(MyCog, name="anonse"):
     )
     @app_commands.describe(kategoria="Kategoria z której szukać anonsa")
     @app_commands.describe(region="Region z którego szukać anonsa")
+    @app_commands.describe(siurdol="Wymusza siurdola")
     @app_commands.choices(kategoria=CategoryChoices)
     @app_commands.choices(region=RegionChoices)
+    @app_commands.choices(siurdol=SiurdolChoices)
     async def anonse(
         self,
         interaction: Interaction,
         kategoria: app_commands.Choice[str] = "7",
         region: app_commands.Choice[str] = "0",
+        siurdol: Optional[str] = "może",
     ):
         await interaction.response.defer()
         if interaction.user.voice:
             log.info(f"{kategoria=}, {region=}")
             kategoria = kategoria if type(kategoria) == str else kategoria.value
             region = region if type(region) == str else region.value
-            anonse = await self.get_anonse(interaction, kategoria, region)
+            anonse = await self.get_anonse(interaction, kategoria, region, siurdol)
 
             cat = next(c.name for c in CategoryChoices if c.value == kategoria)
             reg = next(r.name for r in RegionChoices if r.value == region)
@@ -173,20 +178,27 @@ class Anonse(MyCog, name="anonse"):
             msg = f"{interaction.user.name}, nie jesteś nawet na kanale..."
             await interaction.response.send_message(msg)
 
-    async def get_anonse(self, interaction, cat, region):
+    async def get_anonse(self, interaction, cat, region, siurdol):
         for i in [1, 2, 3, 4, 30]:
             page = randint(1, int(30 / i))
-            anonse_list = await self.get_anonses(page, cat, region)
-            if anonse_list:
-                anonse_item = choice(anonse_list)
-                anonse_ad = AnonseAd.from_html(anonse_item)
+            anonses = await self.get_anonses(page, cat, region)
+            if not anonses:
+                continue
+            if siurdol == "tak":
+                anonses = [a for a in anonses if AnonseAd.from_html(a).image]
+                if not anonses:
+                    continue
+            anonse_item = choice(anonses)
+            anonse_ad = AnonseAd.from_html(anonse_item)
 
-                log.info(f"ANONSE: page={page}, cat={cat}, {anonse_ad}")
-                return anonse_ad
+            log.info(f"ANONSE: page={page}, cat={cat}, {anonse_ad}")
+            return anonse_ad
         else:
-            return await interaction.followup.send("Kurde, zebzdziałem się")
+            return await interaction.followup.send(
+                "Coś nie mogę znaleźć anonsa :disappointed_relieved:"
+            )
 
-    async def get_anonses(self, page, cat, region):
+    async def get_anonses(self, page, cat, region) -> List[AnonseAd]:
         url = f"/?m=list&pg={page}&cat={cat}"
         if region != "0":
             url += f"{url}&region={region}"
@@ -197,6 +209,8 @@ class Anonse(MyCog, name="anonse"):
             except Exception:
                 await asyncio.sleep(0.2)
                 continue
+        else:
+            return None
         dom = BeautifulSoup(r.content, "html.parser")
         return dom.find_all("div", {"class": "listaditem"})
 
