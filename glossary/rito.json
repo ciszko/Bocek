@@ -92,17 +92,20 @@
         "{user} zabił barona",
         "Baron leży, puszujemy",
         "Brawo chłopacy",
-        "Baron is ded"
+        "Baron is ded",
+        "Baron bardziej jak {self.get_rhyme('baron')}"
     ],
     "DragonKill": [
         "Smok poległ dla naszego dobra",
         "Smok is ded",
         "{user} zabił smoka, palec do oka",
-        "{user} smokobijec"
+        "{user} smokobijec",
+        "Dragon bardziej jak {self.get_rhyme('dragon')}"
     ],
     "HeraldKill": [
         "{user} zabił heralda",
-        "Tylko podnieś heralda {user}"
+        "Tylko podnieś heralda {user}",
+        "Herald bardziej jak {self.get_rhyme('herald')}"
     ],
     "InhibKilled": [
         "Inhibjitor",
@@ -114,7 +117,8 @@
         "{user} zniszczył tureta",
         "{user} puszuje jak szalony",
         "{user} zniszczył tóreta, zdjedz kotleta",
-        "{user} zniszczył tureta, zdejmij napleta"
+        "{user} zniszczył tureta, zdejmij napleta",
+        "Turet bardziej jak {self.get_rhyme('turet')}"
     ],
     "Ace": [
         "no i ejsik",
@@ -138,6 +142,7 @@
         "Sabijak": "sabijak",
         "Xubeks": "ksubek",
         "Nowik6300": "nowik",
-        "GodRevi": "stolarz"
+        "GodRevi": "stolarz",
+        "Mαster Vi": "karol"
     }
 }
