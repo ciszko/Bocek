@@ -21,6 +21,7 @@ class Rito(MyCog, name="rito"):
             "Xubeks",
             "Nowik6300",
             "GodRevi",
+            "Mαster Vi",
         ]
         self.glossary = Glossary(self, "rito.json")
 
@@ -48,7 +49,7 @@ class Rito(MyCog, name="rito"):
         wait_time = 30
         while not self.bot.is_closed():
             if in_game := await self.in_game():
-                wait_time = 3
+                wait_time = 2
                 diff = await self.compare_stats()
                 if diff:
                     tts = await self.bot.tts.create_tts(diff)
