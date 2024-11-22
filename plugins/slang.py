@@ -13,7 +13,7 @@ class Slang(MyCog, name="slang"):
         self.session = Session(url, headers)
 
     @app_commands.command(name="slang", description="Losowy miejski.pl")
-    async def random_joke(self, interaction: Interaction):
+    async def slang(self, interaction: Interaction):
         await interaction.response.defer()
         r = self.session.get("/losuj")
         dom = BeautifulSoup(r.content, "html.parser")
@@ -24,8 +24,8 @@ class Slang(MyCog, name="slang"):
         log.info(msg)
         if interaction.user.voice:
             tts = await self.bot.tts.create_tts(msg)
-            await interaction.response.send_message(msg)
+            await interaction.followup.send(msg)
             await self.bot.play_on_channel(tts)
         else:
             msg = f"{interaction.user.name}, nie jesteś nawet na kanale..."
-            await interaction.response.send_message(msg)
+            await interaction.followup.send(msg)

@@ -129,7 +129,7 @@ class MyBot(Bot):
 
         await self.process_commands(message)
 
-    async def on_voice_state_update(self, member, before, after):
+    async def on_voice_state_update(self, member: discord.Member, before, after):
         if member == self.user or not self.ready:
             return
         if not hasattr(after, "channel") and not hasattr(after.channel.name):
@@ -137,7 +137,7 @@ class MyBot(Bot):
         if before.channel != after.channel and after.channel == self.voice_channel:
             await asyncio.sleep(0.75)
             to_say, placeholders = self.glossary.get_random("greetings")
-            user = member.nick if member.nick else member.name
+            user = member.display_name if member.display_name else member.name
             scope = locals()
             to_say = replace_all(
                 to_say, {f"{{{p}}}": eval(p, scope) for p in placeholders}
@@ -166,7 +166,7 @@ class MyBot(Bot):
         #     return
         if not self.ready:
             return
-        if len(self.voice_channel.members) == 0 and self.vc:
+        if len(self.voice_channel.members) <= 1 and self.vc:
             try:
                 await self.disconnect_from_voice()
             except Exception as e:
@@ -219,7 +219,7 @@ class MyBot(Bot):
             await context.message.add_reaction("❓")
             if closest_match:
                 return await msg.reply(
-                    f"Grube paluszki :( Czy chodziło Ci o **${closest_match[0]}**?"
+                    f"Grube paluszki :( Czy chodziło Ci o **/{closest_match[0]}**?"
                 )
             else:
                 return await msg.reply(

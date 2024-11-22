@@ -124,11 +124,12 @@ class Anonse(MyCog, name="anonse"):
                 )
             )
             self.embed.set_image(url=None)
-            await interaction.response.edit_message(embed=self.embed, view=self)
+            await interaction.message.edit(embed=self.embed, view=self)
+            await interaction.response.defer()
 
     @app_commands.command(
         name="anonse",
-        description='Zwraca losowe gejowe anonse z wybranej kategorii. Default: $anonse "fetysze"',
+        description='Zwraca losowe gejowe anonse z wybranej kategorii. Default: /anonse "fetysze"',
     )
     @app_commands.describe(kategoria="Kategoria z której szukać anonsa")
     @app_commands.describe(region="Region z którego szukać anonsa")
