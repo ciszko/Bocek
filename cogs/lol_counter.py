@@ -2,29 +2,29 @@ from bs4 import BeautifulSoup
 from discord import app_commands, Interaction, Embed, Color
 from tabulate import tabulate
 from difflib import get_close_matches
-from functools import cached_property
-from .common import async_wrap, MyCog
-from .log import log
-from core.session import Session
+from utils.common import RhymeExtension
+from utils.log import log
+from utils.session import Session
 from typing import Dict, List
+from async_property import async_cached_property
+from discord.ext.commands import Cog
 
 
-class LolCounter(MyCog, name="lol_counter"):
+class LolCounter(RhymeExtension, Cog, name="lol_counter"):
     def __init__(self, bot):
         self.bot = bot
         headers = {"User-Agent": "Bocek/1.0"}
         self.base_url = "https://www.counterstats.net"
         self.session = Session(self.base_url, headers)
-        self.champions
 
-    @cached_property
-    def champions(self) -> Dict[str, str]:
+    @async_cached_property
+    async def champions(self) -> Dict[str, str]:
         try:
-            r = self.session.get("")
+            r = await self.session.get("")
         except Exception:
             return {"": ""}
 
-        dom = BeautifulSoup(r.content, "html.parser")
+        dom = BeautifulSoup(r, "html.parser")
         champion_divs = dom.find_all("div", {"class": "champion-icon champList"})
         champs = {}
         for champion_div in champion_divs:
@@ -48,6 +48,7 @@ class LolCounter(MyCog, name="lol_counter"):
         interaction: Interaction,
         current: str,
     ) -> List[app_commands.Choice[str]]:
+        await self.champions
         return [
             app_commands.Choice(name=champion, value=url)
             for champion, url in self.champions.items()
@@ -75,16 +76,15 @@ class LolCounter(MyCog, name="lol_counter"):
         embed.set_thumbnail(url=img)
         await interaction.followup.send(embed=embed)
 
-    @async_wrap
-    def get_lol_counters(self, champion, limit=10):
+    async def get_lol_counters(self, champion, limit=10):
         champion = self.get_closest_champion(champion)
         url = f"/league-of-legends/{champion}"
         try:
-            r = self.session.get(url)
+            r = await self.session.get(url)
         except Exception:
             raise Exception("Kurcze jakiś problem z serwerem jest :(")
 
-        dom = BeautifulSoup(r.content, "html.parser")
+        dom = BeautifulSoup(r, "html.parser")
 
         img = dom.find("img", {"class": "icon"})["src"]
         all_h3 = dom.find_all("h3")
@@ -102,7 +102,7 @@ class LolCounter(MyCog, name="lol_counter"):
             headers="firstrow",
             tablefmt="github",
             floatfmt=".1f",
-            colalign=("left", "center", "center"),
+            colalign=("left", "center"),
         )
 
         return champion, img, table

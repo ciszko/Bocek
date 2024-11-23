@@ -1,40 +1,47 @@
 from pathlib import Path
+from typing import List
+from async_property import async_cached_property
 from discord import app_commands, Interaction
 from discord.app_commands import Choice
 from discord import File
 from google.cloud import texttospeech
+from google.api_core.retry_async import AsyncRetry
 import random
-from .common import async_wrap, MyCog, MP3_DIR
+from utils.common import async_wrap, RhymeExtension, MP3_DIR
 from uuid import uuid4
-from .log import log
+from utils.log import log
+from discord.ext.commands import Cog
 
 
-VOICE_CHOICES = [
-    "pl-PL-Wavenet-A",
-    "pl-PL-Wavenet-B",
-    "pl-PL-Wavenet-C",
-    "pl-PL-Wavenet-D",
-    "pl-PL-Wavenet-E",
-]
-
-VoiceChoices = [
-    Choice(name="upośledzona kobieta", value=VOICE_CHOICES[0]),
-    Choice(name="bocek", value=VOICE_CHOICES[1]),
-    Choice(name="upośledzony", value=VOICE_CHOICES[2]),
-    Choice(name="dziecko", value=VOICE_CHOICES[3]),
-    Choice(name="kobieta", value=VOICE_CHOICES[4]),
-]
-
-
-class Tts(MyCog, name="tts"):
+class Tts(RhymeExtension, Cog, name="tts"):
     def __init__(self, bot):
         self.bot = bot
-        self.client = texttospeech.TextToSpeechClient()
+        self.client = texttospeech.TextToSpeechAsyncClient()
+
+    @async_cached_property
+    async def voices(self):
+        voices_resp = await self.client.list_voices(language_code="pl-PL")
+        # "F" voices are bugged
+        return {
+            f"{v.name}-{v.ssml_gender.name}": v.name
+            for v in voices_resp.voices
+            if "F" not in v.name
+        }
+
+    async def voices_autocomplete(
+        self, interaction, current: str
+    ) -> List[app_commands.Choice[str]]:
+        await self.voices
+        return [
+            app_commands.Choice(name=voice_name, value=value)
+            for voice_name, value in self.voices.items()
+            if current.lower() in voice_name.lower()
+        ]
 
     @app_commands.command(name="tts", description="Wysyła plik z nagraniem.")
     @app_commands.describe(text="Tekst do powiedzenia")
     @app_commands.describe(pitch="Wysokość głosu")
-    @app_commands.choices(voice=VoiceChoices)
+    @app_commands.autocomplete(voice=voices_autocomplete)
     @app_commands.describe(volume="Głośność")
     @app_commands.describe(speaking_rate="Szybkość mówienia")
     async def tts(
@@ -42,13 +49,23 @@ class Tts(MyCog, name="tts"):
         interaction: Interaction,
         text: str,
         pitch: app_commands.Range[float, -20.0, 20.0] = 0,
-        voice: app_commands.Choice[str] = "pl-PL-Wavenet-B",
+        voice: str = "pl-PL-Wavenet-B",
         volume: app_commands.Range[float, 0.0, 1.0] = 0,
         speaking_rate: app_commands.Range[float, 0.25, 4.0] = 0.9,
     ):
         await interaction.response.defer()
         voice = voice if type(voice) == str else voice.value
-        tts = await self.create_tts(text, pitch, voice, volume, speaking_rate)
+        tts = await self.create_tts(
+            text=text,
+            pitch=pitch,
+            voice=voice,
+            volume=volume,
+            speaking_rate=speaking_rate,
+        )
+        if tts is None:
+            await interaction.followup.send(
+                "Mam sucho w gardle, nie mogę tego powiedzieć"
+            )
 
         await interaction.followup.send(file=File(tts))
 
@@ -58,8 +75,7 @@ class Tts(MyCog, name="tts"):
         log.info(f"TTS args {args=}, {kwargs=}")
         return await self.tts_google(*args, **kwargs)
 
-    @async_wrap
-    def tts_google(
+    async def tts_google(
         self,
         text,
         pitch=0.0,
@@ -88,14 +104,19 @@ class Tts(MyCog, name="tts"):
             speaking_rate=speaking_rate,
         )
         # generate response
-        for _ in range(2):
-            try:
-                response = self.client.synthesize_speech(
-                    input=tts, voice=voice_params, audio_config=audio_config
-                )
-                break
-            except Exception as exc:
-                log.exception(exc)
+        retry = AsyncRetry(initial=0.1, multiplier=2, deadline=10)
+        response = None
+        try:
+            response = await self.client.synthesize_speech(
+                input=tts,
+                voice=voice_params,
+                audio_config=audio_config,
+                retry=retry,
+            )
+        except Exception as exc:
+            log.exception(exc)
+        if response is None:
+            return None
         # save the response
         tts_path = MP3_DIR / f"{uuid4().hex[:10]}.mp3"
         with tts_path.open("wb") as out:
@@ -125,7 +146,7 @@ class Tts(MyCog, name="tts"):
     def get_random_voice(self, **kwargs):
         return {
             **kwargs,
-            "voice": random.choice(VOICE_CHOICES),
+            "voice": random.choice(self.voices),
             "pitch": random.uniform(-20, 20),
             "speaking_rate": random.uniform(0.85, 1.0),
         }
