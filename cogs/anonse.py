@@ -7,13 +7,14 @@ from typing import List, Optional
 from bs4 import BeautifulSoup
 import discord
 from discord import app_commands, Interaction
+from discord.ext.commands import Cog
 from discord.app_commands import Choice
 from random import choice, randint
 from copy import deepcopy
 
-from .common import MyCog
-from .log import log
-from core.session import Session
+from utils.common import RhymeExtension
+from utils.log import log
+from utils.session import Session
 
 BASE_URL = "https://anonse.inaczej.pl"
 
@@ -92,7 +93,7 @@ class AnonseAd:
         )
 
 
-class Anonse(MyCog, name="anonse"):
+class Anonse(RhymeExtension, Cog, name="anonse"):
     name = "anonse"
 
     def __init__(self, bot):
@@ -177,7 +178,7 @@ class Anonse(MyCog, name="anonse"):
             await self.bot.play_on_channel(tts)
         else:
             msg = f"{interaction.user.name}, nie jesteś nawet na kanale..."
-            await interaction.response.send_message(msg)
+            await interaction.followup.send(msg)
 
     async def get_anonse(self, interaction, cat, region, siurdol):
         for i in [1, 2, 3, 4, 30]:
@@ -203,16 +204,11 @@ class Anonse(MyCog, name="anonse"):
         url = f"/?m=list&pg={page}&cat={cat}"
         if region != "0":
             url += f"{url}&region={region}"
-        for _ in range(3):
-            try:
-                r = self.session.get(url)
-                break
-            except Exception:
-                await asyncio.sleep(0.2)
-                continue
-        else:
+        try:
+            r = await self.session.get(url)
+        except Exception:
             return None
-        dom = BeautifulSoup(r.content, "html.parser")
+        dom = BeautifulSoup(r, "html.parser")
         return dom.find_all("div", {"class": "listaditem"})
 
     def replace_numbers(self, msg):

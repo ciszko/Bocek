@@ -1,11 +1,12 @@
 from bs4 import BeautifulSoup
-from .log import log
+from utils.log import log
 from discord import app_commands, Interaction
-from .common import MyCog
-from core.session import Session
+from utils.common import RhymeExtension
+from utils.session import Session
+from discord.ext.commands import Cog
 
 
-class Slang(MyCog, name="slang"):
+class Slang(RhymeExtension, Cog, name="slang"):
     def __init__(self, bot):
         self.bot = bot
         headers = {"User-Agent": "Bocek/1.0"}
@@ -15,8 +16,8 @@ class Slang(MyCog, name="slang"):
     @app_commands.command(name="slang", description="Losowy miejski.pl")
     async def slang(self, interaction: Interaction):
         await interaction.response.defer()
-        r = self.session.get("/losuj")
-        dom = BeautifulSoup(r.content, "html.parser")
+        r = await self.session.get("/losuj")
+        dom = BeautifulSoup(r, "html.parser")
         article = dom.find("article")
         word = article.find("h1").text
         desc = article.find("p").text.replace("\r\n", "").strip()
@@ -27,5 +28,4 @@ class Slang(MyCog, name="slang"):
             await interaction.followup.send(msg)
             await self.bot.play_on_channel(tts)
         else:
-            msg = f"{interaction.user.name}, nie jesteś nawet na kanale..."
             await interaction.followup.send(msg)

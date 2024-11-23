@@ -2,12 +2,13 @@ import aiohttp
 from deepdiff import DeepDiff
 from random import random
 import asyncio
-from .glossary import Glossary
-from .log import log
-from .common import MyCog, replace_all
+from utils.glossary import Glossary
+from utils.log import log
+from utils.common import RhymeExtension, replace_all
+from discord.ext.commands import Cog
 
 
-class Rito(MyCog, name="rito"):
+class Rito(RhymeExtension, Cog, name="rito"):
     def __init__(self, bot):
         self.bot = bot
         self.url_base = "https://192.168.0.31:29999/liveclientdata/"

@@ -21,6 +21,9 @@ grpcio = "*"
 grpcio-tools = "*"
 black = "*"
 "discord.py" = {extras = ["voice"], version = "*"}
+aiohttp = "*"
+aiohttp-retry = "*"
+async-property = "*"
 
 [dev-packages]
 autopep8 = "*"
