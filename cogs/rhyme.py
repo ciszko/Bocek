@@ -1,9 +1,9 @@
 import json
 from discord import app_commands
 from discord.ext import commands
-from .common import BASE_DIR
+from utils.common import BASE_DIR
 import random
-from .log import log
+from utils.log import log
 
 
 class Rhyme(commands.Cog, name="rhyme"):
@@ -28,7 +28,7 @@ class Rhyme(commands.Cog, name="rhyme"):
         return list(all_results)[:limit]
 
     @app_commands.command(
-        name="rym", description="Zwraca rymy do słowa. Np. $rym dupa 5"
+        name="rym", description="Zwraca rymy do słowa. Np. /rym dupa 5"
     )
     async def rhyme(self, interaction, word: str, limit: int = 10):
         rhymes = self.get_rhyme(word, limit)

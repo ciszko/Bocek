@@ -1,53 +1,43 @@
+from functools import cached_property
 import os
 import re
 import random
-from dotenv import load_dotenv
 
 import discord
 from discord import app_commands
 from discord.ext.commands import Bot
 
-from plugins.common import replace_all, BASE_DIR
-from plugins.log import log
-from plugins.lol_counter import LolCounter
-from plugins.tts import Tts
-from plugins.anonse import Anonse
-from plugins.rito import Rito
-from plugins.glossary import Glossary
-from plugins.random_event import RandomEvent
-from plugins.joke import Joke
-from plugins.rhyme import Rhyme
-from plugins.slang import Slang
-from plugins.minecraft import Minecraft
+from utils.common import RhymeExtension, replace_all, MP3_DIR, TOKEN, GUILD, FFMPEG
+from utils.log import log
+from cogs.lol_counter import LolCounter
+from cogs.tts import Tts
+from cogs.anonse import Anonse
+from cogs.rito import Rito
+from utils.glossary import Glossary
+from cogs.random_event import RandomEvent
+from cogs.joke import Joke
+from cogs.rhyme import Rhyme
+from cogs.slang import Slang
+from cogs.minecraft import Minecraft
 
-import platform
+
 import asyncio
 from difflib import get_close_matches
 from mutagen.mp3 import MP3
 from time import time
 
-load_dotenv()
-TOKEN = os.getenv("DISCORD_TOKEN")
-GUILD = os.getenv("GUILD_ID")
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = str(
-    BASE_DIR / os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
-)
 
-if platform.system() == "Windows":
-    ffmpeg = "D:/Projekt/Bocek/extras/ffmpeg.exe"
-else:
-    ffmpeg = "/usr/bin/ffmpeg"
-
-
-class MyBot(Bot):
+class MyBot(Bot, RhymeExtension):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.ready = False
         self.glossary = Glossary(self, "talk.json")
         self.channel_list = []
-        self.voice_channel_id = 283292201579184128
-        self.text_channel_id = 283292201109159947
+        self.voice_channel_id = int(os.getenv("VOICE_CHANNEL_ID"))
+        self.text_channel_id = int(os.getenv("TEXT_CHANNEL_ID"))
         self.vc = None
+        if not MP3_DIR.exists():
+            os.makedirs(MP3_DIR)
 
     async def setup_hook(self):
         cogs = [
@@ -72,13 +62,13 @@ class MyBot(Bot):
         self.tree.copy_global_to(guild=guild)
         await self.tree.sync(guild=guild)
 
-    @property
+    @cached_property
     def voice_channel(self):
         return next(
             (c for c in self.channel_list if c.id == self.voice_channel_id), None
         )
 
-    @property
+    @cached_property
     def text_channel(self):
         return next((c for c in self.channel_list if c.id == self.id), None)
 
@@ -91,12 +81,6 @@ class MyBot(Bot):
             cog_name = cog.__cog_name__
             setattr(self, cog_name, self.get_cog(cog_name))
             log.info(f"Registered {cog.__name__} as a cog")
-
-    def get_rhyme(self, text):
-        to_ret = ""
-        if to_ret := self.rhyme.get_rhyme(text):
-            to_ret = random.choice(to_ret)
-        return to_ret
 
     async def on_message(self, message):
         if message.author == self.user:
@@ -137,7 +121,7 @@ class MyBot(Bot):
         if before.channel != after.channel and after.channel == self.voice_channel:
             await asyncio.sleep(0.75)
             to_say, placeholders = self.glossary.get_random("greetings")
-            user = member.display_name if member.display_name else member.name
+            user = member.name
             scope = locals()
             to_say = replace_all(
                 to_say, {f"{{{p}}}": eval(p, scope) for p in placeholders}
@@ -186,7 +170,7 @@ class MyBot(Bot):
         try:
             self.vc.play(
                 discord.FFmpegOpusAudio(
-                    executable=ffmpeg, source=message, options="-loglevel panic"
+                    executable=FFMPEG, source=message, options="-loglevel panic"
                 )
             )
         except discord.errors.ClientException:
@@ -194,7 +178,7 @@ class MyBot(Bot):
             self.vc = await self.voice_channel.connect()
             self.vc.play(
                 discord.FFmpegOpusAudio(
-                    executable=ffmpeg, source=message, options="-loglevel panic"
+                    executable=FFMPEG, source=message, options="-loglevel panic"
                 )
             )
         timeout = time() + duration + 1  # timeout is audio duration + 1s
@@ -261,7 +245,7 @@ class MyBot(Bot):
             await interaction.followup.send("anus")
 
 
-intents = discord.Intents.all()
-bot = MyBot(command_prefix="$", intents=intents)
-
-bot.run(TOKEN, log_handler=None)
+if __name__ == "__main__":
+    intents = discord.Intents.all()
+    bot = MyBot(command_prefix="$", intents=intents)
+    bot.run(TOKEN, log_handler=None)

@@ -2,13 +2,14 @@ from datetime import timedelta, datetime
 from discord import app_commands, Interaction, CustomActivity, Game, Streaming
 from discord.ext import commands
 import asyncio
-from .glossary import Glossary
+from utils.glossary import Glossary
 from random import choice, randint
-from .log import log
-from .common import MyCog, replace_all
+from utils.log import log
+from utils.common import RhymeExtension, replace_all
+from discord.ext.commands import Cog
 
 
-class RandomEvent(MyCog, name="random_event"):
+class RandomEvent(RhymeExtension, Cog, name="random_event"):
     def __init__(self, bot: commands.Bot):
         self.bot: commands.Bot = bot
         self.glossary = Glossary(self, "random_join.json")
