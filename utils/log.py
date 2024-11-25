@@ -1,10 +1,10 @@
 import logging
 import logging.handlers
+
 import discord
 
 
 class CustomFormatter(logging.Formatter):
-
     grey = "\x1b[38;20m"
     yellow = "\x1b[33;20m"
     blue = "\x1b[36;20m"

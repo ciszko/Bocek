@@ -1,11 +1,13 @@
+import asyncio
+from random import random
+
 import aiohttp
 from deepdiff import DeepDiff
-from random import random
-import asyncio
+from discord.ext.commands import Cog
+
+from utils.common import RhymeExtension, replace_all
 from utils.glossary import Glossary
 from utils.log import log
-from utils.common import RhymeExtension, replace_all
-from discord.ext.commands import Cog
 
 
 class Rito(RhymeExtension, Cog, name="rito"):
@@ -49,7 +51,7 @@ class Rito(RhymeExtension, Cog, name="rito"):
         await self.bot.wait_until_ready()
         wait_time = 30
         while not self.bot.is_closed():
-            if in_game := await self.in_game():
+            if await self.in_game():
                 wait_time = 2
                 diff = await self.compare_stats()
                 if diff:

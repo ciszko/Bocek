@@ -1,13 +1,15 @@
-from bs4 import BeautifulSoup
-from discord import app_commands, Interaction, Embed, Color
-from tabulate import tabulate
 from difflib import get_close_matches
+from typing import Dict, List
+
+from async_property import async_cached_property
+from bs4 import BeautifulSoup
+from discord import Color, Embed, Interaction, app_commands
+from discord.ext.commands import Cog
+from tabulate import tabulate
+
 from utils.common import RhymeExtension
 from utils.log import log
 from utils.session import Session
-from typing import Dict, List
-from async_property import async_cached_property
-from discord.ext.commands import Cog
 
 
 class LolCounter(RhymeExtension, Cog, name="lol_counter"):
@@ -81,8 +83,8 @@ class LolCounter(RhymeExtension, Cog, name="lol_counter"):
         url = f"/league-of-legends/{champion}"
         try:
             r = await self.session.get(url)
-        except Exception:
-            raise Exception("Kurcze jakiś problem z serwerem jest :(")
+        except Exception as e:
+            raise Exception("Kurcze jakiś problem z serwerem jest :(") from e
 
         dom = BeautifulSoup(r, "html.parser")
 

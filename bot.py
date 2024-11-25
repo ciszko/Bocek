@@ -1,30 +1,28 @@
-from functools import cached_property
+import asyncio
 import os
-import re
 import random
+import re
+from difflib import get_close_matches
+from functools import cached_property
+from time import time
 
 import discord
 from discord import app_commands
 from discord.ext.commands import Bot
-
-from utils.common import RhymeExtension, replace_all, MP3_DIR, TOKEN, GUILD, FFMPEG
-from utils.log import log
-from cogs.lol_counter import LolCounter
-from cogs.tts import Tts
-from cogs.anonse import Anonse
-from cogs.rito import Rito
-from utils.glossary import Glossary
-from cogs.random_event import RandomEvent
-from cogs.joke import Joke
-from cogs.rhyme import Rhyme
-from cogs.slang import Slang
-from cogs.minecraft import Minecraft
-
-
-import asyncio
-from difflib import get_close_matches
 from mutagen.mp3 import MP3
-from time import time
+
+from cogs.anonse import Anonse
+from cogs.joke import Joke
+from cogs.lol_counter import LolCounter
+from cogs.minecraft import Minecraft
+from cogs.random_event import RandomEvent
+from cogs.rhyme import Rhyme
+from cogs.rito import Rito
+from cogs.slang import Slang
+from cogs.tts import Tts
+from utils.common import FFMPEG, GUILD, MP3_DIR, TOKEN, RhymeExtension, replace_all
+from utils.glossary import Glossary
+from utils.log import log
 
 
 class MyBot(Bot, RhymeExtension):
@@ -196,7 +194,7 @@ class MyBot(Bot, RhymeExtension):
         log.info(f"{self.user.name} has connected to Discord!")
 
     async def on_command_error(self, context, exception):
-        if type(exception) == discord.ext.commands.errors.CommandNotFound:
+        if isinstance(exception, discord.ext.commands.errors.CommandNotFound):
             all_commands = [x.name for x in self.commands]
             msg = context.message
             closest_match = get_close_matches(msg.content, all_commands, n=1)
@@ -207,7 +205,7 @@ class MyBot(Bot, RhymeExtension):
                 )
             else:
                 return await msg.reply(
-                    f"Masz tak grube paluszki, że nie wiem o co chodzi :("
+                    "Masz tak grube paluszki, że nie wiem o co chodzi :("
                 )
         else:
             log.exception(exception)
@@ -234,7 +232,7 @@ class MyBot(Bot, RhymeExtension):
 
         @self.tree.command(name="anus", description="anus anus nostradamus")
         async def anus(interaction: discord.Interaction):
-            to_say = f"anus anus nostradamus"
+            to_say = "anus anus nostradamus"
             await interaction.response.defer(ephemeral=True)
             if (
                 hasattr(interaction.user.voice, "channel")
