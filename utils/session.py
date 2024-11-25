@@ -1,5 +1,5 @@
 from aiohttp import ClientSession
-from aiohttp_retry import RetryClient, ExponentialRetry
+from aiohttp_retry import ExponentialRetry, RetryClient
 
 
 class Session(RetryClient):

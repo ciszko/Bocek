@@ -1,12 +1,14 @@
-from datetime import timedelta, datetime
-from discord import app_commands, Interaction, CustomActivity, Game, Streaming
-from discord.ext import commands
 import asyncio
-from utils.glossary import Glossary
+from datetime import datetime, timedelta
 from random import choice, randint
-from utils.log import log
-from utils.common import RhymeExtension, replace_all
+
+from discord import CustomActivity, Game, Interaction, Streaming, app_commands
+from discord.ext import commands
 from discord.ext.commands import Cog
+
+from utils.common import RhymeExtension, replace_all
+from utils.glossary import Glossary
+from utils.log import log
 
 
 class RandomEvent(RhymeExtension, Cog, name="random_event"):

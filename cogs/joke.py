@@ -1,10 +1,11 @@
 from bs4 import BeautifulSoup
-from utils.log import log
-from discord import app_commands, Interaction
+from discord import Interaction, app_commands
 from discord.ext import commands
-from utils.common import RhymeExtension
-from utils.session import Session
 from discord.ext.commands import Cog
+
+from utils.common import RhymeExtension
+from utils.log import log
+from utils.session import Session
 
 
 class Joke(RhymeExtension, Cog, name="joke"):

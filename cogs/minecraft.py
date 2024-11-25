@@ -1,11 +1,12 @@
 import os
-from discord import app_commands, Interaction
 from functools import cached_property
+
+from discord import Interaction, app_commands
+from discord.ext.commands import Cog
 
 from utils.common import RhymeExtension
 from utils.log import log
 from utils.session import Session
-from discord.ext.commands import Cog
 
 
 class Minecraft(RhymeExtension, Cog, name="minecraft"):
@@ -49,7 +50,7 @@ class Minecraft(RhymeExtension, Cog, name="minecraft"):
         name="minecraft_kredyty", description="Zwraca ilość pozostałych kredytów"
     )
     async def minecraft_credit(self, interaction: Interaction):
-        resp = await self.session.get(f"/account").json()
+        resp = await self.session.get("/account").json()
         if resp["success"] is False:
             await interaction.response.send_message(
                 "Kurde, nie mogę wyłączyć serwerka :("

@@ -1,16 +1,17 @@
+import random
 from pathlib import Path
 from typing import List
-from async_property import async_cached_property
-from discord import app_commands, Interaction
-from discord.app_commands import Choice
-from discord import File
-from google.cloud import texttospeech
-from google.api_core.retry_async import AsyncRetry
-import random
-from utils.common import async_wrap, RhymeExtension, MP3_DIR
 from uuid import uuid4
-from utils.log import log
+
+from async_property import async_cached_property
+from discord import File, Interaction, app_commands
+from discord.app_commands import Choice
 from discord.ext.commands import Cog
+from google.api_core.retry_async import AsyncRetry
+from google.cloud import texttospeech
+
+from utils.common import MP3_DIR, RhymeExtension, async_wrap
+from utils.log import log
 
 
 class Tts(RhymeExtension, Cog, name="tts"):
@@ -54,7 +55,7 @@ class Tts(RhymeExtension, Cog, name="tts"):
         speaking_rate: app_commands.Range[float, 0.25, 4.0] = 0.9,
     ):
         await interaction.response.defer()
-        voice = voice if type(voice) == str else voice.value
+        voice = voice if type(voice) is str else voice.value
         tts = await self.create_tts(
             text=text,
             pitch=pitch,
@@ -71,7 +72,7 @@ class Tts(RhymeExtension, Cog, name="tts"):
 
     async def create_tts(self, *args, **kwargs):
         if kwargs.pop("random", None):
-            kwargs = self.get_random_voice()
+            kwargs = await self.get_random_voice()
         log.info(f"TTS args {args=}, {kwargs=}")
         return await self.tts_google(*args, **kwargs)
 
@@ -143,10 +144,11 @@ class Tts(RhymeExtension, Cog, name="tts"):
                 log.warning(f"{file} is still in use")
         return
 
-    def get_random_voice(self, **kwargs):
+    async def get_random_voice(self, **kwargs):
+        voices = await self.voices
         return {
             **kwargs,
-            "voice": random.choice(self.voices),
+            "voice": random.choice(list(voices.values())),
             "pitch": random.uniform(-20, 20),
             "speaking_rate": random.uniform(0.85, 1.0),
         }
