@@ -1,6 +1,7 @@
-import random
 import json
+import random
 import string
+
 from .common import BASE_DIR
 from .log import log
 
@@ -37,5 +38,5 @@ class Glossary:
         return [
             name
             for text, name, spec, conv in string.Formatter().parse(text)
-            if name != None
+            if name is not None
         ]

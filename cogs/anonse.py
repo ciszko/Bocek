@@ -1,16 +1,17 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-import re
 import asyncio
-from typing import List, Optional
-from bs4 import BeautifulSoup
-import discord
-from discord import app_commands, Interaction
-from discord.ext.commands import Cog
-from discord.app_commands import Choice
-from random import choice, randint
+import re
 from copy import deepcopy
+from dataclasses import dataclass, field
+from random import choice, randint
+from typing import List, Optional
+
+import discord
+from bs4 import BeautifulSoup
+from discord import Interaction, app_commands
+from discord.app_commands import Choice
+from discord.ext.commands import Cog
 
 from utils.common import RhymeExtension
 from utils.log import log
@@ -148,8 +149,8 @@ class Anonse(RhymeExtension, Cog, name="anonse"):
         await interaction.response.defer()
         if interaction.user.voice:
             log.info(f"{kategoria=}, {region=}")
-            kategoria = kategoria if type(kategoria) == str else kategoria.value
-            region = region if type(region) == str else region.value
+            kategoria = kategoria if isinstance(kategoria, str) else kategoria.value
+            region = region if isinstance(region, str) else region.value
             anonse = await self.get_anonse(interaction, kategoria, region, siurdol)
 
             cat = next(c.name for c in CategoryChoices if c.value == kategoria)

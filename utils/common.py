@@ -1,11 +1,12 @@
 import asyncio
-from functools import wraps, partial
 import os
 import pathlib
+import platform
 import random
+from functools import partial, wraps
+
 from discord.ext.commands import Bot
 from dotenv import load_dotenv
-import platform
 
 load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
