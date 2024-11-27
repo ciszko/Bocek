@@ -131,3 +131,6 @@ dmypy.json
 *.ipynb
 tts.mp3
 .vscode/
+cogs/anonse.py
+extras/googlekey.json
+.env

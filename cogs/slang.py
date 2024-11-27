@@ -30,3 +30,7 @@ class Slang(RhymeExtension, Cog, name="slang"):
             await self.bot.play_on_channel(tts)
         else:
             await interaction.followup.send(msg)
+
+
+async def setup(bot) -> None:
+    await bot.add_cog(Slang(bot))
