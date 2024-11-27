@@ -59,3 +59,7 @@ class Minecraft(RhymeExtension, Cog, name="minecraft"):
         credits = resp["data"]["credits"]
         log.info(f"Remaining credits for server: {credits}")
         await interaction.response.send_message(f"Zostało **{credits}** kredytów.")
+
+
+async def setup(bot) -> None:
+    await bot.add_cog(Minecraft(bot))

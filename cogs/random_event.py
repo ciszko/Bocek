@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from random import choice, randint
 
 from discord import CustomActivity, Game, Interaction, Streaming, app_commands
-from discord.ext import commands
+from discord.ext import commands, tasks
 from discord.ext.commands import Cog
 
 from utils.common import RhymeExtension, replace_all
@@ -17,6 +17,15 @@ class RandomEvent(RhymeExtension, Cog, name="random_event"):
         self.glossary = Glossary(self, "random_join.json")
         self.tzinfo = datetime.now().astimezone().tzinfo
         self.join_at = None
+        self.update_join_time()
+        self.random_check.start()
+
+    def update_join_time(self):
+        new_interval = randint(8 * 60, 10 * 60)
+        join_at = datetime.now(self.tzinfo) + timedelta(seconds=new_interval)
+        self.join_at = join_at.strftime("%H:%M:%S")
+        self.random_check.change_interval(seconds=new_interval)
+        log.info(f"Next random join at {self.join_at}")
 
     def random_say(self):
         if members := [
@@ -32,40 +41,32 @@ class RandomEvent(RhymeExtension, Cog, name="random_event"):
             return msg
         return None
 
+    @tasks.loop(seconds=8 * 60)
     async def random_check(self):
+        self.update_join_time()
+        if len(self.bot.voice_channel.members) <= 1:
+            return
+        if name := self.random_say():
+            tts = await self.bot.tts.create_tts(name, random=True)
+            await self.bot.play_on_channel(tts)
+
+        choices = ("game", "streaming", "custom")
+        type_ = choice(choices)
+        match type_:
+            case "game":
+                name, _ = self.glossary.get_random("activity_game")
+                activity = Game(name)
+            case "streaming":
+                name, _ = self.glossary.get_random("activity_game")
+                activity = Streaming(name=name, url="https://anonse.inaczej.pl")
+            case "custom":
+                name, _ = self.glossary.get_random("activity_custom")
+                activity = CustomActivity(name)
+        await self.bot.change_presence(activity=activity)
+
+    @random_check.before_loop
+    async def random_check_before_loop(self):
         await self.bot.wait_until_ready()
-        while True:
-            if not self.bot.ready:
-                await asyncio.sleep(1)
-                continue
-            break
-
-        while not self.bot.is_closed():
-            if len(self.bot.voice_channel.members) > 1:
-                if name := self.random_say():
-                    tts = await self.bot.tts.create_tts(name, random=True)
-                    await self.bot.play_on_channel(tts)
-
-            wait_time = randint(8 * 60, 10 * 60)
-            join_at = datetime.now(self.tzinfo) + timedelta(seconds=wait_time)
-            self.join_at = join_at.strftime("%H:%M:%S")
-            log.info(f"Random join on {self.join_at}")
-
-            choices = ("game", "streaming", "custom")
-            type_ = choice(choices)
-            match type_:
-                case "game":
-                    name, _ = self.glossary.get_random("activity_game")
-                    activity = Game(name)
-                case "streaming":
-                    name, _ = self.glossary.get_random("activity_game")
-                    activity = Streaming(name=name, url="https://anonse.inaczej.pl")
-                case "custom":
-                    name, _ = self.glossary.get_random("activity_custom")
-                    activity = CustomActivity(name)
-            await self.bot.change_presence(activity=activity)
-
-            await asyncio.sleep(wait_time)
 
     @app_commands.command(
         name="kiedy", description="Informacja kiedy bocek coś se powie"
@@ -82,3 +83,7 @@ class RandomEvent(RhymeExtension, Cog, name="random_event"):
         tts = await self.bot.tts.create_tts(msg, random=True)
         await self.bot.play_on_channel(tts)
         await interaction.followup.send(msg)
+
+
+async def setup(bot) -> None:
+    await bot.add_cog(RandomEvent(bot))

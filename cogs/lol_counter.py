@@ -118,3 +118,7 @@ class LolCounter(RhymeExtension, Cog, name="lol_counter"):
             win_ratio = win_ratio.get_text()
             out.append([champion, win_ratio])
         return out
+
+
+async def setup(bot) -> None:
+    await bot.add_cog(LolCounter(bot))

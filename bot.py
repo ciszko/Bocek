@@ -1,26 +1,22 @@
 import asyncio
 import os
-import random
-import re
 from difflib import get_close_matches
 from functools import cached_property
 from time import time
 
 import discord
-from discord import app_commands
 from discord.ext.commands import Bot
 from mutagen.mp3 import MP3
 
-from cogs.anonse import Anonse
-from cogs.joke import Joke
-from cogs.lol_counter import LolCounter
-from cogs.minecraft import Minecraft
-from cogs.random_event import RandomEvent
-from cogs.rhyme import Rhyme
-from cogs.rito import Rito
-from cogs.slang import Slang
-from cogs.tts import Tts
-from utils.common import FFMPEG, GUILD, MP3_DIR, TOKEN, RhymeExtension, replace_all
+from utils.common import (
+    BASE_DIR,
+    FFMPEG,
+    GUILD,
+    MP3_DIR,
+    TOKEN,
+    RhymeExtension,
+    replace_all,
+)
 from utils.glossary import Glossary
 from utils.log import log
 
@@ -38,23 +34,11 @@ class MyBot(Bot, RhymeExtension):
             os.makedirs(MP3_DIR)
 
     async def setup_hook(self):
-        cogs = [
-            LolCounter,
-            Tts,
-            Anonse,
-            RandomEvent,
-            Rito,
-            Joke,
-            Rhyme,
-            Slang,
-            Minecraft,
-        ]
-
-        await self.add_cogs(cogs)
+        await self.load_cogs()
         self.add_commands()
 
-        self.bg_task = self.loop.create_task(self.random_event.random_check())
-        self.rito_task = self.loop.create_task(self.rito.rito_check())
+        # self.bg_task = self.loop.create_task(self.random_event.random_check())
+        # self.rito_task = self.loop.create_task(self.rito.rito_check())
 
         guild = discord.Object(id=GUILD)
         self.tree.copy_global_to(guild=guild)
@@ -70,15 +54,20 @@ class MyBot(Bot, RhymeExtension):
     def text_channel(self):
         return next((c for c in self.channel_list if c.id == self.id), None)
 
-    async def add_cogs(self, cogs):
-        # cog registration
-        # name Cogs with PascalCase, then bot will have snake_case attribute
-        # LolCounter -> self.lol_counter
-        for cog in cogs:
-            await self.add_cog(cog(self))
-            cog_name = cog.__cog_name__
-            setattr(self, cog_name, self.get_cog(cog_name))
-            log.info(f"Registered {cog.__name__} as a cog")
+    @property
+    def tts(self):
+        return self.get_cog("tts")
+
+    async def load_cogs(self):
+        for file in (BASE_DIR / "cogs").iterdir():
+            if file.suffix != ".py" or file.stem == "__init__":
+                continue
+            try:
+                await self.load_extension(f"cogs.{file.stem}")
+                log.info(f"Loaded extension '{file.stem}'")
+            except Exception as e:
+                exception = f"{type(e).__name__}: {e}"
+                log.error(f"Failed to load extension {file.stem}\n{exception}")
 
     async def on_message(self, message):
         if message.author == self.user:

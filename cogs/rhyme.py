@@ -5,7 +5,6 @@ from discord import app_commands
 from discord.ext import commands
 
 from utils.common import BASE_DIR
-from utils.log import log
 
 
 class Rhyme(commands.Cog, name="rhyme"):
@@ -37,3 +36,7 @@ class Rhyme(commands.Cog, name="rhyme"):
         formatted = ", ".join(rhymes)
         response = f'Rymy do słowa "**{word}**":\n{formatted}'
         await interaction.response.send_message(response)
+
+
+async def setup(bot) -> None:
+    await bot.add_cog(Rhyme(bot))

@@ -1,10 +1,8 @@
 from bs4 import BeautifulSoup
 from discord import Interaction, app_commands
-from discord.ext import commands
 from discord.ext.commands import Cog
 
 from utils.common import RhymeExtension
-from utils.log import log
 from utils.session import Session
 
 
@@ -34,3 +32,7 @@ class Joke(RhymeExtension, Cog, name="joke"):
         if interaction.user.voice:
             tts = await self.bot.tts.create_tts(msg)
             await self.bot.play_on_channel(tts)
+
+
+async def setup(bot) -> None:
+    await bot.add_cog(Joke(bot))

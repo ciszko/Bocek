@@ -3,66 +3,74 @@ from random import random
 
 import aiohttp
 from deepdiff import DeepDiff
+from discord.ext import tasks
 from discord.ext.commands import Cog
 
 from utils.common import RhymeExtension, replace_all
 from utils.glossary import Glossary
 from utils.log import log
 
+OFFLINE_WAIT = 30
+ONLINE_WAIT = 2
+EVENT_PRIORITY = {
+    "PentaKill": 1,
+    "QuadraKill": 0.8,
+    "TripleKill": 0.5,
+    "BaronSteal": 1,
+    "DragonSteal": 0.8,
+    "DoubleKill": 0.4,
+    "BaronKill": 0.5,
+    "Ace": 0.5,
+    "DragonKill": 0.3,
+    "HeraldKill": 0.3,
+    "FirstBlood": 0.5,
+    "ChampionKill": 0.3,
+    "ChampionDeath": 0.3,
+    "InhibKilled": 0.3,
+    "TurretKilled": 0.3,
+}
+PLAYERS = [
+    "Ciszkoo",
+    "LikeBanana",
+    "Chonkey",
+    "SwagettiYoloneze",
+    "Sabijak",
+    "Xubeks",
+    "Nowik6300",
+    "GodRevi",
+    "Mαster Vi",
+]
+
 
 class Rito(RhymeExtension, Cog, name="rito"):
     def __init__(self, bot):
         self.bot = bot
-        self.url_base = "https://192.168.0.31:29999/liveclientdata/"
+        self.url_base = "https://192.168.0.31:29999/liveclientdata"
         self.connector = aiohttp.TCPConnector(ssl=False)
-        self.players = [
-            "Ciszkoo",
-            "LikeBanana",
-            "Chonkey",
-            "SwagettiYoloneze",
-            "Sabijak",
-            "Xubeks",
-            "Nowik6300",
-            "GodRevi",
-            "Mαster Vi",
-        ]
         self.glossary = Glossary(self, "rito.json")
 
         self.events = {}
-        self.event_priority = {
-            "PentaKill": 1,
-            "QuadraKill": 0.8,
-            "TripleKill": 0.5,
-            "BaronSteal": 1,
-            "DragonSteal": 0.8,
-            "DoubleKill": 0.4,
-            "BaronKill": 0.5,
-            "Ace": 0.5,
-            "DragonKill": 0.3,
-            "HeraldKill": 0.3,
-            "FirstBlood": 0.5,
-            "ChampionKill": 0.3,
-            "ChampionDeath": 0.3,
-            "InhibKilled": 0.3,
-            "TurretKilled": 0.3,
-        }
+        self.rito_check.start()
 
+    @tasks.loop(seconds=30)
     async def rito_check(self):
+        if not await self.in_game():
+            if self.rito_check.seconds != OFFLINE_WAIT:
+                self.rito_check.change_interval(OFFLINE_WAIT)
+            return
+        if self.rito_check.seconds != ONLINE_WAIT:
+            self.rito_check.change_interval(ONLINE_WAIT)
+        if not (diff := await self.compare_stats()):
+            return
+        tts = await self.bot.tts.create_tts(diff)
+        await self.bot.play_on_channel(tts)
+
+    @rito_check.before_loop
+    async def rito_check_before_loop(self):
         await self.bot.wait_until_ready()
-        wait_time = 30
-        while not self.bot.is_closed():
-            if await self.in_game():
-                wait_time = 2
-                diff = await self.compare_stats()
-                if diff:
-                    tts = await self.bot.tts.create_tts(diff)
-                    await self.bot.play_on_channel(tts)
-            else:
-                wait_time = 30
-            await asyncio.sleep(wait_time)
 
     async def get_all_data(self):
-        url = f"{self.url_base}allgamedata"
+        url = f"{self.url_base}/allgamedata"
         async with aiohttp.ClientSession(
             connector=aiohttp.TCPConnector(ssl=False)
         ) as session:
@@ -70,7 +78,7 @@ class Rito(RhymeExtension, Cog, name="rito"):
                 return await resp.json()
 
     async def get_all_events(self):
-        url = f"{self.url_base}eventdata"
+        url = f"{self.url_base}/eventdata"
         async with aiohttp.ClientSession(
             connector=aiohttp.TCPConnector(ssl=False)
         ) as session:
@@ -85,7 +93,7 @@ class Rito(RhymeExtension, Cog, name="rito"):
                     return None
 
     async def in_game(self):
-        url = f"{self.url_base}eventdata"
+        url = f"{self.url_base}/eventdata"
         try:
             async with aiohttp.ClientSession(
                 connector=aiohttp.TCPConnector(ssl=False)
@@ -126,7 +134,7 @@ class Rito(RhymeExtension, Cog, name="rito"):
         return None
 
     def handle_event(self, event):
-        if not any(player in event.values() for player in self.players):
+        if not any(player in event.values() for player in PLAYERS):
             return
         if event["EventName"] in ["MinionsSpawning", "GameStart"]:
             return
@@ -145,9 +153,7 @@ class Rito(RhymeExtension, Cog, name="rito"):
                 event["EventName"] = "QuadraKill"
             elif int(event["KillStreak"]) == 5:
                 event["EventName"] = "PentaKill"
-        elif (
-            event["EventName"] == "ChampionKill" and event["VictimName"] in self.players
-        ):
+        elif event["EventName"] == "ChampionKill" and event["VictimName"] in PLAYERS:
             event["EventName"] = "ChampionDeath"
             event["Who"] = event["VictimName"]
         elif (
@@ -158,7 +164,7 @@ class Rito(RhymeExtension, Cog, name="rito"):
         return event
 
     def create_msg(self, events):
-        for event_name, prio in self.event_priority.items():
+        for event_name, prio in EVENT_PRIORITY.items():
             if event := next((e for e in events if e["EventName"] == event_name), None):
                 if random() < prio:
                     player = event["Who"]
@@ -172,3 +178,7 @@ class Rito(RhymeExtension, Cog, name="rito"):
                     return msg
         else:
             return None
+
+
+async def setup(bot) -> None:
+    await bot.add_cog(Rito(bot))

@@ -5,7 +5,6 @@ from uuid import uuid4
 
 from async_property import async_cached_property
 from discord import File, Interaction, app_commands
-from discord.app_commands import Choice
 from discord.ext.commands import Cog
 from google.api_core.retry_async import AsyncRetry
 from google.cloud import texttospeech
@@ -152,3 +151,7 @@ class Tts(RhymeExtension, Cog, name="tts"):
             "pitch": random.uniform(-20, 20),
             "speaking_rate": random.uniform(0.85, 1.0),
         }
+
+
+async def setup(bot) -> None:
+    await bot.add_cog(Tts(bot))
