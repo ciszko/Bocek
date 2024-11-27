@@ -37,9 +37,6 @@ class MyBot(Bot, RhymeExtension):
         await self.load_cogs()
         self.add_commands()
 
-        # self.bg_task = self.loop.create_task(self.random_event.random_check())
-        # self.rito_task = self.loop.create_task(self.rito.rito_check())
-
         guild = discord.Object(id=GUILD)
         self.tree.copy_global_to(guild=guild)
         await self.tree.sync(guild=guild)
