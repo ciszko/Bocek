@@ -219,3 +219,7 @@ class Anonse(RhymeExtension, Cog, name="anonse"):
         if len(groups) == 3:
             return f"{groups[0]}cm, {groups[1]}lat, siurdol {groups[2]}cm"
         return f"{groups[0]}cm, {groups[1]}kg, {groups[2]}lat, siurdol {groups[3]}cm"
+
+
+async def setup(bot) -> None:
+    await bot.add_cog(Anonse(bot))

@@ -43,6 +43,6 @@ class RhymeExtension:
     def get_rhyme(self, text):
         to_ret = ""
         ctx = self if isinstance(self, Bot) else self.bot
-        if to_ret := ctx.rhyme.get_rhyme(text):
+        if to_ret := ctx.get_cog("rhyme").get_rhyme(text):
             to_ret = random.choice(to_ret)
         return to_ret
