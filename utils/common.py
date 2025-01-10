@@ -3,6 +3,7 @@ import os
 import pathlib
 import platform
 import random
+import tomllib
 from functools import partial, wraps
 
 from discord.ext.commands import Bot
@@ -21,6 +22,8 @@ if platform.system() == "Windows":
 else:
     FFMPEG = "/usr/bin/ffmpeg"
 
+with open(BASE_DIR / "pyproject.toml", "rb") as f:
+    CONFIG = tomllib.load(f)["tool"]["bocek"]
 
 def async_wrap(func):
     @wraps(func)
