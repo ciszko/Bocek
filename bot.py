@@ -121,6 +121,7 @@ class MyBot(Bot, RhymeExtension):
             await self.tts.delete_all_tts()
 
     async def disconnect_from_voice(self):
+        log.info("DISCONNECTING FROM VOICE")
         [
             await vc.disconnect(force=True)
             for vc in self.voice_clients

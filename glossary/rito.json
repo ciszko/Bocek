@@ -107,6 +107,12 @@
         "Tylko podnieś heralda {user}",
         "Herald bardziej jak {self.get_rhyme('herald')}"
     ],
+    "AtakhanKill": [
+        "{user} zabił atakhana",
+        "Karaczan poległ",
+        "Atakan, {self.get_rhyme('atakan')}, {self.get_rhyme('atakan')}",
+        "Atakaszczan rozpłaszczan"
+    ],
     "InhibKilled": [
         "Inhibjitor",
         "Super minionki nadchodzą!",

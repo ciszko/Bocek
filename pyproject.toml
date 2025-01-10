@@ -1,9 +1,9 @@
 [project]
 name = "bocek"
 version = "0.1.0"
-description = "Discord bot with some really dumb features."
+description = "Discord bot to keep you company."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 dependencies = [
     "bs4>=0.0.2",
     "discord-py[voice]>=2.4.0",
@@ -26,10 +26,42 @@ dependencies = [
 ]
 
 [dependency-groups]
-dev = [
-    "ruff>=0.8.0",
-]
+dev = ["ruff>=0.8.0"]
 
 [tool.ruff]
 extend-select = ["I"]
 select = ["E4", "E7", "E9", "F", "B"]
+
+[tool.bocek.rito]
+lol-game-port = 29999
+offline-wait = 30
+online-wait = 2
+players = [
+    "Ciszkoo",
+    "LikeBanana",
+    "Chonkey",
+    "SwagettiYoloneze",
+    "Sabijak",
+    "Xubeks",
+    "Nowik6300",
+    "GodRevi",
+    "Mαster Vi",
+]
+
+[tool.bocek.rito.event-possibility]
+PentaKill = 1
+QuadraKill = 0.8
+TripleKill = 0.5
+BaronSteal = 1
+DragonSteal = 0.8
+DoubleKill = 0.4
+BaronKill = 0.5
+Ace = 0.5
+DragonKill = 0.3
+HeraldKill = 0.3
+AtakhanKill = 0.9
+FirstBlood = 0.5
+ChampionKill = 0.3
+ChampionDeath = 0.3
+InhibKilled = 0.3
+TurretKilled = 0.3

@@ -6,46 +6,21 @@ from deepdiff import DeepDiff
 from discord.ext import tasks
 from discord.ext.commands import Cog
 
-from utils.common import RhymeExtension, replace_all
+from utils.common import CONFIG, RhymeExtension, replace_all
 from utils.glossary import Glossary
 from utils.log import log
 
-OFFLINE_WAIT = 30
-ONLINE_WAIT = 2
-EVENT_PRIORITY = {
-    "PentaKill": 1,
-    "QuadraKill": 0.8,
-    "TripleKill": 0.5,
-    "BaronSteal": 1,
-    "DragonSteal": 0.8,
-    "DoubleKill": 0.4,
-    "BaronKill": 0.5,
-    "Ace": 0.5,
-    "DragonKill": 0.3,
-    "HeraldKill": 0.3,
-    "FirstBlood": 0.5,
-    "ChampionKill": 0.3,
-    "ChampionDeath": 0.3,
-    "InhibKilled": 0.3,
-    "TurretKilled": 0.3,
-}
-PLAYERS = [
-    "Ciszkoo",
-    "LikeBanana",
-    "Chonkey",
-    "SwagettiYoloneze",
-    "Sabijak",
-    "Xubeks",
-    "Nowik6300",
-    "GodRevi",
-    "Mαster Vi",
-]
+OFFLINE_WAIT = CONFIG["rito"]["offline-wait"]
+ONLINE_WAIT = CONFIG["rito"]["online-wait"]
+EVENT_PRIORITY = CONFIG["rito"]["event-possibility"]
+PLAYERS = CONFIG["rito"]["players"]
+LOL_GAME_PORT = CONFIG["rito"]["lol-game-port"]
 
 
 class Rito(RhymeExtension, Cog, name="rito"):
     def __init__(self, bot):
         self.bot = bot
-        self.url_base = "https://192.168.0.31:29999/liveclientdata"
+        self.url_base = f"https://192.168.0.31:{LOL_GAME_PORT}/liveclientdata"
         self.connector = aiohttp.TCPConnector(ssl=False)
         self.glossary = Glossary(self, "rito.json")
 
@@ -56,10 +31,10 @@ class Rito(RhymeExtension, Cog, name="rito"):
     async def rito_check(self):
         if not await self.in_game():
             if self.rito_check.seconds != OFFLINE_WAIT:
-                self.rito_check.change_interval(OFFLINE_WAIT)
+                self.rito_check.change_interval(seconds=OFFLINE_WAIT)
             return
         if self.rito_check.seconds != ONLINE_WAIT:
-            self.rito_check.change_interval(ONLINE_WAIT)
+            self.rito_check.change_interval(seconds=ONLINE_WAIT)
         if not (diff := await self.compare_stats()):
             return
         tts = await self.bot.tts.create_tts(diff)
@@ -113,9 +88,8 @@ class Rito(RhymeExtension, Cog, name="rito"):
         if not events_prev:
             await self.get_all_events()
             return None
-        if events := await self.get_all_events():
-            ...
-        else:
+        events = await self.get_all_events()
+        if not events:
             return None
         to_ret = []
         try:
@@ -145,14 +119,15 @@ class Rito(RhymeExtension, Cog, name="rito"):
             event["KillerName"] = event["Recipient"]
         event["Who"] = event["KillerName"]
         if event["EventName"] == "Multikill":
-            if int(event["KillStreak"]) == 2:
-                event["EventName"] = "DoubleKill"
-            elif int(event["KillStreak"]) == 3:
-                event["EventName"] = "TripleKill"
-            elif int(event["KillStreak"]) == 4:
-                event["EventName"] = "QuadraKill"
-            elif int(event["KillStreak"]) == 5:
-                event["EventName"] = "PentaKill"
+            match int(event["KillStreak"]):
+                case 2:
+                    event["EventName"] = "DoubleKill"
+                case 3:
+                    event["EventName"] = "TripleKill"
+                case 4:
+                    event["EventName"] = "QuadraKill"
+                case 5:
+                    event["EventName"] = "PentaKill"
         elif event["EventName"] == "ChampionKill" and event["VictimName"] in PLAYERS:
             event["EventName"] = "ChampionDeath"
             event["Who"] = event["VictimName"]
