@@ -46,8 +46,8 @@ class RandomEvent(RhymeExtension, Cog, name="random_event"):
         self.update_join_time()
         if len(self.bot.voice_channel.members) <= 1:
             return
-        if name := self.random_say():
-            tts = await self.bot.tts.create_tts(name, random=True)
+        if msg := self.random_say():
+            tts = await self.bot.tts.create_tts(msg, random=True)
             await self.bot.play_on_channel(tts)
 
         choices = ("game", "streaming", "custom")

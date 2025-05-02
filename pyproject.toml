@@ -23,6 +23,7 @@ dependencies = [
     "aiohttp-retry>=2.9.1",
     "async-property>=0.2.2",
     "mutagen>=1.47.0",
+    "niquests>=3.12.1",
 ]
 
 [dependency-groups]
@@ -33,6 +34,7 @@ extend-select = ["I"]
 select = ["E4", "E7", "E9", "F", "B"]
 
 [tool.bocek.rito]
+lol-game-ip = "192.168.0.31"
 lol-game-port = 29999
 offline-wait = 30
 online-wait = 2

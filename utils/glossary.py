@@ -2,8 +2,8 @@ import json
 import random
 import string
 
-from .common import BASE_DIR
-from .log import log
+from utils.common import BASE_DIR
+from utils.log import log
 
 
 class Glossary:
@@ -11,7 +11,8 @@ class Glossary:
         self.plugin = plugin
         self.glossary_path = BASE_DIR / "glossary" / glossary
 
-    def get_random(self, section="default"):
+    def get_random(self, section="default") -> tuple[str, list[str]]:
+        """Returns random line from selected section from a glossary"""
         glossary = self.get_file_json()
         if section not in glossary:
             return None, None
@@ -20,7 +21,8 @@ class Glossary:
         log.info(f"{self.plugin.__class__.__name__} -> {section} -> {to_ret}")
         return to_ret, placeholders
 
-    def get_value(self, section, key):
+    def get_value(self, section, key) -> tuple[str, list[str]]:
+        """Returns specific key from a dictionary section from a glossary"""
         glossary = self.get_file_json()
         if section not in glossary:
             return None, None
@@ -35,6 +37,7 @@ class Glossary:
         return data
 
     def get_placeholders(self, text):
+        """Returns placeholders from the text"""
         return [
             name
             for text, name, spec, conv in string.Formatter().parse(text)

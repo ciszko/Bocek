@@ -145,11 +145,11 @@ class MyBot(Bot, RhymeExtension):
             try:
                 self.vc = await self.voice_channel.connect()
             except discord.ClientException:
-                log.error("Already connected to voice channel")
+                log.warning("Already connected to voice channel")
                 await self.disconnect_from_voice()
                 self.vc = await self.voice_channel.connect()
         if self.vc and self.vc.is_playing():
-            log.error("Already playing")
+            log.warning("Already playing")
             return
         duration = MP3(message).info.length
         try:

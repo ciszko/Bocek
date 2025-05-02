@@ -17,6 +17,7 @@ MP3_DIR = BASE_DIR / "mp3"
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = str(
     BASE_DIR / os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
 )
+
 if platform.system() == "Windows":
     FFMPEG = "D:/Projekt/Bocek/extras/ffmpeg.exe"
 else:
@@ -24,6 +25,7 @@ else:
 
 with open(BASE_DIR / "pyproject.toml", "rb") as f:
     CONFIG = tomllib.load(f)["tool"]["bocek"]
+
 
 def async_wrap(func):
     @wraps(func)

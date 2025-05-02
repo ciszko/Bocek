@@ -1,20 +1,11 @@
-from aiohttp import ClientSession
-from aiohttp_retry import ExponentialRetry, RetryClient
+from niquests import AsyncSession
+from urllib3.util import Retry
+
+retries = Retry(total=3, backoff_factor=0.1)
 
 
-class Session(RetryClient):
-    def __init__(self, base_url, headers):
+class Session(AsyncSession):
+    def __init__(self, base_url, headers=None):
         self.base_url = base_url
-        session = ClientSession()
-        session.headers.update(**headers)
-        super().__init__(session)
-
-    async def get(self, url, **kwargs):
-        async with super().get(
-            f"{self.base_url}{url}",
-            retry_options=ExponentialRetry(),
-            **kwargs,
-        ) as response:
-            resp = await response.text()
-        # await self.close()
-        return resp
+        self.headers = headers
+        super().__init__(retries=retries, base_url=base_url)
