@@ -1,7 +1,5 @@
-import asyncio
 from random import random
 
-import aiohttp
 from deepdiff import DeepDiff
 from discord.ext import tasks
 from discord.ext.commands import Cog
@@ -9,19 +7,20 @@ from discord.ext.commands import Cog
 from utils.common import CONFIG, RhymeExtension, replace_all
 from utils.glossary import Glossary
 from utils.log import log
+from utils.session import Session
 
 OFFLINE_WAIT = CONFIG["rito"]["offline-wait"]
 ONLINE_WAIT = CONFIG["rito"]["online-wait"]
 EVENT_PRIORITY = CONFIG["rito"]["event-possibility"]
 PLAYERS = CONFIG["rito"]["players"]
+LOL_GAME_IP = CONFIG["rito"]["lol-game-ip"]
 LOL_GAME_PORT = CONFIG["rito"]["lol-game-port"]
 
 
 class Rito(RhymeExtension, Cog, name="rito"):
     def __init__(self, bot):
         self.bot = bot
-        self.url_base = f"https://192.168.0.31:{LOL_GAME_PORT}/liveclientdata"
-        self.connector = aiohttp.TCPConnector(ssl=False)
+        self.session = Session(f"https://{LOL_GAME_IP}:{LOL_GAME_PORT}/liveclientdata")
         self.glossary = Glossary(self, "rito.json")
 
         self.events = {}
@@ -45,38 +44,25 @@ class Rito(RhymeExtension, Cog, name="rito"):
         await self.bot.wait_until_ready()
 
     async def get_all_data(self):
-        url = f"{self.url_base}/allgamedata"
-        async with aiohttp.ClientSession(
-            connector=aiohttp.TCPConnector(ssl=False)
-        ) as session:
-            async with session.get(url) as resp:
-                return await resp.json()
+        async with self.session.get("/allgamedata", verify=False) as resp:
+            return await resp.json()
 
     async def get_all_events(self):
-        url = f"{self.url_base}/eventdata"
-        async with aiohttp.ClientSession(
-            connector=aiohttp.TCPConnector(ssl=False)
-        ) as session:
-            async with session.get(url) as resp:
-                try:
-                    data = await resp.json()
-                    if data:
-                        self.events = data
-                        return data
-                except Exception as e:
-                    log.exception(e)
-                    return None
+        async with self.session.get("/eventdata", verify=False) as resp:
+            try:
+                if data := await resp.json():
+                    self.events = data
+                    return data
+            except Exception as e:
+                log.exception(e)
+                return None
 
     async def in_game(self):
-        url = f"{self.url_base}/eventdata"
         try:
-            async with aiohttp.ClientSession(
-                connector=aiohttp.TCPConnector(ssl=False)
-            ) as session:
-                async with session.get(url, timeout=3) as resp:
-                    x = await resp.json()
-                    if x:
-                        return True
+            async with self.session.get("/eventdata", timeout=3, verify=False) as resp:
+                x = await resp.json()
+                if x:
+                    return True
         except Exception as e:
             if "Timeout" not in str(e) or "Cannot connect to host" not in str(e):
                 ...
@@ -151,8 +137,7 @@ class Rito(RhymeExtension, Cog, name="rito"):
                         msg, {f"{{{p}}}": eval(p, scope) for p in msg_placeholders}
                     )
                     return msg
-        else:
-            return None
+        return None
 
 
 async def setup(bot) -> None:

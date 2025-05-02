@@ -35,6 +35,9 @@ In order to speak Bocek requires a google service account with
 [TTS (Text-To-Speech) API](https://console.cloud.google.com/apis/api/texttospeech.googleapis.com)
 turned on. The json file can be found under [service accounts](https://console.cloud.google.com/apis/credentials) > service accounts > keys
 
+In addition to that Bocek needs vocal cords, a suitable solution is `ffmpeg`.
+You can download it from [the official website](https://www.ffmpeg.org/download.html).
+
 ### League of Legeneds Live game commentary
 This feature facilitates [Game Client API](https://developer.riotgames.com/docs/lol#game-client-api),
 this API basically allows to gather a game data from a current LoL match. 
