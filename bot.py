@@ -117,6 +117,9 @@ class MyBot(Bot, RhymeExtension):
             and len(self.voice_channel.members) <= 1
             and self.vc
         ):
+            log.info(f"{after.channel=}\n{self.voice_channel=}")
+            log.info(self.voice_channel.members)
+            log.info(self.vc)
             await self.disconnect_from_voice()
             await self.tts.delete_all_tts()
 

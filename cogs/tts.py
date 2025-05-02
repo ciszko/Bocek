@@ -114,7 +114,17 @@ class Tts(RhymeExtension, Cog, name="tts"):
                 retry=retry,
             )
         except Exception as exc:
-            log.exception(exc)
+            if "400 Chirp HD" in str(exc):
+                audio_config.speaking_rate = None
+                audio_config.pitch = None
+                response = await self.client.synthesize_speech(
+                    input=tts,
+                    voice=voice_params,
+                    audio_config=audio_config,
+                    retry=retry
+                )
+            else:
+                log.exception(exc)
         if response is None:
             return None
         # save the response
