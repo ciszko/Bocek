@@ -1,19 +1,23 @@
-import asyncio
 from datetime import datetime, timedelta
 from random import choice, randint
+from typing import TYPE_CHECKING
 
+import discord
 from discord import CustomActivity, Game, Interaction, Streaming, app_commands
-from discord.ext import commands, tasks
+from discord.ext import tasks
 from discord.ext.commands import Cog
 
 from utils.common import RhymeExtension, replace_all
 from utils.glossary import Glossary
 from utils.log import log
 
+if TYPE_CHECKING:
+    from bot import MyBot
+
 
 class RandomEvent(RhymeExtension, Cog, name="random_event"):
-    def __init__(self, bot: commands.Bot):
-        self.bot: commands.Bot = bot
+    def __init__(self, bot):
+        self.bot: MyBot = bot
         self.glossary = Glossary(self, "random_join.json")
         self.tzinfo = datetime.now().astimezone().tzinfo
         self.join_at = None
@@ -47,7 +51,7 @@ class RandomEvent(RhymeExtension, Cog, name="random_event"):
         if len(self.bot.voice_channel.members) <= 1:
             return
         if msg := self.random_say():
-            tts = await self.bot.tts.create_tts(msg, random=True)
+            tts = await self.bot.tts.create_tts(msg)
             await self.bot.play_on_channel(tts)
 
         choices = ("game", "streaming", "custom")
@@ -78,11 +82,30 @@ class RandomEvent(RhymeExtension, Cog, name="random_event"):
 
     @app_commands.command(name="powiedz", description="Coś se powiem")
     async def powiedz(self, interaction: Interaction):
-        await interaction.response.defer(ephemeral=True)
+        await self.bot.handle_defering(interaction)
+        if not self.bot.is_caller_connected(interaction):
+            try:
+                await interaction.followup.send("Nawet cię nie ma na kanale")
+            except discord.errors.NotFound as e:
+                log.error(f"Failed to send followup: {e}")
+            return
         msg = self.random_say()
-        tts = await self.bot.tts.create_tts(msg, random=True)
-        await self.bot.play_on_channel(tts)
-        await interaction.followup.send(msg)
+        if not msg:
+            try:
+                await interaction.followup.send("Nie mam nic do powiedzenia")
+            except discord.errors.NotFound as e:
+                log.error(f"Failed to send followup: {e}")
+            return
+        try:
+            tts = await self.bot.tts.create_tts(msg)
+            await self.bot.play_on_channel(tts)
+            await interaction.followup.send(msg)
+        except Exception as e:
+            log.exception(f"Error in powiedz command: {e}")
+            try:
+                await interaction.followup.send("Coś poszło nie tak :(")
+            except discord.errors.NotFound as e:
+                log.error(f"Failed to send error followup: {e}")
 
 
 async def setup(bot) -> None:
