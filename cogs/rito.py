@@ -1,4 +1,5 @@
 from random import random
+from typing import TYPE_CHECKING
 
 from deepdiff import DeepDiff
 from discord.ext import tasks
@@ -8,6 +9,9 @@ from utils.common import CONFIG, RhymeExtension, replace_all
 from utils.glossary import Glossary
 from utils.log import log
 from utils.session import Session
+
+if TYPE_CHECKING:
+    from bot import MyBot
 
 OFFLINE_WAIT = CONFIG["rito"]["offline-wait"]
 ONLINE_WAIT = CONFIG["rito"]["online-wait"]
@@ -19,11 +23,14 @@ LOL_GAME_PORT = CONFIG["rito"]["lol-game-port"]
 
 class Rito(RhymeExtension, Cog, name="rito"):
     def __init__(self, bot):
-        self.bot = bot
-        self.session = Session(f"https://{LOL_GAME_IP}:{LOL_GAME_PORT}/liveclientdata")
+        self.bot: MyBot = bot
+        self.session = Session(
+            f"https://{LOL_GAME_IP}:{LOL_GAME_PORT}/liveclientdata",
+            retries=False,
+        )
         self.glossary = Glossary(self, "rito.json")
 
-        self.events = {}
+        self.events: dict = {}
         self.rito_check.start()
 
     @tasks.loop(seconds=30)
@@ -59,13 +66,14 @@ class Rito(RhymeExtension, Cog, name="rito"):
 
     async def in_game(self):
         try:
-            async with self.session.get("/eventdata", timeout=3, verify=False) as resp:
-                x = await resp.json()
-                if x:
+            async with self.session as s:
+                resp = await s.get("/eventdata", timeout=3, verify=False)
+                if resp.status == 200:
                     return True
         except Exception as e:
             if "Timeout" not in str(e) or "Cannot connect to host" not in str(e):
-                ...
+                return False
+            log.exception(f"Unexpected error in in_game: {e}")
             return False
 
     async def compare_stats(self):

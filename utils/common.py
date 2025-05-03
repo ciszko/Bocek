@@ -10,12 +10,12 @@ from discord.ext.commands import Bot
 from dotenv import load_dotenv
 
 load_dotenv()
-TOKEN = os.getenv("DISCORD_TOKEN")
-GUILD = os.getenv("GUILD_ID")
+TOKEN = os.getenv("DISCORD_TOKEN", "")
+GUILD = os.getenv("GUILD_ID", "")
 BASE_DIR = pathlib.Path(__file__).parent.parent
 MP3_DIR = BASE_DIR / "mp3"
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = str(
-    BASE_DIR / os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+    BASE_DIR / os.getenv("GOOGLE_APPLICATION_CREDENTIALS", "extras/googlekey.json")
 )
 
 if platform.system() == "Windows":
@@ -25,6 +25,8 @@ else:
 
 with open(BASE_DIR / "pyproject.toml", "rb") as f:
     CONFIG = tomllib.load(f)["tool"]["bocek"]
+
+FFPMEG_OPTIONS = "-loglevel error -ac 2 -ar 24000 -b:a 32k"
 
 
 def async_wrap(func):

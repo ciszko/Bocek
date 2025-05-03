@@ -21,7 +21,6 @@ class Tts(RhymeExtension, Cog, name="tts"):
     @async_cached_property
     async def voices(self):
         voices_resp = await self.client.list_voices(language_code="pl-PL")
-        # "F" voices are bugged
         return {
             f"{v.name}-{v.ssml_gender.name}": v.name
             for v in voices_resp.voices
@@ -31,12 +30,13 @@ class Tts(RhymeExtension, Cog, name="tts"):
     async def voices_autocomplete(
         self, interaction, current: str
     ) -> List[app_commands.Choice[str]]:
-        await self.voices
-        return [
+        voices = await self.voices
+        choices = [
             app_commands.Choice(name=voice_name, value=value)
-            for voice_name, value in self.voices.items()
+            for voice_name, value in voices.items()
             if current.lower() in voice_name.lower()
         ]
+        return choices[:25]
 
     @app_commands.command(name="tts", description="Wysyła plik z nagraniem.")
     @app_commands.describe(text="Tekst do powiedzenia")
@@ -54,26 +54,28 @@ class Tts(RhymeExtension, Cog, name="tts"):
         speaking_rate: app_commands.Range[float, 0.25, 4.0] = 0.9,
     ):
         await interaction.response.defer()
-        voice = voice if type(voice) is str else voice.value
-        tts = await self.create_tts(
+        voice = voice if isinstance(voice, str) else voice.value
+        tts_path = await self.create_tts(
             text=text,
             pitch=pitch,
             voice=voice,
             volume=volume,
             speaking_rate=speaking_rate,
         )
-        if tts is None:
+        if tts_path is None:
             await interaction.followup.send(
                 "Mam sucho w gardle, nie mogę tego powiedzieć"
             )
+            return
+        await interaction.followup.send(file=File(tts_path))
 
-        await interaction.followup.send(file=File(tts))
-
-    async def create_tts(self, *args, **kwargs):
-        if kwargs.pop("random", None):
-            kwargs = await self.get_random_voice()
-        log.info(f"TTS args {args=}, {kwargs=}")
-        return await self.tts_google(*args, **kwargs)
+    async def create_tts(self, text, random=False, **kwargs):
+        if not text:
+            return None
+        if random:
+            kwargs.update(await self.get_random_voice())
+        log.info(f"TTS args text={text}, kwargs={kwargs}")
+        return await self.tts_google(text, **kwargs)
 
     async def tts_google(
         self,
@@ -85,39 +87,40 @@ class Tts(RhymeExtension, Cog, name="tts"):
         lang="pl-PL",
     ):
         if not text:
-            return
-
+            return None
         if lang.lower() == "pl":
             lang = "pl-PL"
-
-        # if '<' in text:
-        #     text = texttospeech.SynthesisInput(ssml=text)
-        # else:
-        tts = texttospeech.SynthesisInput(text=text)
-        # voice creation
+        tts_input = texttospeech.SynthesisInput(text=text)
         voice_params = texttospeech.VoiceSelectionParams(language_code=lang, name=voice)
-        # additionial params
         audio_config = texttospeech.AudioConfig(
             audio_encoding=texttospeech.AudioEncoding.MP3,
             pitch=pitch,
             volume_gain_db=volume,
             speaking_rate=speaking_rate,
         )
-        # generate response
         retry = AsyncRetry(initial=0.1, multiplier=2, deadline=10)
-        response = None
         try:
             response = await self.client.synthesize_speech(
-                input=tts,
+                input=tts_input,
                 voice=voice_params,
                 audio_config=audio_config,
                 retry=retry,
             )
         except Exception as exc:
-            log.exception(exc)
+            if "400 Chirp HD" in str(exc):
+                audio_config.speaking_rate = None
+                audio_config.pitch = None
+                response = await self.client.synthesize_speech(
+                    input=tts_input,
+                    voice=voice_params,
+                    audio_config=audio_config,
+                    retry=retry,
+                )
+            else:
+                log.exception(f"TTS synthesis failed: {exc}")
+                return None
         if response is None:
             return None
-        # save the response
         tts_path = MP3_DIR / f"{uuid4().hex[:10]}.mp3"
         with tts_path.open("wb") as out:
             out.write(response.audio_content)
@@ -131,7 +134,6 @@ class Tts(RhymeExtension, Cog, name="tts"):
             log.info(f"Removed {path}")
         except FileNotFoundError:
             log.warning(f"{path} was already deleted")
-        return
 
     @async_wrap
     def delete_all_tts(self):
@@ -141,7 +143,6 @@ class Tts(RhymeExtension, Cog, name="tts"):
                 file.unlink()
             except PermissionError:
                 log.warning(f"{file} is still in use")
-        return
 
     async def get_random_voice(self, **kwargs):
         voices = await self.voices
