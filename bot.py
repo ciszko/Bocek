@@ -144,6 +144,8 @@ class MyBot(Bot, RhymeExtension):
         if not self.ready:
             log.info("Bot not ready, skipping playback")
             return
+        if message is None:
+            return
         non_bot_members = len([m for m in self.voice_channel.members if not m.bot])
         log.info(f"Non-bot members in voice channel: {non_bot_members}")
         if non_bot_members < 1:
