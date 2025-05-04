@@ -98,13 +98,11 @@ class Tts(RhymeExtension, Cog, name="tts"):
             volume_gain_db=volume,
             speaking_rate=speaking_rate,
         )
-        retry = AsyncRetry(initial=0.1, multiplier=2, deadline=10)
         try:
             response = await self.client.synthesize_speech(
                 input=tts_input,
                 voice=voice_params,
                 audio_config=audio_config,
-                retry=retry,
             )
         except Exception as exc:
             if "400 Chirp HD" in str(exc):
@@ -114,7 +112,6 @@ class Tts(RhymeExtension, Cog, name="tts"):
                     input=tts_input,
                     voice=voice_params,
                     audio_config=audio_config,
-                    retry=retry,
                 )
             else:
                 log.exception(f"TTS synthesis failed: {exc}")
