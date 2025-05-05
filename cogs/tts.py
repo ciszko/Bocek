@@ -6,6 +6,7 @@ from uuid import uuid4
 from async_property import async_cached_property
 from discord import File, Interaction, app_commands
 from discord.ext.commands import Cog
+from google.api_core.exceptions import InvalidArgument
 from google.api_core.retry_async import AsyncRetry
 from google.cloud import texttospeech
 
@@ -104,18 +105,17 @@ class Tts(RhymeExtension, Cog, name="tts"):
                 voice=voice_params,
                 audio_config=audio_config,
             )
+        except InvalidArgument:
+            audio_config.speaking_rate = None
+            audio_config.pitch = None
+            response = await self.client.synthesize_speech(
+                input=tts_input,
+                voice=voice_params,
+                audio_config=audio_config,
+            )
         except Exception as exc:
-            if "400 Chirp HD" in str(exc):
-                audio_config.speaking_rate = None
-                audio_config.pitch = None
-                response = await self.client.synthesize_speech(
-                    input=tts_input,
-                    voice=voice_params,
-                    audio_config=audio_config,
-                )
-            else:
-                log.exception(f"TTS synthesis failed: {exc}")
-                return None
+            log.exception(f"TTS synthesis failed: {exc}")
+            return None
         if response is None:
             return None
         tts_path = MP3_DIR / f"{uuid4().hex[:10]}.mp3"
