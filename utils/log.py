@@ -1,35 +1,29 @@
 import logging
-import logging.handlers
+import sys
 
-import discord
+from loguru import logger as log
 
-
-class CustomFormatter(logging.Formatter):
-    grey = "\x1b[38;20m"
-    yellow = "\x1b[33;20m"
-    blue = "\x1b[36;20m"
-    red = "\x1b[31;20m"
-    bold_red = "\x1b[31;1m"
-    pink = "\x1b[35;1m"
-    green = "\x1b[32:20m"
-    reset = "\x1b[0m"
-    date = blue + "%(asctime)s " + reset
-    msg = f"{pink} [%(filename)s:%(lineno)d]{reset} %(message)s"
-
-    FORMATS = {
-        logging.DEBUG: date + grey + "%(levelname)-8s" + msg,
-        logging.INFO: date + green + "%(levelname)-8s" + msg,
-        logging.WARNING: date + yellow + "%(levelname)-8s" + msg,
-        logging.ERROR: date + red + "%(levelname)-8s" + msg,
-        logging.CRITICAL: date + bold_red + "%(levelname)-8s" + msg,
-    }
-
-    def format(self, record):
-        log_fmt = self.FORMATS.get(record.levelno)
-        formatter = logging.Formatter(log_fmt, self.datefmt)
-        return formatter.format(record)
+log.remove()
+log.add(sys.stderr, level="DEBUG")
+log.add(
+    "discord.log",
+    rotation="32 MB",  # Rotate at 32 MiB
+    retention=5,  # Keep 5 files
+    compression="zip",
+    level="DEBUG",
+)
 
 
-dt_fmt = "%Y-%m-%d %H:%M:%S"
-discord.utils.setup_logging(formatter=CustomFormatter(datefmt=dt_fmt))
-log = logging.getLogger("discord")
+class InterceptHandler(logging.Handler):
+    def emit(self, record):
+        level = record.levelname
+        frame, depth = sys._getframe(1), 1
+        while frame and frame.f_code.co_filename == logging.__file__:
+            frame = frame.f_back
+            depth += 1
+        log.opt(depth=depth, exception=record.exc_info).log(level, record.getMessage())
+
+
+logging.basicConfig(handlers=[InterceptHandler()], level=logging.DEBUG)
+logging.getLogger("discord").setLevel(logging.DEBUG)
+logging.getLogger("discord.http").setLevel(logging.INFO)

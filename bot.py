@@ -201,7 +201,6 @@ class MyBot(Bot, RhymeExtension):
                 options=FFPMEG_OPTIONS,
             )
             self.vc.play(source, after=after_playback)
-            log.info(f"Audio playback started in {time() - start_time:.2f}s")
         except discord.errors.ClientException as e:
             log.error(f"Failed to play audio: {e}")
 
@@ -275,6 +274,18 @@ class MyBot(Bot, RhymeExtension):
                 tts = await self.tts.create_tts(to_say, random=True)
                 await self.play_on_channel(tts)
             await interaction.followup.send("anus")
+
+        @self.tree.command(name="morda", description="zamyka mordę Bockowi")
+        async def morda(interaction: discord.Interaction):
+            await interaction.response.defer()
+            if not self.is_caller_connected(interaction):
+                return
+            if not self.vc.is_playing():
+                return
+            await interaction.followup.send(
+                "już się zamykam <:siusiak:283294977969356800>"
+            )
+            self.vc.stop()
 
 
 async def close(self):
