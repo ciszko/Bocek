@@ -114,6 +114,7 @@ dependencies = [
     { name = "grpcio" },
     { name = "grpcio-tools" },
     { name = "gtts" },
+    { name = "loguru" },
     { name = "mutagen" },
     { name = "niquests" },
     { name = "pynacl" },
@@ -142,6 +143,7 @@ requires-dist = [
     { name = "grpcio", specifier = ">=1.68.0" },
     { name = "grpcio-tools", specifier = ">=1.62.3" },
     { name = "gtts", specifier = ">=2.5.4" },
+    { name = "loguru", specifier = ">=0.7.3" },
     { name = "mutagen", specifier = ">=1.47.0" },
     { name = "niquests", specifier = ">=3.12.1" },
     { name = "pynacl", specifier = ">=1.5.0" },
@@ -528,6 +530,19 @@ wheels = [
 ]
 
 [[package]]
+name = "loguru"
+version = "0.7.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "colorama", marker = "sys_platform == 'win32'" },
+    { name = "win32-setctime", marker = "sys_platform == 'win32'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/3a/05/a1dae3dffd1116099471c643b8924f5aa6524411dc6c63fdae648c4f1aca/loguru-0.7.3.tar.gz", hash = "sha256:19480589e77d47b8d85b2c827ad95d49bf31b0dcde16593892eb51dd18706eb6", size = 63559 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/0c/29/0348de65b8cc732daa3e33e67806420b2ae89bdce2b04af740289c5c6c8c/loguru-0.7.3-py3-none-any.whl", hash = "sha256:31a33c10c8e1e10422bfd431aeb5d351c7cf7fa671e3c4df004162264b28220c", size = 61595 },
+]
+
+[[package]]
 name = "multidict"
 version = "6.1.0"
 source = { registry = "https://pypi.org/simple" }
@@ -868,6 +883,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/f8/ae/a520ed1c77550bc62348a41d9b62e426ef56b61d03bd12711f102e196940/wassima-1.2.0-cp37-abi3-win_amd64.whl", hash = "sha256:3612394abdf7a9278eb12f5519e73e7560d2c89ac2e6be849d679837b82edb4f", size = 124924 },
     { url = "https://files.pythonhosted.org/packages/26/e0/ed903e7d27b9b21261481b6de8fcbf0e32f6524a26b0c8e439f4066e5ab9/wassima-1.2.0-cp37-abi3-win_arm64.whl", hash = "sha256:50b912ae6a0cdeee78103cab56b0dc8c5677306b0900abb35ed7b86d1d99ff1a", size = 120115 },
     { url = "https://files.pythonhosted.org/packages/5e/63/7ed368779707772f6cb63cecc7fc6f4a75796a81230cf02503999d1fca07/wassima-1.2.0-py3-none-any.whl", hash = "sha256:aa5b6629ea0c1063032b74587b421bca88db61a7627cfe7fdba24cb1c6f8995a", size = 7647 },
+]
+
+[[package]]
+name = "win32-setctime"
+version = "1.2.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/b3/8f/705086c9d734d3b663af0e9bb3d4de6578d08f46b1b101c2442fd9aecaa2/win32_setctime-1.2.0.tar.gz", hash = "sha256:ae1fdf948f5640aae05c511ade119313fb6a30d7eabe25fef9764dca5873c4c0", size = 4867 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e1/07/c6fe3ad3e685340704d314d765b7912993bcb8dc198f0e7a89382d37974b/win32_setctime-1.2.0-py3-none-any.whl", hash = "sha256:95d644c4e708aba81dc3704a116d8cbc974d70b3bdb8be1d150e36be6e9d1390", size = 4083 },
 ]
 
 [[package]]
