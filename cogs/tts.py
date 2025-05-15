@@ -6,11 +6,11 @@ from uuid import uuid4
 from async_property import async_cached_property
 from discord import File, Interaction, app_commands
 from discord.ext.commands import Cog
-from google.api_core.exceptions import InvalidArgument
+from google.api_core.exceptions import InvalidArgument, ServiceUnavailable
 from google.api_core.retry_async import AsyncRetry
 from google.cloud import texttospeech
 
-from utils.common import MP3_DIR, RhymeExtension, async_wrap
+from utils.common import BASE_DIR, MP3_DIR, RhymeExtension, async_wrap
 from utils.log import log
 
 
@@ -113,6 +113,10 @@ class Tts(RhymeExtension, Cog, name="tts"):
                 voice=voice_params,
                 audio_config=audio_config,
             )
+        except ServiceUnavailable:
+            del self.voices
+            await self.voices
+            return BASE_DIR / "utils" / "fart.mp3"
         except Exception as exc:
             log.exception(f"TTS synthesis failed: {exc}")
             return None
