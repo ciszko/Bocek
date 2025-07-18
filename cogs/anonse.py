@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-import asyncio
 import re
 from copy import deepcopy
 from dataclasses import dataclass, field
-from random import choice, randint
+from datetime import datetime, timedelta
+from random import choice, shuffle
 from typing import TYPE_CHECKING, List, Optional
 
 import discord
@@ -69,12 +69,12 @@ class AnonseAd:
     text: str
     image: Optional[str]
     location: str
-    date: str
+    date: datetime
     age: Optional[str]
     footer: str = field(init=False)
 
     def __post_init__(self):
-        self.footer = "\n".join((x for x in [self.age, self.location, self.date] if x))
+        self.footer = "\n".join((x for x in [self.age, self.location] if x))
 
     @classmethod
     def from_html(cls, html) -> AnonseAd:
@@ -83,9 +83,27 @@ class AnonseAd:
         text = html.find("div", {"class": "adcontent"}).get_text().strip()
         author = html.find("i", {"class": "icon-user"}).next_sibling.strip()
         location = html.find("i", {"class": "icon-location-arrow"}).next_sibling
-        date = html.find("i", {"class": "icon-calendar"}).next_sibling
+        raw_date = html.find("i", {"class": "icon-calendar"}).next_sibling
         age = html.find("i", {"class": "icon-leaf"})
         age = age.next_sibling if age else ""
+
+        try:
+            if raw_date.startswith("Dzisiaj"):
+                time_str = raw_date.split(" ")[1]
+                today = datetime.now()
+                date = datetime.strptime(
+                    f"{today.strftime('%d-%m-%Y')} {time_str}", "%d-%m-%Y %H:%M"
+                )
+            elif raw_date.startswith("Wczoraj"):
+                time_str = raw_date.split(" ")[1]
+                yesterday = datetime.now() - timedelta(days=1)
+                date = datetime.strptime(
+                    f"{yesterday.strftime('%d-%m-%Y')} {time_str}", "%d-%m-%Y %H:%M"
+                )
+            else:
+                date = datetime.strptime(raw_date, "%d-%m-%Y %H:%M")
+        except (IndexError, ValueError):
+            date = datetime.now()
 
         return cls(
             author=author,
@@ -184,6 +202,7 @@ class Anonse(RhymeExtension, Cog, name="anonse"):
             log.info(f"Anonse image: {anonse.image}")
             embed.set_image(url=anonse.image)
             embed.set_footer(text=anonse.footer)
+            embed.timestamp = anonse.date
 
             view = (
                 Anonse.DeleteImageButton(
@@ -204,8 +223,11 @@ class Anonse(RhymeExtension, Cog, name="anonse"):
                 log.error(f"Failed to send error followup: {e}")
 
     async def get_anonse(self, interaction, cat, region, siurdol):
-        for i in [1, 2, 3, 4, 30]:
-            page = randint(1, int(30 / i))
+        max_page = await self.get_max_page(cat, region)
+        pages = list(range(1, max_page + 1))
+        shuffle(pages)
+
+        for page in pages[:5]:
             anonses = await self.get_anonses(page, cat, region)
             if not anonses:
                 continue
@@ -235,6 +257,22 @@ class Anonse(RhymeExtension, Cog, name="anonse"):
             return []
         dom = BeautifulSoup(html, "html.parser")
         return dom.find_all("div", {"class": "listaditem"})
+
+    async def get_max_page(self, cat, region) -> int:
+        url = f"/?m=list&pg=1&cat={cat}"
+        if region != "0":
+            url += f"{url}&region={region}"
+        try:
+            r = await self.session.get(url)
+            html = r.text
+        except Exception as e:
+            log.exception(e)
+            return 30
+        dom = BeautifulSoup(html, "html.parser")
+        pagination = dom.find("div", {"class": "pagination"})
+        return max(
+            int(el.get_text()) for el in pagination.children if el.get_text().isdigit()
+        )
 
     def replace_numbers(self, msg):
         pattern = r"(\d+)[\/,l ]*(\d+)[\/,l ]*(\d+)[\/,l ]?(\d+)?"

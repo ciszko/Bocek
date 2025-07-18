@@ -47,7 +47,7 @@ class MyBot(Bot, RhymeExtension):
         self.tree.copy_global_to(guild=guild)
         await self.tree.sync(guild=guild)
 
-    @cached_property
+    @property
     def voice_channel(self):
         return next(
             (c for c in self.channel_list if c.id == self.voice_channel_id), None
