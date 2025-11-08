@@ -12,7 +12,7 @@ class Session:
         )
 
     async def get(self, url, **kwargs):
-        return await self._session.get(self._base_url / url, **kwargs)
+        return await self._session.get(self._base_url.join(URL(url)), **kwargs)
 
     async def close(self):
         await self._session.close()
