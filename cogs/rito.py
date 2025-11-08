@@ -51,26 +51,25 @@ class Rito(RhymeExtension, Cog, name="rito"):
         await self.bot.wait_until_ready()
 
     async def get_all_data(self):
-        async with self.session.get("/allgamedata", verify=False) as resp:
-            return await resp.json()
+        resp = await self.session.get("/allgamedata", verify=False)
+        return resp.json()
 
     async def get_all_events(self):
-        async with self.session.get("/eventdata", verify=False) as resp:
-            try:
-                if data := await resp.json():
-                    self.events = data
-                    return data
-            except Exception as e:
-                log.exception(e)
-                return None
+        resp = await self.session.get("/eventdata", verify=False)
+        try:
+            data = resp.json()
+            self.events = data
+            return data
+        except Exception as e:
+            log.exception(e)
+            return None
 
     async def in_game(self):
         try:
-            async with self.session as s:
-                resp = await s.get("/eventdata", timeout=3, verify=False)
-                if resp.status == 200:
-                    log.info("In game detected")
-                    return True
+            resp = await self.session.get("/eventdata", timeout=3, verify=False)
+            if  resp.status_code == 200:
+                log.info("In game detected")
+                return True
         except Exception as e:
             if "Timeout" not in str(e) or "Cannot connect to host" not in str(e):
                 log.info(f"Not in game, {e.__class__.__name__}: {e}")
