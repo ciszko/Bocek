@@ -69,9 +69,11 @@ class Rito(RhymeExtension, Cog, name="rito"):
             async with self.session as s:
                 resp = await s.get("/eventdata", timeout=3, verify=False)
                 if resp.status == 200:
+                    log.info("In game detected")
                     return True
         except Exception as e:
             if "Timeout" not in str(e) or "Cannot connect to host" not in str(e):
+                log.info(f"Not in game, {e.__class__.__name__}: {e}")
                 return False
             log.exception(f"Unexpected error in in_game: {e}")
             return False

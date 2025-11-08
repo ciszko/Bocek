@@ -4,7 +4,7 @@ import sys
 from loguru import logger as log
 
 log.remove()
-log.add(sys.stderr, level="DEBUG")
+log.add(sys.stderr, level="INFO")
 log.add(
     "discord.log",
     rotation="32 MB",  # Rotate at 32 MiB
@@ -24,6 +24,6 @@ class InterceptHandler(logging.Handler):
         log.opt(depth=depth, exception=record.exc_info).log(level, record.getMessage())
 
 
-logging.basicConfig(handlers=[InterceptHandler()], level=logging.DEBUG)
-logging.getLogger("discord").setLevel(logging.DEBUG)
-logging.getLogger("discord.http").setLevel(logging.INFO)
+logging.basicConfig(handlers=[InterceptHandler()], level=logging.INFO)
+logging.getLogger("discord").setLevel(logging.WARNING)
+logging.getLogger("discord.http").setLevel(logging.WARNING)
