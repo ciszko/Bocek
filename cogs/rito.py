@@ -1,3 +1,4 @@
+import asyncio
 from random import random
 from typing import TYPE_CHECKING
 
@@ -51,11 +52,11 @@ class Rito(RhymeExtension, Cog, name="rito"):
         await self.bot.wait_until_ready()
 
     async def get_all_data(self):
-        resp = await self.session.get("/allgamedata", verify=False)
+        resp = await asyncio.to_thread(self.session.get, "/allgamedata", verify=False)
         return resp.json()
 
     async def get_all_events(self):
-        resp = await self.session.get("/eventdata", verify=False)
+        resp = await asyncio.to_thread(self.session.get, "/eventdata", verify=False)
         try:
             data = resp.json()
             self.events = data
@@ -66,8 +67,10 @@ class Rito(RhymeExtension, Cog, name="rito"):
 
     async def in_game(self):
         try:
-            resp = await self.session.get("/eventdata", timeout=3, verify=False)
-            if  resp.status_code == 200:
+            resp = await asyncio.to_thread(
+                self.session.get, "/eventdata", timeout=3, verify=False
+            )
+            if resp.status_code == 200:
                 log.info("In game detected")
                 return True
         except Exception as e:
