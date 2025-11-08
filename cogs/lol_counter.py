@@ -1,3 +1,4 @@
+import asyncio
 from difflib import get_close_matches
 from typing import Dict, List
 
@@ -19,14 +20,17 @@ class LolCounter(RhymeExtension, Cog, name="lol_counter"):
         self.base_url = "https://www.counterstats.net"
         self.session = Session(self.base_url, headers)
 
+    def cog_unload(self):
+        asyncio.create_task(self.session.close())
+
     @async_cached_property
     async def champions(self) -> Dict[str, str]:
         try:
-            r = await self.session.get("")
+            r = await self.session.get("/")
         except Exception:
             return {"": ""}
 
-        dom = BeautifulSoup(r, "html.parser")
+        dom = BeautifulSoup(await r.text(), "html.parser")
         champion_divs = dom.find_all("div", {"class": "champion-icon champList"})
         champs = {}
         for champion_div in champion_divs:
@@ -86,7 +90,7 @@ class LolCounter(RhymeExtension, Cog, name="lol_counter"):
         except Exception as e:
             raise Exception("Kurcze jakiś problem z serwerem jest :(") from e
 
-        dom = BeautifulSoup(r, "html.parser")
+        dom = BeautifulSoup(await r.text(), "html.parser")
 
         img = dom.find("img", {"class": "icon"})["src"]
         all_h3 = dom.find_all("h3")

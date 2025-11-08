@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import re
 from copy import deepcopy
 from dataclasses import dataclass, field
@@ -122,6 +123,9 @@ class Anonse(RhymeExtension, Cog, name="anonse"):
         self.bot: MyBot = bot
         headers = {"User-Agent": "Bocek/1.0"}
         self.session = Session(BASE_URL, headers)
+
+    def cog_unload(self):
+        asyncio.create_task(self.session.close())
 
     class DeleteImageButton(discord.ui.View):
         def __init__(self, *, msg=None, img=None, embed=None):
@@ -251,7 +255,7 @@ class Anonse(RhymeExtension, Cog, name="anonse"):
             url += f"{url}&region={region}"
         try:
             r = await self.session.get(url)
-            html = r.text
+            html = await r.text()
         except Exception as e:
             log.exception(e)
             return []
@@ -264,12 +268,14 @@ class Anonse(RhymeExtension, Cog, name="anonse"):
             url += f"{url}&region={region}"
         try:
             r = await self.session.get(url)
-            html = r.text
+            html = await r.text()
         except Exception as e:
             log.exception(e)
             return 30
         dom = BeautifulSoup(html, "html.parser")
         pagination = dom.find("div", {"class": "pagination"})
+        if not pagination:
+            return 1
         return max(
             int(el.get_text()) for el in pagination.children if el.get_text().isdigit()
         )
