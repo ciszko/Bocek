@@ -1,3 +1,5 @@
+import asyncio
+
 from bs4 import BeautifulSoup
 from discord import Interaction, app_commands
 from discord.ext.commands import Cog
@@ -13,10 +15,13 @@ class Joke(RhymeExtension, Cog, name="joke"):
         url = "https://perelki.net"
         self.session = Session(url, headers)
 
+    def cog_unload(self):
+        asyncio.create_task(self.session.close())
+
     @app_commands.command(name="żart", description="Losowy żarcik")
     async def random_joke(self, interaction: Interaction):
         r = await self.session.get("/random")
-        dom = BeautifulSoup(r, "html.parser")
+        dom = BeautifulSoup(await r.text(), "html.parser")
         joke = (
             dom.find("div", {"class": "content"})
             .find("div", {"class": "container"})

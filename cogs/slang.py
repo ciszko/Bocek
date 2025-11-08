@@ -1,3 +1,5 @@
+import asyncio
+
 from bs4 import BeautifulSoup
 from discord import Interaction, app_commands
 from discord.ext.commands import Cog
@@ -14,11 +16,14 @@ class Slang(RhymeExtension, Cog, name="slang"):
         url = "https://www.miejski.pl"
         self.session = Session(url, headers)
 
+    def cog_unload(self):
+        asyncio.create_task(self.session.close())
+
     @app_commands.command(name="slang", description="Losowy miejski.pl")
     async def slang(self, interaction: Interaction):
         await interaction.response.defer()
         r = await self.session.get("/losuj")
-        dom = BeautifulSoup(r, "html.parser")
+        dom = BeautifulSoup(await r.text(), "html.parser")
         article = dom.find("article")
         word = article.find("h1").text
         desc = article.find("p").text.replace("\r\n", "").strip()
