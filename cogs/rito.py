@@ -26,13 +26,17 @@ class Rito(RhymeExtension, Cog, name="rito"):
     def __init__(self, bot):
         self.bot: MyBot = bot
         self.session = Session(
-            f"https://{LOL_GAME_IP}:{LOL_GAME_PORT}/liveclientdata",
+            f"https://{LOL_GAME_IP}:{LOL_GAME_PORT}",
             retries=False,
         )
         self.glossary = Glossary(self, "rito.json")
 
         self.events: dict = {}
         self.rito_check.start()
+
+    def cog_unload(self):
+        self.rito_check.cancel()
+        asyncio.create_task(self.session.close())
 
     @tasks.loop(seconds=30)
     async def rito_check(self):
@@ -52,13 +56,13 @@ class Rito(RhymeExtension, Cog, name="rito"):
         await self.bot.wait_until_ready()
 
     async def get_all_data(self):
-        resp = await asyncio.to_thread(self.session.get, "/allgamedata", verify=False)
-        return resp.json()
+        resp = await self.session.get("/liveclientdata/allgamedata", ssl=False)
+        return await resp.json()
 
     async def get_all_events(self):
-        resp = await asyncio.to_thread(self.session.get, "/eventdata", verify=False)
+        resp = await self.session.get("/liveclientdata/eventdata", ssl=False)
         try:
-            data = resp.json()
+            data = await resp.json()
             self.events = data
             return data
         except Exception as e:
@@ -67,10 +71,10 @@ class Rito(RhymeExtension, Cog, name="rito"):
 
     async def in_game(self):
         try:
-            resp = await asyncio.to_thread(
-                self.session.get, "/eventdata", timeout=3, verify=False
+            resp = await self.session.get(
+                "/liveclientdata/eventdata", timeout=3, ssl=False
             )
-            if resp.status_code == 200:
+            if resp.status == 200:
                 log.info("In game detected")
                 return True
         except Exception as e:

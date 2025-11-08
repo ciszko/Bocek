@@ -25,6 +25,7 @@ dependencies = [
     "mutagen>=1.47.0",
     "niquests>=3.12.1",
     "loguru>=0.7.3",
+    "yarl>=1.18.0",
 ]
 
 [dependency-groups]
