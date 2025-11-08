@@ -48,7 +48,7 @@ class Rito(RhymeExtension, Cog, name="rito"):
             self.rito_check.change_interval(seconds=ONLINE_WAIT)
         if not (diff := await self.compare_stats()):
             return
-        tts = await self.bot.tts.create_tts(diff)
+        tts = await self.bot.tts.create_tts(diff, random=True)
         await self.bot.play_on_channel(tts)
 
     @rito_check.before_loop
@@ -75,7 +75,6 @@ class Rito(RhymeExtension, Cog, name="rito"):
                 "/liveclientdata/eventdata", timeout=3, ssl=False
             )
             if resp.status == 200:
-                log.info("In game detected")
                 return True
         except Exception as e:
             if "Timeout" not in str(e) or "Cannot connect to host" not in str(e):
