@@ -188,7 +188,7 @@ class MyBot(Bot, RhymeExtension):
             if error:
                 log.error(f"Playback error: {error}")
             loop = self.loop
-            if "fart" not in str(message):
+            if "farts" not in str(message):
                 loop.create_task(self.tts.delete_tts(message))
             if len([m for m in self.voice_channel.members if not m.bot]) < 1:
                 loop.create_task(self.disconnect_from_voice())
@@ -287,6 +287,15 @@ class MyBot(Bot, RhymeExtension):
                 "już się zamykam <:siusiak:283294977969356800>"
             )
             self.vc.stop()
+
+        @self.tree.command(name="pierd", description="puszcza bąka")
+        async def pierd(interaction: discord.Interaction):
+            await interaction.response.defer()
+            if not self.is_caller_connected(interaction):
+                return
+            tts = self.tts.get_random_fart()
+            await self.play_on_channel(tts)
+            await interaction.followup.send("😖💨")
 
 
 async def close(self):
