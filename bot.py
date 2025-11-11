@@ -188,7 +188,8 @@ class MyBot(Bot, RhymeExtension):
             if error:
                 log.error(f"Playback error: {error}")
             loop = self.loop
-            loop.create_task(self.tts.delete_tts(message))
+            if "fart" not in str(message):
+                loop.create_task(self.tts.delete_tts(message))
             if len([m for m in self.voice_channel.members if not m.bot]) < 1:
                 loop.create_task(self.disconnect_from_voice())
 
