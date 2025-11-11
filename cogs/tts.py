@@ -114,7 +114,8 @@ class Tts(RhymeExtension, Cog, name="tts"):
                 audio_config=audio_config,
             )
         except ServiceUnavailable:
-            del self.voices
+            if await self.voices:
+                del self.voices
             await self.voices
             return self.get_random_fart()
         except Exception as exc:
