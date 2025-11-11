@@ -116,7 +116,7 @@ class Tts(RhymeExtension, Cog, name="tts"):
         except ServiceUnavailable:
             del self.voices
             await self.voices
-            return BASE_DIR / "utils" / "fart.mp3"
+            return self.get_random_fart()
         except Exception as exc:
             log.exception(f"TTS synthesis failed: {exc}")
             return None
@@ -126,6 +126,9 @@ class Tts(RhymeExtension, Cog, name="tts"):
         with tts_path.open("wb") as out:
             out.write(response.audio_content)
         return tts_path
+
+    def get_random_fart(self) -> str:
+        return random.choice(list((BASE_DIR / "farts").iterdir())).absolute().as_posix()
 
     @async_wrap
     def delete_tts(self, path):
