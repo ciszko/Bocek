@@ -78,7 +78,6 @@ class Rito(RhymeExtension, Cog, name="rito"):
                 return True
         except Exception as e:
             if "Timeout" not in str(e) or "Cannot connect to host" not in str(e):
-                log.info(f"Not in game, {e.__class__.__name__}: {e}")
                 return False
             log.exception(f"Unexpected error in in_game: {e}")
             return False
