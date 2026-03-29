@@ -3,6 +3,8 @@ from pathlib import Path
 from typing import List
 from uuid import uuid4
 
+from pydub import AudioSegment, effects
+
 from async_property import async_cached_property
 from discord import File, Interaction, app_commands
 from discord.ext.commands import Cog
@@ -129,7 +131,44 @@ class Tts(RhymeExtension, Cog, name="tts"):
         return tts_path
 
     def get_random_fart(self) -> str:
-        return random.choice(list((BASE_DIR / "farts").iterdir())).absolute().as_posix()
+        fart_path = random.choice(list((BASE_DIR / "farts").iterdir()))
+        audio = AudioSegment.from_mp3(fart_path)
+        audio = self._apply_random_fart_effects(audio)
+        out_path = MP3_DIR / f"fart_{uuid4().hex[:8]}.mp3"
+        audio.export(out_path, format="mp3")
+        return out_path.absolute().as_posix()
+
+    def _apply_random_fart_effects(self, audio: AudioSegment) -> AudioSegment:
+        # pitch shift via frame rate trick (range: 0.6x–1.6x of original)
+        pitch_factor = random.uniform(0.6, 1.6)
+        shifted = audio._spawn(
+            audio.raw_data,
+            overrides={"frame_rate": int(audio.frame_rate * pitch_factor)},
+        ).set_frame_rate(audio.frame_rate)
+
+        # random speed stretch (0.8x–1.4x), independent of pitch
+        speed_factor = random.uniform(0.8, 1.4)
+        if speed_factor != 1.0:
+            shifted = effects.speedup(shifted, playback_speed=speed_factor) if speed_factor > 1.0 else shifted._spawn(
+                shifted.raw_data,
+                overrides={"frame_rate": int(shifted.frame_rate * speed_factor)},
+            ).set_frame_rate(shifted.frame_rate)
+
+        # optional reverb: mix in 2 decaying echoes
+        if random.random() < 0.5:
+            delay_ms = random.randint(80, 250)
+            decay = random.uniform(0.25, 0.5)
+            echo1 = shifted - (shifted.dBFS * (1 - decay) + 6)
+            echo2 = shifted - (shifted.dBFS * (1 - decay * 0.5) + 10)
+            padded = shifted + AudioSegment.silent(duration=delay_ms * 2)
+            padded = padded.overlay(echo1, position=delay_ms)
+            padded = padded.overlay(echo2, position=delay_ms * 2)
+            shifted = padded
+
+        # slight volume randomness ±4 dB
+        shifted = shifted + random.uniform(-4, 4)
+
+        return shifted
 
     @async_wrap
     def delete_tts(self, path):

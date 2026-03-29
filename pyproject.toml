@@ -27,6 +27,7 @@ dependencies = [
     "loguru>=0.7.3",
     "yarl>=1.18.0",
     "setuptools>=75.0.0",
+    "pydub>=0.25.1",
 ]
 
 [dependency-groups]
