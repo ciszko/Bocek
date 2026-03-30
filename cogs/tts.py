@@ -139,8 +139,8 @@ class Tts(RhymeExtension, Cog, name="tts"):
         return out_path.absolute().as_posix()
 
     def _apply_random_fart_effects(self, audio: AudioSegment) -> AudioSegment:
-        # pitch shift via frame rate trick (range: 0.6x–1.6x of original)
-        pitch_factor = random.uniform(0.6, 1.6)
+        # pitch shift via frame rate trick (range: 0.3x–1.9x of original)
+        pitch_factor = random.uniform(0.3, 1.9)
         shifted = audio._spawn(
             audio.raw_data,
             overrides={"frame_rate": int(audio.frame_rate * pitch_factor)},
@@ -149,10 +149,14 @@ class Tts(RhymeExtension, Cog, name="tts"):
         # random speed stretch (0.8x–1.4x), independent of pitch
         speed_factor = random.uniform(0.8, 1.4)
         if speed_factor != 1.0:
-            shifted = effects.speedup(shifted, playback_speed=speed_factor) if speed_factor > 1.0 else shifted._spawn(
-                shifted.raw_data,
-                overrides={"frame_rate": int(shifted.frame_rate * speed_factor)},
-            ).set_frame_rate(shifted.frame_rate)
+            shifted = (
+                effects.speedup(shifted, playback_speed=speed_factor)
+                if speed_factor > 1.0
+                else shifted._spawn(
+                    shifted.raw_data,
+                    overrides={"frame_rate": int(shifted.frame_rate * speed_factor)},
+                ).set_frame_rate(shifted.frame_rate)
+            )
 
         # optional reverb: mix in 2 decaying echoes
         if random.random() < 0.5:
