@@ -73,7 +73,9 @@
         "wbijam na bombsajt A., kolejny terro padł",
         "Ale jesteś piękny {user}",
         "Jestem raperem, prawie jak {self.get_rhyme('raperem')}",
-        "Mam ochotę uderzyć cię w jajko {user}"
+        "Mam ochotę uderzyć cię w jajko {user}",
+        "ludzie, luuuuuudzieeeeeee",
+        "eeeeeeeeoooooooooeeeeoooyyyyyyyyuuuuuuuuuu"
     ],
     "greetings": [
         "Siemanko {user}",
@@ -83,13 +85,10 @@
         "Hej haj helou!",
         "{user}, ale masz sranie! Sziiiiiiiiiiiiiiiiiiisz",
         "Jak to jest być skrybą {user}. Dobrze?",
-        "No i po co tu wróciłeś {user}?, ić stond.",
         "Nie chcę przerywać, ale {user} znów przyszedł popsuć zabawę.",
         "Jeśli jest tu ulany ziom, przekażcie mu że wisi mi 50 złotych.",
         "Jeśli jest tu {user}, przekażcie mu że wisi mi 50 złotych.",
         "Łaaazaaap!",
-        "{user} {user} ty chuju.",
-        "{user} {self.get_rhyme(user)}",
         "{user} {user} {self.get_rhyme(user)}",
         "{user} bardziej jak {self.get_rhyme(user)}",
         "Dawaj {user} pokaż siurdolka",
@@ -142,5 +141,37 @@
         "czarnego",
         "fioletowego",
         "obrzydliwego"
+    ],
+    "greetings.happy": [
+        "O NARESZCIE! {user}!!!",
+        "{user} {self.get_rhyme(user)}",
+
+        "Hej {user}, dziś jest piękny dzień!",
+        "Wchodzi {user}, a ja właśnie byłem w doskonałym humorze!",
+        "{user}! Mój ulubiony człowiek!",
+        "Co tam {user}, wszystko gra?",
+        "Ej ej ej, {user} wchodzi!",
+        "Kurde {user}, cieszę się że jesteś, naprawdę!",
+        "{user} {self.get_rhyme(user)}, oto on!"
+    ],
+    "greetings.grumpy": [
+        "Kolejny raz ty, {user}...",
+        "O. Ty. {user}. Super.",
+        "Wchodzi {user}... no tak, tego jeszcze brakowało.",
+        "A, {user}. Czego tym razem?",
+        "{user}, mógłbyś dziś sobie odpuścić?",
+        "Wszedł {user}. Jak zwykle.",
+        "Nieee, tylko nie {user}...",
+        "Miałem taki spokój, aż tu nagle {user}."
+    ],
+    "greetings.grudge": [
+        "Pamiętam {user}. Doskonale pamiętam.",
+        "Zamknąłeś mi mordę {user}. Nie zapomniałem.",
+        "{user}. Wróciłeś. Szkoda.",
+        "Mamy pewną sprawę do omówienia, {user}.",
+        "Nie myśl {user}, że o tym zapomniałem.",
+        "{user} {user} ty chuju.",
+        "{user}... pamiętasz co zrobiłeś? Bo ja pamiętam.",
+        "No i po co tu wróciłeś {user}?, ić stond."
     ]
 }

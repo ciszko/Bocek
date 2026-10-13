@@ -11,14 +11,22 @@ class Glossary:
         self.plugin = plugin
         self.glossary_path = BASE_DIR / "glossary" / glossary
 
-    def get_random(self, section="default") -> tuple[str, list[str]]:
-        """Returns random line from selected section from a glossary"""
+    def get_random(self, section="default", mood: str | None = None) -> tuple[str | None, list[str] | None]:
+        """Returns random line from selected section from a glossary.
+
+        If mood is given, tries '<section>.<mood>' first and falls back to '<section>'.
+        """
         glossary = self.get_file_json()
-        if section not in glossary:
+        key = section
+        if mood:
+            mood_key = f"{section}.{mood}"
+            if mood_key in glossary:
+                key = mood_key
+        if key not in glossary:
             return None, None
-        to_ret = random.choice(glossary[section])
+        to_ret = random.choice(glossary[key])
         placeholders = self.get_placeholders(to_ret)
-        log.info(f"{self.plugin.__class__.__name__} -> {section} -> {to_ret}")
+        log.info(f"{self.plugin.__class__.__name__} -> {key} -> {to_ret}")
         return to_ret, placeholders
 
     def get_value(self, section, key) -> tuple[str, list[str]]:

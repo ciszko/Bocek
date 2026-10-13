@@ -8,7 +8,7 @@ from discord import Color, Embed, Interaction, app_commands
 from discord.ext.commands import Cog
 from tabulate import tabulate
 
-from utils.common import RhymeExtension
+from utils.common import RhymeExtension, mood_effect
 from utils.log import log
 from utils.session import Session
 
@@ -67,6 +67,7 @@ class LolCounter(RhymeExtension, Cog, name="lol_counter"):
     @app_commands.describe(champion="Postać na która zwrócone będą kontry")
     @app_commands.describe(limit="Limit liczby kontr")
     @app_commands.autocomplete(champion=champion_autocomplete)
+    @mood_effect(+5)
     async def counter(self, interaction: Interaction, champion: str, limit: int = 10):
         log.info(f"{champion=}, {limit=}")
         await interaction.response.defer()

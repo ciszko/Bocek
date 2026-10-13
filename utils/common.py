@@ -46,6 +46,14 @@ def replace_all(text, dic):
     return text
 
 
+def mood_effect(delta: int):
+    """Mark a slash command as affecting Bocek's mood by delta points."""
+    def decorator(func):
+        func._mood_delta = delta
+        return func
+    return decorator
+
+
 class RhymeExtension:
     def get_rhyme(self, text):
         to_ret = ""

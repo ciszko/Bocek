@@ -14,7 +14,7 @@ from discord import Interaction, app_commands
 from discord.app_commands import Choice
 from discord.ext.commands import Cog
 
-from utils.common import RhymeExtension
+from utils.common import RhymeExtension, mood_effect
 from utils.log import log
 from utils.session import Session
 
@@ -164,6 +164,7 @@ class Anonse(RhymeExtension, Cog, name="anonse"):
     @app_commands.choices(kategoria=CategoryChoices)
     @app_commands.choices(region=RegionChoices)
     @app_commands.choices(siurdol=SiurdolChoices)
+    @mood_effect(+15)
     async def anonse(
         self,
         interaction: Interaction,

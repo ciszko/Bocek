@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 from discord import Interaction, app_commands
 from discord.ext.commands import Cog
 
-from utils.common import RhymeExtension
+from utils.common import RhymeExtension, mood_effect
 from utils.log import log
 from utils.session import Session
 
@@ -20,6 +20,7 @@ class Slang(RhymeExtension, Cog, name="slang"):
         asyncio.create_task(self.session.close())
 
     @app_commands.command(name="slang", description="Losowy miejski.pl")
+    @mood_effect(+5)
     async def slang(self, interaction: Interaction):
         await interaction.response.defer()
         r = await self.session.get("/losuj")

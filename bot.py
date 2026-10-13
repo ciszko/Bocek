@@ -18,10 +18,13 @@ from utils.common import (
     MP3_DIR,
     TOKEN,
     RhymeExtension,
+    mood_effect,
     replace_all,
 )
 from utils.glossary import Glossary
+from utils.grudge import GrudgeList
 from utils.log import log
+from utils.mood import MoodSystem
 
 if TYPE_CHECKING:
     from cogs.tts import Tts
@@ -37,6 +40,8 @@ class MyBot(Bot, RhymeExtension):
         self.text_channel_id = int(os.getenv("TEXT_CHANNEL_ID"))
         self.vc = None
         self.is_connecting = False
+        self.mood = MoodSystem()
+        self.grudge = GrudgeList()
         os.makedirs(MP3_DIR, exist_ok=True)
 
     async def setup_hook(self):
@@ -113,7 +118,8 @@ class MyBot(Bot, RhymeExtension):
             return
         if before.channel != after.channel and after.channel == self.voice_channel:
             await asyncio.sleep(0.75)
-            to_say, placeholders = self.glossary.get_random("greetings")
+            effective_mood = "grudge" if self.grudge.holds_grudge(member.id) else self.mood.mood
+            to_say, placeholders = self.glossary.get_random("greetings", mood=effective_mood)
             user = member.global_name
             scope = locals()
             to_say = replace_all(
@@ -205,6 +211,12 @@ class MyBot(Bot, RhymeExtension):
         except discord.errors.ClientException as e:
             log.error(f"Failed to play audio: {e}")
 
+    async def on_app_command_completion(self, _interaction: discord.Interaction, command) -> None:
+        delta = getattr(command.callback, "_mood_delta", 0)
+        if delta:
+            self.mood.adjust(delta)
+            log.info(f"Mood adjusted by {delta:+d} via /{command.name}, score={self.mood._score}")
+
     async def on_ready(self):
         self.channel_list = [c for c in self.get_all_channels()]
         self.ready = True
@@ -277,18 +289,21 @@ class MyBot(Bot, RhymeExtension):
             await interaction.followup.send("anus")
 
         @self.tree.command(name="morda", description="zamyka mordę Bockowi")
+        @mood_effect(-40)
         async def morda(interaction: discord.Interaction):
             await interaction.response.defer()
             if not self.is_caller_connected(interaction):
                 return
             if not self.vc.is_playing():
                 return
+            self.grudge.add(interaction.user.id)
             await interaction.followup.send(
                 "już się zamykam <:siusiak:283294977969356800>"
             )
             self.vc.stop()
 
         @self.tree.command(name="pierd", description="puszcza bąka")
+        @mood_effect(+20)
         async def pierd(interaction: discord.Interaction):
             await interaction.response.defer()
             if not self.is_caller_connected(interaction):

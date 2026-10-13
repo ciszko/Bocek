@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 from discord import Interaction, app_commands
 from discord.ext.commands import Cog
 
-from utils.common import RhymeExtension
+from utils.common import RhymeExtension, mood_effect
 from utils.session import Session
 
 
@@ -19,6 +19,7 @@ class Joke(RhymeExtension, Cog, name="joke"):
         asyncio.create_task(self.session.close())
 
     @app_commands.command(name="żart", description="Losowy żarcik")
+    @mood_effect(+10)
     async def random_joke(self, interaction: Interaction):
         r = await self.session.get("/random")
         dom = BeautifulSoup(await r.text(), "html.parser")

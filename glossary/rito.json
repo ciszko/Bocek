@@ -22,7 +22,10 @@
         "no i wylądował",
         "oj {user}",
         "{user} może już nie wychodź z respa",
-        "{user} weź się ogarnij"
+        "{user} weź się ogarnij",
+        "ej {user}, co się dzieje?",
+        "{user} spróbuj pozabijać trochę minionów, może to ci pomoże",
+        "ludzie, luuuuuudzieeeeeee, {user} umarł"
     ],
     "ChampionKill": [
         "najs {user}",
@@ -117,7 +120,8 @@
         "Inhibjitor",
         "Super minionki nadchodzą!",
         "Kończcie te kuropatfy",
-        "Sorbitol maltitol inhibjitor"
+        "Sorbitol maltitol inhibjitor",
+        "Inhibitor bardziej jak {self.get_rhyme('inhibitor')}"
     ],
     "TurretKilled": [
         "{user} zniszczył tureta",
