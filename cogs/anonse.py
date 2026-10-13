@@ -229,11 +229,15 @@ class Anonse(RhymeExtension, Cog, name="anonse"):
 
                 with TemporaryDirectory() as temp_dir:
                     image_path = Path(temp_dir) / filename
-                    await async_wrap(image_path.write_bytes)(response.content)
-                    with discord.File(image_path, filename=filename) as image_file:
+                    image_data = await response.read()
+                    await async_wrap(image_path.write_bytes)(image_data)
+                    image_file = discord.File(image_path, filename=filename)
+                    try:
                         await interaction.followup.send(
                             embed=embed, view=view, file=image_file
                         )
+                    finally:
+                        image_file.close()
             else:
                 await interaction.followup.send(embed=embed, view=view)
 
