@@ -4,8 +4,11 @@ import re
 from copy import deepcopy
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
+from pathlib import Path
 from random import choice, shuffle
+from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING, List, Optional
+from urllib.parse import urlsplit
 
 import discord
 from bs4 import BeautifulSoup
@@ -13,7 +16,7 @@ from discord import Interaction, app_commands
 from discord.app_commands import Choice
 from discord.ext.commands import Cog
 
-from utils.common import RhymeExtension
+from utils.common import RhymeExtension, async_wrap
 from utils.log import log
 from utils.session import Session
 
@@ -147,7 +150,7 @@ class Anonse(RhymeExtension, Cog, name="anonse"):
                 )
             )
             self.embed.set_image(url=None)
-            await interaction.message.edit(embed=self.embed, view=self)
+            await interaction.message.edit(embed=self.embed, view=self, attachments=[])
             await interaction.response.defer()
 
     @app_commands.command(
@@ -200,7 +203,6 @@ class Anonse(RhymeExtension, Cog, name="anonse"):
             )
             embed.set_author(name=anonse.author)
             log.info(f"Anonse image: {anonse.image}")
-            embed.set_image(url=anonse.image)
             embed.set_footer(text=anonse.footer)
             embed.timestamp = anonse.date
 
@@ -212,7 +214,25 @@ class Anonse(RhymeExtension, Cog, name="anonse"):
                 else discord.utils.MISSING
             )
 
-            await interaction.followup.send(embed=embed, view=view)
+            if anonse.image:
+                response = await self.session.get(anonse.image)
+                response.raise_for_status()
+                suffix = Path(urlsplit(anonse.image).path).suffix.lower()
+                if suffix not in {".jpg", ".jpeg", ".png", ".gif", ".webp"}:
+                    suffix = ".jpg"
+                filename = f"anonse{suffix}"
+                embed.set_image(url=f"attachment://{filename}")
+
+                with TemporaryDirectory() as temp_dir:
+                    image_path = Path(temp_dir) / filename
+                    await async_wrap(image_path.write_bytes)(response.content)
+                    with discord.File(image_path, filename=filename) as image_file:
+                        await interaction.followup.send(
+                            embed=embed, view=view, file=image_file
+                        )
+            else:
+                await interaction.followup.send(embed=embed, view=view)
+
             tts = await self.bot.tts.create_tts(anonse.text, random=True)
             await self.bot.play_on_channel(tts)
         except Exception as e:
