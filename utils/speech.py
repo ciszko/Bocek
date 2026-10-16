@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import time
+from collections import deque
 from collections.abc import Awaitable, Callable
 from contextlib import contextmanager
 from pathlib import Path
@@ -28,9 +29,13 @@ class VoiceOutput(Protocol):
 
     def listeners(self) -> int: ...
 
+    def playing(self) -> bool: ...
+
     async def connect(self) -> bool: ...
 
-    async def play(self, path: Path, on_done: Callable[[], Awaitable[None]]) -> bool: ...
+    async def play(
+        self, path: Path, on_done: Callable[[], Awaitable[None]]
+    ) -> bool: ...
 
     def stop(self) -> bool: ...
 
@@ -73,6 +78,8 @@ class Speech:
         make_fart: Callable[[], Path],
         audio_dir: Path,
         clock: Callable[[], float] = time.perf_counter,
+        fart_pool_size: int = 3,
+        fart_refill_delay: float = 1.0,
     ):
         self._synth = synthesizer
         self._output = output
@@ -80,6 +87,10 @@ class Speech:
         self._audio_dir = audio_dir
         self._clock = clock
         self._pending: set[asyncio.Task] = set()
+        self._farts: deque[Path] = deque()
+        self._fart_pool_size = fart_pool_size
+        self._fart_refill_delay = fart_refill_delay
+        self._fart_refill: asyncio.Task | None = None
 
     async def say(
         self, text: str, voice: Voice = "default", delay: float = 0.0
@@ -93,7 +104,7 @@ class Speech:
         Returns True if audio started playing. Drops (never queues) when
         nothing can listen or audio is already playing.
         """
-        if not text or not await self._can_speak():
+        if not text or not await self._can_speak() or self._busy():
             return False
         timings = _Timings("say", self._clock)
         connect, hold = self._prepare(timings, delay)
@@ -114,7 +125,7 @@ class Speech:
             timings.log(started)
 
     async def fart(self) -> bool:
-        if not await self._can_speak():
+        if not await self._can_speak() or self._busy():
             return False
         timings = _Timings("fart", self._clock)
         connect, hold = self._prepare(timings, 0.0)
@@ -144,10 +155,18 @@ class Speech:
     async def leave_if_empty(self) -> None:
         if self._output.listeners() < 1:
             await self._output.disconnect()
-            await asyncio.to_thread(self._delete_all)
+            await asyncio.to_thread(self._delete_all, set(self._farts))
+
+    def warm_up(self) -> None:
+        """Start preparing farts in the background so /pierd has one ready."""
+        self._ensure_fart_refill()
 
     async def shutdown(self) -> None:
+        if self._fart_refill:
+            self._fart_refill.cancel()
         await self._output.disconnect()
+        while self._farts:
+            await self._delete(self._farts.popleft())
 
     async def _synthesize(self, text: str, voice: Voice) -> Path | None:
         if voice == "default":
@@ -160,7 +179,30 @@ class Speech:
         return await self._synth.synthesize(text, **params)
 
     async def _new_fart(self) -> Path:
-        return await asyncio.to_thread(self._make_fart)
+        path = self._farts.popleft() if self._farts else None
+        if path is None:
+            path = await asyncio.to_thread(self._make_fart)
+        self._ensure_fart_refill()
+        return path
+
+    def _ensure_fart_refill(self) -> None:
+        if self._fart_refill and not self._fart_refill.done():
+            return
+        self._fart_refill = asyncio.create_task(self._refill_farts())
+
+    async def _refill_farts(self) -> None:
+        try:
+            while len(self._farts) < self._fart_pool_size:
+                await asyncio.sleep(self._fart_refill_delay)
+                self._farts.append(await asyncio.to_thread(self._make_fart))
+        except Exception as e:
+            log.exception(f"Preparing a fart failed: {e}")
+
+    def _busy(self) -> bool:
+        if self._output.playing():
+            log.info("Already playing, dropping request")
+            return True
+        return False
 
     async def _can_speak(self) -> bool:
         if not self._output.ready:
@@ -220,9 +262,11 @@ class Speech:
         except FileNotFoundError:
             log.warning(f"{path} was already deleted")
 
-    def _delete_all(self) -> None:
+    def _delete_all(self, keep: set[Path]) -> None:
         log.info("Deleting all speech audio")
         for file in self._audio_dir.iterdir():
+            if file in keep:
+                continue
             try:
                 file.unlink()
             except PermissionError:

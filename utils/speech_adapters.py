@@ -102,6 +102,9 @@ class DiscordVoiceOutput:
         channel = self._bot.voice_channel
         return len([m for m in channel.members if not m.bot]) if channel else 0
 
+    def playing(self) -> bool:
+        return bool(self._vc and self._vc.is_playing())
+
     async def connect(self) -> bool:
         if self._is_connecting:
             log.warning("Already attempting to connect to voice channel")

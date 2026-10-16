@@ -105,6 +105,7 @@ class MyBot(Bot, RhymeExtension):
     async def on_ready(self):
         self.channel_list = [c for c in self.get_all_channels()]
         self.ready = True
+        self.speech.warm_up()
         log.info(f"{self.user.name} has connected to Discord!")
 
     async def on_command_error(self, context, exception):

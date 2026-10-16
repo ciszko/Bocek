@@ -43,6 +43,9 @@ class RecordingOutput:
     def listeners(self):
         return self.humans
 
+    def playing(self):
+        return self.busy
+
     async def connect(self):
         self.connects += 1
         return self.connected
@@ -86,7 +89,7 @@ def speech(synth, output, audio_dir):
         path.write_bytes(b"f")
         return path
 
-    return Speech(synth, output, make_fart, audio_dir)
+    return Speech(synth, output, make_fart, audio_dir, fart_pool_size=0)
 
 
 async def test_say_plays_synthesized_audio(speech, synth, output):
@@ -308,4 +311,117 @@ async def test_listener_leaving_during_delay_drops_audio(speech, output, audio_d
     assert await task is False
     assert output.played == []
     assert output.disconnects >= 1
+    assert list(audio_dir.iterdir()) == []
+
+
+class FartFactory:
+    def __init__(self, audio_dir):
+        self.audio_dir = audio_dir
+        self.made = 0
+        self.fail = False
+
+    def __call__(self):
+        if self.fail:
+            raise RuntimeError("ffmpeg exploded")
+        self.made += 1
+        path = self.audio_dir / f"fart_{self.made}.mp3"
+        path.write_bytes(b"f")
+        return path
+
+
+async def settle(condition, timeout=1.0):
+    loop = asyncio.get_running_loop()
+    end = loop.time() + timeout
+    while not condition():
+        assert loop.time() < end, "condition not reached"
+        await asyncio.sleep(0.005)
+
+
+@pytest.fixture
+def farts(audio_dir):
+    return FartFactory(audio_dir)
+
+
+@pytest.fixture
+def pooled(synth, output, audio_dir, farts):
+    return Speech(
+        synth, output, farts, audio_dir, fart_pool_size=2, fart_refill_delay=0
+    )
+
+
+async def test_warm_up_prepares_a_bounded_pool(pooled, farts):
+    pooled.warm_up()
+    await settle(lambda: farts.made == 2)
+    await asyncio.sleep(0.05)
+    assert farts.made == 2
+
+
+async def test_fart_from_pool_renders_nothing_on_the_request_path(
+    pooled, farts, output
+):
+    pooled.warm_up()
+    await settle(lambda: farts.made == 2)
+    played_before = len(output.played)
+    started = await pooled.fart()
+    assert started is True
+    assert len(output.played) == played_before + 1
+    assert output.played[-1].name in {"fart_1.mp3", "fart_2.mp3"}
+
+
+async def test_pool_is_refilled_after_a_fart_is_taken(pooled, farts):
+    pooled.warm_up()
+    await settle(lambda: farts.made == 2)
+    await pooled.fart()
+    await settle(lambda: farts.made == 3)
+    await asyncio.sleep(0.05)
+    assert farts.made == 3
+
+
+async def test_empty_pool_falls_back_to_rendering_on_demand(pooled, farts, output):
+    assert await pooled.fart() is True
+    assert len(output.played) == 1
+    assert farts.made >= 1
+
+
+async def test_synthesis_failure_uses_pooled_fart(pooled, synth, farts, output):
+    pooled.warm_up()
+    await settle(lambda: farts.made == 2)
+    synth.unavailable = True
+    assert await pooled.say("hello") is True
+    assert output.played[-1].name.startswith("fart_")
+
+
+async def test_pooled_farts_survive_leaving_an_empty_channel(
+    pooled, farts, output, audio_dir
+):
+    pooled.warm_up()
+    await settle(lambda: farts.made == 2)
+    output.humans = 0
+    await pooled.leave_if_empty()
+    assert {p.name for p in audio_dir.iterdir()} == {"fart_1.mp3", "fart_2.mp3"}
+
+
+async def test_shutdown_deletes_pooled_farts(pooled, farts, output, audio_dir):
+    pooled.warm_up()
+    await settle(lambda: farts.made == 2)
+    await pooled.shutdown()
+    assert list(audio_dir.iterdir()) == []
+
+
+async def test_failed_pool_render_does_not_break_fart(pooled, farts, output):
+    farts.fail = True
+    pooled.warm_up()
+    await asyncio.sleep(0.05)
+    farts.fail = False
+    assert await pooled.fart() is True
+
+
+async def test_requests_are_dropped_before_any_work_when_already_playing(
+    speech, synth, output, audio_dir
+):
+    output.busy = True
+    assert await speech.fart() is False
+    assert await speech.say("hello") is False
+    assert synth.calls == []
+    assert output.connects == 0
     assert list(audio_dir.iterdir()) == []
