@@ -6,20 +6,17 @@ from utils.common import RhymeExtension
 from utils.log import log
 from utils.web import FetchError
 
+JOKE_URL = "https://perelki.net/losuj"
+# perelki.net redirects non-browser User-Agents to itself forever
+BROWSER_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0"
+}
+
 
 def parse_joke(html: str) -> str:
     dom = BeautifulSoup(html, "html.parser")
-    joke = (
-        dom.find("div", {"class": "content"})
-        .find("div", {"class": "container"})
-        .get_text()
-    )
-    return (
-        joke[: joke.find("Dowcip:")]
-        .replace("\r", "")
-        .replace("\n", " ")
-        .replace("\t", "")
-    )
+    joke = dom.find("section", {"class": "losuj"}).find("p", {"class": "setup"})
+    return " ".join(joke.get_text().split())
 
 
 class Joke(RhymeExtension, Cog, name="joke"):
@@ -30,7 +27,7 @@ class Joke(RhymeExtension, Cog, name="joke"):
     async def random_joke(self, interaction: Interaction):
         await interaction.response.defer()
         try:
-            msg = parse_joke(await self.bot.web.text("https://perelki.net/random"))
+            msg = parse_joke(await self.bot.web.text(JOKE_URL, headers=BROWSER_HEADERS))
         except (FetchError, AttributeError) as e:
             log.warning(f"Joke unavailable: {e!r}")
             await interaction.followup.send("Kurde, nie mogę teraz znaleźć żartu :(")
