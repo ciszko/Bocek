@@ -46,6 +46,8 @@ class Glossary:
         if section not in glossary:
             return None, None
         to_ret = glossary[section].get(key, None)
+        if to_ret is None:
+            return None, None
         placeholders = self.get_placeholders(to_ret)
         log.info(f"{section} -> {to_ret}")
         return to_ret, placeholders

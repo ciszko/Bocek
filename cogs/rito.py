@@ -1,16 +1,15 @@
 import asyncio
-from random import random
 from typing import TYPE_CHECKING
 
-import aiohttp
-from deepdiff import DeepDiff
 from discord.ext import tasks
 from discord.ext.commands import Cog
 
 from utils.common import RhymeExtension
 from utils.config import CONFIG
 from utils.glossary import Glossary
+from utils.live_client import LiveClient
 from utils.log import log
+from utils.narrator import Narrator
 from utils.session import Session
 
 if TYPE_CHECKING:
@@ -32,8 +31,8 @@ class Rito(RhymeExtension, Cog, name="rito"):
             retries=False,
         )
         self.glossary = Glossary(self, "rito.json")
-
-        self.events: dict = {}
+        self.source = LiveClient(self.session)
+        self.narrator = Narrator(self.glossary, PLAYERS, EVENT_PRIORITY)
         self.rito_check.start()
 
     def cog_unload(self):
@@ -42,112 +41,26 @@ class Rito(RhymeExtension, Cog, name="rito"):
 
     @tasks.loop(seconds=30)
     async def rito_check(self):
-        if not await self.in_game():
+        if not await self.source.in_game():
+            self.narrator.reset()
             if self.rito_check.seconds != OFFLINE_WAIT:
                 self.rito_check.change_interval(seconds=OFFLINE_WAIT)
             return
         if self.rito_check.seconds != ONLINE_WAIT:
             self.rito_check.change_interval(seconds=ONLINE_WAIT)
-        if not (diff := await self.compare_stats()):
+        if not (snapshot := await self.source.events()):
             return
-        await self.bot.speech.say(diff, voice="random")
+        try:
+            msg = self.narrator.narrate(snapshot)
+        except Exception as e:
+            log.exception(e)
+            return
+        if msg:
+            await self.bot.speech.say(msg, voice="random")
 
     @rito_check.before_loop
     async def rito_check_before_loop(self):
         await self.bot.wait_until_ready()
-
-    async def get_all_data(self):
-        resp = await self.session.get("/liveclientdata/allgamedata", ssl=False)
-        return await resp.json()
-
-    async def get_all_events(self):
-        resp = await self.session.get("/liveclientdata/eventdata", ssl=False)
-        try:
-            data = await resp.json()
-            self.events = data
-            return data
-        except Exception as e:
-            log.exception(e)
-            return None
-
-    async def in_game(self) -> bool:
-        try:
-            resp = await self.session.get(
-                "/liveclientdata/eventdata", timeout=3, ssl=False
-            )
-            resp.release()
-            return resp.status == 200
-        except (asyncio.TimeoutError, aiohttp.ClientConnectorError):
-            return False
-        except Exception as e:
-            log.exception(f"Unexpected error in in_game: {e}")
-            return False
-
-    async def compare_stats(self):
-        """Returns the message if any"""
-        events_prev = self.events.copy()
-        if not events_prev:
-            await self.get_all_events()
-            return None
-        events = await self.get_all_events()
-        if not events:
-            return None
-        to_ret = []
-        try:
-            if not (
-                diff := DeepDiff(events_prev, events).get("iterable_item_added", None)
-            ):
-                return None
-            for event in diff.values():
-                if not (processed := self.handle_event(event)):
-                    continue
-                to_ret.append(processed)
-            if to_ret:
-                return self.create_msg(to_ret)
-        except Exception as e:
-            log.exception(e)
-        return None
-
-    def handle_event(self, event):
-        if not any(player in event.values() for player in PLAYERS):
-            return
-        if event["EventName"] in ["MinionsSpawning", "GameStart"]:
-            return
-        if "Acer" in event.keys():
-            event["KillerName"] = event["Acer"]
-            event["EventName"] = "Ace"
-        elif event.get("EventName", None) == "FirstBlood":
-            event["KillerName"] = event["Recipient"]
-        event["Who"] = event["KillerName"]
-        if event["EventName"] == "Multikill":
-            match int(event["KillStreak"]):
-                case 2:
-                    event["EventName"] = "DoubleKill"
-                case 3:
-                    event["EventName"] = "TripleKill"
-                case 4:
-                    event["EventName"] = "QuadraKill"
-                case 5:
-                    event["EventName"] = "PentaKill"
-        elif event["EventName"] == "ChampionKill" and event["VictimName"] in PLAYERS:
-            event["EventName"] = "ChampionDeath"
-            event["Who"] = event["VictimName"]
-        elif (
-            event["EventName"] in ["DragonKill", "HeraldKill", "BaronKill"]
-            and event["Stolen"] == "True"
-        ):
-            event["EventName"] = event["EventName"].replace("Kill", "Steal")
-        return event
-
-    def create_msg(self, events):
-        for event_name, prio in EVENT_PRIORITY.items():
-            if event := next((e for e in events if e["EventName"] == event_name), None):
-                if random() < prio:
-                    player = event["Who"]
-                    event_name = event["EventName"]
-                    user, _ = self.glossary.get_value("player_transcript", player)
-                    return self.glossary.render(event_name, user=user or player)
-        return None
 
 
 async def setup(bot) -> None:
