@@ -173,6 +173,7 @@ class Anonse(RhymeExtension, Cog, name="anonse"):
             self.msg = msg
             self.img = img
             self.embed = embed
+            self.deleted = False
             super().__init__()
 
         @discord.ui.button(
@@ -181,6 +182,11 @@ class Anonse(RhymeExtension, Cog, name="anonse"):
             emoji="<:siusiak:283294977969356800>",
         )
         async def on_click(self, interaction: Interaction, button: discord.ui.Button):
+            if self.deleted:
+                await interaction.response.defer()
+                return
+            self.deleted = True
+            log.info(f"Anonse image deleted by {interaction.user} ({self.img})")
             button.disabled = True
             button.label = "Siurdolek usunięty"
             self.add_item(
