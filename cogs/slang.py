@@ -30,9 +30,8 @@ class Slang(RhymeExtension, Cog, name="slang"):
         msg = f"{word} - {desc}"
         log.info(msg)
         if interaction.user.voice:
-            tts = await self.bot.tts.create_tts(msg)
             await interaction.followup.send(msg)
-            await self.bot.play_on_channel(tts)
+            await self.bot.speech.say(msg)
         else:
             await interaction.followup.send(msg)
 

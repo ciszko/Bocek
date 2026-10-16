@@ -48,8 +48,7 @@ class Rito(RhymeExtension, Cog, name="rito"):
             self.rito_check.change_interval(seconds=ONLINE_WAIT)
         if not (diff := await self.compare_stats()):
             return
-        tts = await self.bot.tts.create_tts(diff, random=True)
-        await self.bot.play_on_channel(tts)
+        await self.bot.speech.say(diff, voice="random")
 
     @rito_check.before_loop
     async def rito_check_before_loop(self):
