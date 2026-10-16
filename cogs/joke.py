@@ -35,8 +35,7 @@ class Joke(RhymeExtension, Cog, name="joke"):
         )
         await interaction.response.send_message(msg)
         if interaction.user.voice:
-            tts = await self.bot.tts.create_tts(msg, random=True)
-            await self.bot.play_on_channel(tts)
+            await self.bot.speech.say(msg, voice="random")
 
 
 async def setup(bot) -> None:

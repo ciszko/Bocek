@@ -31,7 +31,11 @@ dependencies = [
 ]
 
 [dependency-groups]
-dev = ["ruff>=0.8.0"]
+dev = [
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+    "ruff>=0.8.0",
+]
 
 [tool.ruff]
 extend-select = ["I"]
@@ -71,3 +75,7 @@ ChampionKill = 0.3
 ChampionDeath = 0.3
 InhibKilled = 0.3
 TurretKilled = 0.3
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+pythonpath = ["."]

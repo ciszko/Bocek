@@ -51,8 +51,7 @@ class RandomEvent(RhymeExtension, Cog, name="random_event"):
         if len(self.bot.voice_channel.members) <= 1:
             return
         if msg := self.random_say():
-            tts = await self.bot.tts.create_tts(msg)
-            await self.bot.play_on_channel(tts)
+            await self.bot.speech.say(msg)
 
         choices = ("game", "streaming", "custom")
         type_ = choice(choices)
@@ -97,8 +96,7 @@ class RandomEvent(RhymeExtension, Cog, name="random_event"):
                 log.error(f"Failed to send followup: {e}")
             return
         try:
-            tts = await self.bot.tts.create_tts(msg)
-            await self.bot.play_on_channel(tts)
+            await self.bot.speech.say(msg)
             await interaction.followup.send(msg)
         except Exception as e:
             log.exception(f"Error in powiedz command: {e}")

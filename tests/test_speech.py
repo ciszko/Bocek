@@ -1,0 +1,167 @@
+import pytest
+
+from utils.speech import Speech, SynthesisUnavailable
+
+
+class FakeSynthesizer:
+    def __init__(self, audio_dir):
+        self.audio_dir = audio_dir
+        self.calls = []
+        self.unavailable = False
+
+    async def synthesize(self, text, **params):
+        self.calls.append((text, params))
+        if self.unavailable:
+            raise SynthesisUnavailable
+        path = self.audio_dir / f"say_{len(self.calls)}.mp3"
+        path.write_bytes(b"x")
+        return path
+
+    async def random_voice(self):
+        return {"voice": "random-voice"}
+
+    async def voices(self):
+        return {"v": "v"}
+
+
+class RecordingOutput:
+    def __init__(self):
+        self.ready = True
+        self.humans = 1
+        self.busy = False
+        self.played = []
+        self.disconnects = 0
+        self._on_done = None
+
+    def listeners(self):
+        return self.humans
+
+    async def play(self, path, on_done):
+        if self.busy:
+            return False
+        self.played.append(path)
+        self._on_done = on_done
+        return True
+
+    def stop(self):
+        return bool(self.played)
+
+    async def disconnect(self):
+        self.disconnects += 1
+
+    async def finish_playback(self):
+        await self._on_done()
+
+
+@pytest.fixture
+def audio_dir(tmp_path):
+    return tmp_path
+
+
+@pytest.fixture
+def synth(audio_dir):
+    return FakeSynthesizer(audio_dir)
+
+
+@pytest.fixture
+def output():
+    return RecordingOutput()
+
+
+@pytest.fixture
+def speech(synth, output, audio_dir):
+    def make_fart():
+        path = audio_dir / "fart_1.mp3"
+        path.write_bytes(b"f")
+        return path
+
+    return Speech(synth, output, make_fart, audio_dir)
+
+
+async def test_say_plays_synthesized_audio(speech, synth, output):
+    assert await speech.say("hello") is True
+    assert synth.calls == [("hello", {})]
+    assert len(output.played) == 1
+
+
+async def test_say_random_voice_uses_synthesizer_params(speech, synth):
+    await speech.say("hello", voice="random")
+    assert synth.calls == [("hello", {"voice": "random-voice"})]
+
+
+async def test_say_does_nothing_when_not_ready(speech, synth, output):
+    output.ready = False
+    assert await speech.say("hello") is False
+    assert synth.calls == [] and output.played == []
+
+
+async def test_say_does_nothing_without_listeners(speech, synth, output):
+    output.humans = 0
+    assert await speech.say("hello") is False
+    assert synth.calls == [] and output.played == []
+    assert output.disconnects == 1
+
+
+async def test_say_empty_text_is_ignored(speech, output):
+    assert await speech.say("") is False
+    assert output.played == []
+
+
+async def test_say_drops_and_cleans_up_when_already_playing(speech, output, audio_dir):
+    output.busy = True
+    assert await speech.say("hello") is False
+    assert list(audio_dir.iterdir()) == []
+
+
+async def test_say_falls_back_to_fart_when_synthesis_unavailable(
+    speech, synth, output
+):
+    synth.unavailable = True
+    assert await speech.say("hello") is True
+    assert output.played[0].name.startswith("fart_")
+
+
+async def test_temp_file_deleted_after_playback(speech, output, audio_dir):
+    await speech.say("hello")
+    assert len(list(audio_dir.iterdir())) == 1
+    await output.finish_playback()
+    assert list(audio_dir.iterdir()) == []
+
+
+async def test_fart_file_deleted_after_playback(speech, output, audio_dir):
+    assert await speech.fart() is True
+    await output.finish_playback()
+    assert list(audio_dir.iterdir()) == []
+
+
+async def test_disconnects_after_playback_when_channel_emptied(speech, output):
+    await speech.say("hello")
+    output.humans = 0
+    await output.finish_playback()
+    assert output.disconnects == 1
+
+
+async def test_synthesize_returns_file_without_playing(speech, output):
+    path = await speech.synthesize("hello", pitch=1)
+    assert path is not None and path.exists()
+    assert output.played == []
+
+
+async def test_synthesize_returns_none_when_unavailable(speech, synth):
+    synth.unavailable = True
+    assert await speech.synthesize("hello") is None
+
+
+async def test_leave_if_empty_disconnects_and_clears_files(speech, output, audio_dir):
+    (audio_dir / "old.mp3").write_bytes(b"x")
+    output.humans = 0
+    await speech.leave_if_empty()
+    assert output.disconnects == 1
+    assert list(audio_dir.iterdir()) == []
+
+
+async def test_leave_if_empty_noop_with_listeners(speech, output, audio_dir):
+    (audio_dir / "old.mp3").write_bytes(b"x")
+    await speech.leave_if_empty()
+    assert output.disconnects == 0
+    assert len(list(audio_dir.iterdir())) == 1

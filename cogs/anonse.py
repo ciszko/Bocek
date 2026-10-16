@@ -241,8 +241,7 @@ class Anonse(RhymeExtension, Cog, name="anonse"):
             else:
                 await interaction.followup.send(embed=embed, view=view)
 
-            tts = await self.bot.tts.create_tts(anonse.text, random=True)
-            await self.bot.play_on_channel(tts)
+            await self.bot.speech.say(anonse.text, voice="random")
         except Exception as e:
             log.exception(f"Error in anonse command: {e}")
             try:

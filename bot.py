@@ -5,15 +5,12 @@ import os
 from difflib import get_close_matches
 from functools import cached_property
 from time import time
-from typing import TYPE_CHECKING
 
 import discord
 from discord.ext.commands import Bot
 
 from utils.common import (
     BASE_DIR,
-    FFMPEG,
-    FFPMEG_OPTIONS,
     GUILD,
     MP3_DIR,
     TOKEN,
@@ -22,9 +19,8 @@ from utils.common import (
 )
 from utils.glossary import Glossary
 from utils.log import log
-
-if TYPE_CHECKING:
-    from cogs.tts import Tts
+from utils.speech import Speech
+from utils.speech_adapters import DiscordVoiceOutput, GoogleSynthesizer, make_fart
 
 
 class MyBot(Bot, RhymeExtension):
@@ -35,11 +31,13 @@ class MyBot(Bot, RhymeExtension):
         self.channel_list = []
         self.voice_channel_id = int(os.getenv("VOICE_CHANNEL_ID"))
         self.text_channel_id = int(os.getenv("TEXT_CHANNEL_ID"))
-        self.vc = None
-        self.is_connecting = False
+        self.speech: Speech | None = None
         os.makedirs(MP3_DIR, exist_ok=True)
 
     async def setup_hook(self):
+        self.speech = Speech(
+            GoogleSynthesizer(), DiscordVoiceOutput(self), make_fart, MP3_DIR
+        )
         await self.load_cogs()
         self.add_commands()
 
@@ -56,10 +54,6 @@ class MyBot(Bot, RhymeExtension):
     @cached_property
     def text_channel(self):
         return next((c for c in self.channel_list if c.id == self.id), None)
-
-    @property
-    def tts(self) -> Tts:
-        return self.get_cog("tts")
 
     async def load_cogs(self):
         for file in (BASE_DIR / "cogs").iterdir():
@@ -91,12 +85,11 @@ class MyBot(Bot, RhymeExtension):
                 to_say, {f"{{{p}}}": eval(p, scope) for p in placeholders}
             )
 
-            tts = await self.tts.create_tts(to_say, random=True)
             if (
                 hasattr(message.author.voice, "channel")
                 and message.author.voice.channel
             ):
-                await self.play_on_channel(tts)
+                await self.speech.say(to_say, voice="random")
             else:
                 await message.add_reaction(self.get_emoji(283294977969356800))
                 await message.reply(to_say)
@@ -107,9 +100,7 @@ class MyBot(Bot, RhymeExtension):
         if member == self.user or not self.ready:
             return
         if not hasattr(after, "channel") or not hasattr(after.channel, "name"):
-            if len([m for m in self.voice_channel.members if not m.bot]) < 1:
-                await self.disconnect_from_voice()
-                await self.tts.delete_all_tts()
+            await self.speech.leave_if_empty()
             return
         if before.channel != after.channel and after.channel == self.voice_channel:
             await asyncio.sleep(0.75)
@@ -120,90 +111,11 @@ class MyBot(Bot, RhymeExtension):
                 to_say, {f"{{{p}}}": eval(p, scope) for p in placeholders}
             )
             start_time = time()
-            tts = await self.tts.create_tts(to_say, random=True)
-            log.info(f"TTS generation took {time() - start_time:.2f}s")
-            start_time = time()
-            await self.play_on_channel(tts)
-            log.info(f"Playback took {time() - start_time:.2f}s")
+            await self.speech.say(to_say, voice="random")
+            log.info(f"Greeting took {time() - start_time:.2f}s")
             return
-        if (
-            after.channel != self.voice_channel
-            and len([m for m in self.voice_channel.members if not m.bot]) < 1
-            and self.vc
-        ):
-            await self.disconnect_from_voice()
-            await self.tts.delete_all_tts()
-
-    async def disconnect_from_voice(self):
-        log.info("DISCONNECTING FROM VOICE")
-        for vc in self.voice_clients:
-            await vc.disconnect(force=True)
-        self.vc = None
-
-    async def play_on_channel(self, message=None):
-        if not self.ready:
-            log.info("Bot not ready, skipping playback")
-            return
-        if message is None:
-            return
-        non_bot_members = len([m for m in self.voice_channel.members if not m.bot])
-        log.info(f"Non-bot members in voice channel: {non_bot_members}")
-        if non_bot_members < 1:
-            if self.vc:
-                await self.disconnect_from_voice()
-            return
-        if self.is_connecting:
-            log.warning("Already attempting to connect to voice channel")
-            return
-        if not self.vc or not self.vc.is_connected():
-            try:
-                self.is_connecting = True
-                log.info("Connecting to voice channel")
-                start_time = time()
-                self.vc = await asyncio.wait_for(
-                    self.voice_channel.connect(), timeout=6
-                )
-                log.info(f"Voice connection took {time() - start_time:.2f}s")
-            except asyncio.TimeoutError:
-                log.error("Voice connection timed out")
-                return
-            except discord.ClientException as e:
-                log.warning(f"Voice connection error: {e}")
-                await self.disconnect_from_voice()
-                try:
-                    self.vc = await asyncio.wait_for(
-                        self.voice_channel.connect(), timeout=6
-                    )
-                    log.info(f"Reconnection took {time() - start_time:.2f}s")
-                except Exception as e:
-                    log.error(f"Failed to reconnect: {e}")
-                    return
-            finally:
-                self.is_connecting = False
-        if self.vc and self.vc.is_playing():
-            log.warning("Already playing")
-            return
-
-        def after_playback(error):
-            if error:
-                log.error(f"Playback error: {error}")
-            loop = self.loop
-            if "farts" not in str(message):
-                loop.create_task(self.tts.delete_tts(message))
-            if len([m for m in self.voice_channel.members if not m.bot]) < 1:
-                loop.create_task(self.disconnect_from_voice())
-
-        try:
-            log.info(f"Playing audio: {message}")
-            start_time = time()
-            source = discord.FFmpegOpusAudio(
-                executable=FFMPEG,
-                source=message,
-                options=FFPMEG_OPTIONS,
-            )
-            self.vc.play(source, after=after_playback)
-        except discord.errors.ClientException as e:
-            log.error(f"Failed to play audio: {e}")
+        if after.channel != self.voice_channel:
+            await self.speech.leave_if_empty()
 
     async def on_ready(self):
         self.channel_list = [c for c in self.get_all_channels()]
@@ -263,8 +175,7 @@ class MyBot(Bot, RhymeExtension):
             response = f"{interaction.user.name} ma {siusiak} siusiaka"
             await interaction.response.defer()
             if self.is_caller_connected(interaction):
-                tts = await self.tts.create_tts(response, random=True)
-                await self.play_on_channel(tts)
+                await self.speech.say(response, voice="random")
             await interaction.followup.send(response)
 
         @self.tree.command(name="anus", description="anus anus nostradamus")
@@ -272,8 +183,7 @@ class MyBot(Bot, RhymeExtension):
             to_say = "anus anus nostradamus"
             await interaction.response.defer(ephemeral=True)
             if self.is_caller_connected(interaction):
-                tts = await self.tts.create_tts(to_say, random=True)
-                await self.play_on_channel(tts)
+                await self.speech.say(to_say, voice="random")
             await interaction.followup.send("anus")
 
         @self.tree.command(name="morda", description="zamyka mordę Bockowi")
@@ -281,26 +191,23 @@ class MyBot(Bot, RhymeExtension):
             await interaction.response.defer()
             if not self.is_caller_connected(interaction):
                 return
-            if not self.vc.is_playing():
-                return
-            await interaction.followup.send(
-                "już się zamykam <:siusiak:283294977969356800>"
-            )
-            self.vc.stop()
+            if self.speech.stop():
+                await interaction.followup.send(
+                    "już się zamykam <:siusiak:283294977969356800>"
+                )
 
         @self.tree.command(name="pierd", description="puszcza bąka")
         async def pierd(interaction: discord.Interaction):
             await interaction.response.defer()
             if not self.is_caller_connected(interaction):
                 return
-            tts = self.tts.get_random_fart()
-            await self.play_on_channel(tts)
+            await self.speech.fart()
             await interaction.followup.send("😖💨")
 
 
 async def close(self):
     log.info("Closing bot connections")
-    await self.disconnect_from_voice()
+    await self.speech.shutdown()
     await super().close()
 
 
