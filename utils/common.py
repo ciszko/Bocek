@@ -3,7 +3,6 @@ import os
 import pathlib
 import platform
 import random
-import tomllib
 from functools import partial, wraps
 
 from discord.ext.commands import Bot
@@ -22,9 +21,6 @@ if platform.system() == "Windows":
     FFMPEG = "D:/Projekt/Bocek/extras/ffmpeg.exe"
 else:
     FFMPEG = "/usr/bin/ffmpeg"
-
-with open(BASE_DIR / "pyproject.toml", "rb") as f:
-    CONFIG = tomllib.load(f)["tool"]["bocek"]
 
 FFPMEG_OPTIONS = "-loglevel error -ac 2 -ar 24000 -b:a 32k"
 

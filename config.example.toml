@@ -1,0 +1,27 @@
+# Copy to config.toml and edit. config.toml is gitignored.
+# LOL_GAME_IP / LOL_GAME_PORT environment variables override the game address.
+
+[rito]
+lol-game-ip = "127.0.0.1"
+lol-game-port = 29999
+offline-wait = 30
+online-wait = 2
+players = ["PlayerOne", "PlayerTwo"]
+
+[rito.event-possibility]
+PentaKill = 1
+QuadraKill = 0.8
+TripleKill = 0.5
+BaronSteal = 1
+DragonSteal = 0.8
+DoubleKill = 0.4
+BaronKill = 0.5
+Ace = 0.5
+DragonKill = 0.3
+HeraldKill = 0.3
+AtakhanKill = 0.9
+FirstBlood = 0.5
+ChampionKill = 0.3
+ChampionDeath = 0.3
+InhibKilled = 0.3
+TurretKilled = 0.3

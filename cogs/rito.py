@@ -6,7 +6,8 @@ from deepdiff import DeepDiff
 from discord.ext import tasks
 from discord.ext.commands import Cog
 
-from utils.common import CONFIG, RhymeExtension, replace_all
+from utils.common import RhymeExtension, replace_all
+from utils.config import CONFIG
 from utils.glossary import Glossary
 from utils.log import log
 from utils.session import Session
