@@ -20,6 +20,7 @@ from discord.ext.commands import Cog
 
 from utils.common import RhymeExtension
 from utils.log import log
+from utils.replies import defer, reply, reply_and_speak
 
 if TYPE_CHECKING:
     from bot import MyBot
@@ -218,14 +219,12 @@ class Anonse(RhymeExtension, Cog, name="anonse"):
         region: app_commands.Choice[str] = "0",
         siurdol: Optional[str] = "może",
     ):
-        await self.bot.handle_defering(interaction)
+        if not await defer(interaction):
+            return
         if not self.bot.is_caller_connected(interaction):
-            try:
-                await interaction.followup.send(
-                    f"{interaction.user.name}, nie jesteś nawet na kanale..."
-                )
-            except discord.errors.NotFound as e:
-                log.error(f"Failed to send followup: {e}")
+            await reply(
+                interaction, f"{interaction.user.name}, nie jesteś nawet na kanale..."
+            )
             return
 
         try:
@@ -234,12 +233,9 @@ class Anonse(RhymeExtension, Cog, name="anonse"):
             log.info(f"{kategoria=}, {region=}")
             anonse = await self.get_anonse(kategoria, region, siurdol)
             if not anonse:
-                try:
-                    await interaction.followup.send(
-                        "Coś nie mogę znaleźć anonsa :disappointed_relieved:"
-                    )
-                except discord.errors.NotFound as e:
-                    log.error(f"Failed to send followup: {e}")
+                await reply(
+                    interaction, "Coś nie mogę znaleźć anonsa :disappointed_relieved:"
+                )
                 return
 
             cat = next(c.name for c in CategoryChoices if c.value == kategoria)
@@ -271,17 +267,16 @@ class Anonse(RhymeExtension, Cog, name="anonse"):
                 embed.set_image(url=f"attachment://{filename}")
 
                 image_file = discord.File(io.BytesIO(image_data), filename=filename)
-                await interaction.followup.send(embed=embed, view=view, file=image_file)
+                send_kwargs = {"embed": embed, "view": view, "file": image_file}
             else:
-                await interaction.followup.send(embed=embed, view=view)
+                send_kwargs = {"embed": embed, "view": view}
 
-            await self.bot.speech.say(anonse.text, voice="random")
+            await reply_and_speak(
+                interaction, self.bot.speech, speak=anonse.text, **send_kwargs
+            )
         except Exception as e:
             log.exception(f"Error in anonse command: {e}")
-            try:
-                await interaction.followup.send("Coś poszło nie tak :(")
-            except discord.errors.NotFound as e:
-                log.error(f"Failed to send error followup: {e}")
+            await reply(interaction, "Coś poszło nie tak :(")
 
     async def get_anonse(self, cat, region, siurdol) -> Optional[AnonseAd]:
         max_page = await self.get_max_page(cat, region)

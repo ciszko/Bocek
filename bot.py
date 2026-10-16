@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 import os
 from difflib import get_close_matches
 from functools import cached_property
@@ -17,6 +16,7 @@ from utils.common import (
 )
 from utils.glossary import Glossary
 from utils.log import log
+from utils.replies import defer, reply_and_speak
 from utils.speech import Speech
 from utils.speech_adapters import DiscordVoiceOutput, GoogleSynthesizer, make_fart
 from utils.web import Web
@@ -148,40 +148,33 @@ class MyBot(Bot, RhymeExtension):
             return True
         return False
 
-    async def handle_defering(self, interaction: discord.Interaction):
-        failed_to_defer = False
-        try:
-            await interaction.response.defer()
-        except discord.errors.NotFound as e:
-            log.error(f"Failed to defer interaction: {e}")
-            failed_to_defer = True
-        if failed_to_defer:
-            try:
-                await asyncio.sleep(1)
-                await interaction.response.defer()
-            except discord.errors.HTTPException:
-                return
-            except Exception as e:
-                log.exception(e)
-
     def add_commands(self):
         @self.tree.command(name="siusiak", description="powie prawde o siusiaku")
         async def siusiak(interaction: discord.Interaction):
             """/siusiak"""
             siusiak, _ = self.glossary.get_random("siusiak")
             response = f"{interaction.user.name} ma {siusiak} siusiaka"
-            await interaction.response.defer()
-            if self.is_caller_connected(interaction):
-                await self.speech.say(response, voice="random")
-            await interaction.followup.send(response)
+            if not await defer(interaction):
+                return
+            await reply_and_speak(
+                interaction,
+                self.speech,
+                response,
+                speak=self.is_caller_connected(interaction) and response,
+            )
 
         @self.tree.command(name="anus", description="anus anus nostradamus")
         async def anus(interaction: discord.Interaction):
             to_say = "anus anus nostradamus"
-            await interaction.response.defer(ephemeral=True)
-            if self.is_caller_connected(interaction):
-                await self.speech.say(to_say, voice="random")
-            await interaction.followup.send("anus")
+            if not await defer(interaction, ephemeral=True):
+                return
+            await reply_and_speak(
+                interaction,
+                self.speech,
+                "anus",
+                speak=self.is_caller_connected(interaction) and to_say,
+                ephemeral=True,
+            )
 
         @self.tree.command(name="morda", description="zamyka mordę Bockowi")
         async def morda(interaction: discord.Interaction):

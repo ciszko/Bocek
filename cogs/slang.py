@@ -4,6 +4,7 @@ from discord.ext.commands import Cog
 
 from utils.common import RhymeExtension
 from utils.log import log
+from utils.replies import defer, reply, reply_and_speak
 from utils.web import FetchError
 
 
@@ -20,19 +21,22 @@ class Slang(RhymeExtension, Cog, name="slang"):
 
     @app_commands.command(name="slang", description="Losowy miejski.pl")
     async def slang(self, interaction: Interaction):
-        await interaction.response.defer()
+        if not await defer(interaction):
+            return
         try:
             msg = parse_slang(await self.bot.web.text("https://www.miejski.pl/losuj"))
         except (FetchError, AttributeError) as e:
             log.warning(f"Slang unavailable: {e!r}")
-            await interaction.followup.send("Kurde, nie mogę teraz znaleźć słowa :(")
+            await reply(interaction, "Kurde, nie mogę teraz znaleźć słowa :(")
             return
         log.info(msg)
-        if interaction.user.voice:
-            await interaction.followup.send(msg)
-            await self.bot.speech.say(msg)
-        else:
-            await interaction.followup.send(msg)
+        await reply_and_speak(
+            interaction,
+            self.bot.speech,
+            msg,
+            speak=bool(interaction.user.voice) and msg,
+            voice="default",
+        )
 
 
 async def setup(bot) -> None:

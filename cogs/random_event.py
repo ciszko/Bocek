@@ -2,7 +2,6 @@ from datetime import datetime, timedelta
 from random import choice, randint
 from typing import TYPE_CHECKING
 
-import discord
 from discord import CustomActivity, Game, Interaction, Streaming, app_commands
 from discord.ext import tasks
 from discord.ext.commands import Cog
@@ -10,6 +9,7 @@ from discord.ext.commands import Cog
 from utils.common import RhymeExtension
 from utils.glossary import Glossary
 from utils.log import log
+from utils.replies import defer, reply, reply_and_speak
 
 if TYPE_CHECKING:
     from bot import MyBot
@@ -76,29 +76,16 @@ class RandomEvent(RhymeExtension, Cog, name="random_event"):
 
     @app_commands.command(name="powiedz", description="Coś se powiem")
     async def powiedz(self, interaction: Interaction):
-        await self.bot.handle_defering(interaction)
+        if not await defer(interaction):
+            return
         if not self.bot.is_caller_connected(interaction):
-            try:
-                await interaction.followup.send("Nawet cię nie ma na kanale")
-            except discord.errors.NotFound as e:
-                log.error(f"Failed to send followup: {e}")
+            await reply(interaction, "Nawet cię nie ma na kanale")
             return
         msg = self.random_say()
         if not msg:
-            try:
-                await interaction.followup.send("Nie mam nic do powiedzenia")
-            except discord.errors.NotFound as e:
-                log.error(f"Failed to send followup: {e}")
+            await reply(interaction, "Nie mam nic do powiedzenia")
             return
-        try:
-            await self.bot.speech.say(msg)
-            await interaction.followup.send(msg)
-        except Exception as e:
-            log.exception(f"Error in powiedz command: {e}")
-            try:
-                await interaction.followup.send("Coś poszło nie tak :(")
-            except discord.errors.NotFound as e:
-                log.error(f"Failed to send error followup: {e}")
+        await reply_and_speak(interaction, self.bot.speech, msg, voice="default")
 
 
 async def setup(bot) -> None:
