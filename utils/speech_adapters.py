@@ -125,8 +125,11 @@ class DiscordVoiceOutput:
 
         try:
             log.info(f"Playing audio: {path}")
-            source = discord.FFmpegOpusAudio(
-                executable=FFMPEG, source=str(path), options=FFPMEG_OPTIONS
+            source = await asyncio.to_thread(
+                discord.FFmpegOpusAudio,
+                executable=FFMPEG,
+                source=str(path),
+                options=FFPMEG_OPTIONS,
             )
             self._vc.play(source, after=after)
         except discord.errors.ClientException as e:
