@@ -1,9 +1,12 @@
 import json
 import random
+import re
 import string
 
 from utils.common import BASE_DIR
 from utils.log import log
+
+RHYME = re.compile(r"\{rhyme:([^}]+)\}")
 
 
 class Glossary:
@@ -22,10 +25,17 @@ class Glossary:
         return to_ret, placeholders
 
     def render(self, section="default", **context) -> str | None:
-        """Returns a random line from a section with placeholders filled from context"""
-        text, placeholders = self.get_random(section)
+        """Returns a random line from a section with placeholders filled from context.
+
+        `{rhyme:word}` is replaced by a rhyme from the plugin's get_rhyme."""
+        text, _ = self.get_random(section)
         if text is None:
             return None
+        # {rhyme:word} rhymes a literal word, or a context value when `word` is a key
+        text = RHYME.sub(
+            lambda m: str(self.plugin.get_rhyme(context.get(m[1], m[1]))), text
+        )
+        placeholders = self.get_placeholders(text)
         if missing := [p for p in placeholders if p not in context]:
             raise ValueError(f"Missing placeholders for '{section}': {missing}")
         return text.format_map(context)
