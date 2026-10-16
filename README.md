@@ -21,7 +21,7 @@ Bocek consists of completely random and very useful features such as:
   - [TTS](#tts)
   - [League of Legeneds Live game commentary](#league-of-legeneds-live-game-commentary)
 - [Extra configuration](#extra-configuration)
-  - [`pyproject.toml`](#pyprojecttoml)
+  - [`config.toml`](#configtoml)
   - [`glossary`](#glossary)
 
 
@@ -55,12 +55,16 @@ interface portproxy
 add v4tov4 listenport=29999 listenaddress=0.0.0.0 connectport=2999 connectaddress=127.0.0.1
 ```
 Bocek now should know what is happening in your games but he doesn't know who to track (and insult of course).  
-To set it up, edit the players variable inside [pyproject.toml](pyproject.toml).
+To set it up, edit the `players` list inside `config.toml` (see [Extra configuration](#extra-configuration)).
 
 ## Extra configuration
 
-### [`pyproject.toml`](pyproject.toml)
-In [pyproject.toml](pyproject.toml) you can find some extra configuration variables.
+### `config.toml`
+Copy [config.example.toml](config.example.toml) to `config.toml` (gitignored) and edit it.
+If `config.toml` is missing, the example file is used. Everything lives under the `[rito]` table.
+Secrets stay in `.env`; the `LOL_GAME_IP` and `LOL_GAME_PORT` environment variables override the game address.
+
+`lol-game-ip` - \(str\) address of the PC running LoL
 
 `lol-game-port` - \(int\) port is used to gather data from live LoL game
 
