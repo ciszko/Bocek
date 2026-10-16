@@ -144,6 +144,12 @@ class MyBot(Bot, RhymeExtension):
                 f"```{exception}```"
             )
 
+    async def close(self):
+        log.info("Closing bot connections")
+        if self.speech:
+            await self.speech.shutdown()
+        await super().close()
+
     def is_caller_connected(self, interaction: discord.Interaction) -> bool:
         if hasattr(interaction.user, "voice") and hasattr(
             interaction.user.voice, "channel"
@@ -203,12 +209,6 @@ class MyBot(Bot, RhymeExtension):
                 return
             await self.speech.fart()
             await interaction.followup.send("😖💨")
-
-
-async def close(self):
-    log.info("Closing bot connections")
-    await self.speech.shutdown()
-    await super().close()
 
 
 if __name__ == "__main__":
