@@ -63,3 +63,11 @@ def test_shipped_glossaries_only_use_known_placeholders():
                 line = RHYME.sub("", line)
                 placeholders = Glossary(object(), str(path)).get_placeholders(line)
                 assert set(placeholders) <= known, (path.name, line)
+
+
+def test_get_value_missing_key_returns_none(tmp_path):
+    path = tmp_path / "v.json"
+    path.write_text(json.dumps({"names": {"a": "A"}}), encoding="utf-8")
+    glossary = Glossary(object(), str(path))
+    assert glossary.get_value("names", "a")[0] == "A"
+    assert glossary.get_value("names", "zzz") == (None, None)
