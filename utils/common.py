@@ -9,6 +9,8 @@ from discord.ext.commands import Bot
 from dotenv import load_dotenv
 
 load_dotenv()
+# gRPC's fork handlers can stall subprocess spawns (ffmpeg) for seconds
+os.environ.setdefault("GRPC_ENABLE_FORK_SUPPORT", "0")
 TOKEN = os.getenv("DISCORD_TOKEN", "")
 GUILD = os.getenv("GUILD_ID", "")
 BASE_DIR = pathlib.Path(__file__).parent.parent
