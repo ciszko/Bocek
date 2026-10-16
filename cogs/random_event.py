@@ -7,7 +7,7 @@ from discord import CustomActivity, Game, Interaction, Streaming, app_commands
 from discord.ext import tasks
 from discord.ext.commands import Cog
 
-from utils.common import RhymeExtension, replace_all
+from utils.common import RhymeExtension
 from utils.glossary import Glossary
 from utils.log import log
 
@@ -35,14 +35,9 @@ class RandomEvent(RhymeExtension, Cog, name="random_event"):
         if members := [
             x.global_name for x in self.bot.voice_channel.members if not x.bot
         ]:
-            msg, placeholders = self.glossary.get_random()
-            if "user" in placeholders:
-                user = choice(members)
-            if "all_users" in placeholders:
-                all_users = ", ".join(members) if len(members) > 1 else members[0]
-            scope = locals()
-            msg = replace_all(msg, {f"{{{p}}}": eval(p, scope) for p in placeholders})
-            return msg
+            return self.glossary.render(
+                user=choice(members), all_users=", ".join(members)
+            )
         return None
 
     @tasks.loop(seconds=8 * 60)
