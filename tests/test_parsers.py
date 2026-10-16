@@ -14,7 +14,7 @@ def fixture(name):
 
 def test_parse_joke_returns_joke_text_only():
     assert parse_joke(fixture("joke.html")) == (
-        " Idzie baba do lekarza. Lekarz pyta: co dolega? "
+        "Idzie baba do lekarza. Lekarz pyta: - Co dolega? - Nic, tak wpadłam."
     )
 
 
