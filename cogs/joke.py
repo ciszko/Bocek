@@ -8,6 +8,21 @@ from utils.common import RhymeExtension
 from utils.session import Session
 
 
+def parse_joke(html: str) -> str:
+    dom = BeautifulSoup(html, "html.parser")
+    joke = (
+        dom.find("div", {"class": "content"})
+        .find("div", {"class": "container"})
+        .get_text()
+    )
+    return (
+        joke[: joke.find("Dowcip:")]
+        .replace("\r", "")
+        .replace("\n", " ")
+        .replace("\t", "")
+    )
+
+
 class Joke(RhymeExtension, Cog, name="joke"):
     def __init__(self, bot):
         self.bot = bot
@@ -21,18 +36,7 @@ class Joke(RhymeExtension, Cog, name="joke"):
     @app_commands.command(name="żart", description="Losowy żarcik")
     async def random_joke(self, interaction: Interaction):
         r = await self.session.get("/random")
-        dom = BeautifulSoup(await r.text(), "html.parser")
-        joke = (
-            dom.find("div", {"class": "content"})
-            .find("div", {"class": "container"})
-            .get_text()
-        )
-        msg = (
-            joke[: joke.find("Dowcip:")]
-            .replace("\r", "")
-            .replace("\n", " ")
-            .replace("\t", "")
-        )
+        msg = parse_joke(await r.text())
         await interaction.response.send_message(msg)
         if interaction.user.voice:
             await self.bot.speech.say(msg, voice="random")
