@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import asyncio
+import time
 from collections.abc import Awaitable, Callable
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Protocol
 
@@ -26,6 +28,8 @@ class VoiceOutput(Protocol):
 
     def listeners(self) -> int: ...
 
+    async def connect(self) -> bool: ...
+
     async def play(self, path: Path, on_done: Callable[[], Awaitable[None]]) -> bool: ...
 
     def stop(self) -> bool: ...
@@ -34,6 +38,29 @@ class VoiceOutput(Protocol):
 
 
 Voice = str | dict
+
+
+class _Timings:
+    """Named stage durations for one request, rendered as a single log line."""
+
+    def __init__(self, kind: str, clock: Callable[[], float]):
+        self._kind = kind
+        self._clock = clock
+        self._start = clock()
+        self._stages: dict[str, float] = {}
+
+    @contextmanager
+    def stage(self, name: str):
+        start = self._clock()
+        try:
+            yield
+        finally:
+            self._stages[name] = self._stages.get(name, 0.0) + self._clock() - start
+
+    def log(self, started: bool) -> None:
+        stages = " ".join(f"{k}={v:.2f}s" for k, v in self._stages.items())
+        total = self._clock() - self._start
+        log.info(f"Speech {self._kind}: {stages} total={total:.2f}s started={started}")
 
 
 class Speech:
@@ -45,11 +72,13 @@ class Speech:
         output: VoiceOutput,
         make_fart: Callable[[], Path],
         audio_dir: Path,
+        clock: Callable[[], float] = time.perf_counter,
     ):
         self._synth = synthesizer
         self._output = output
         self._make_fart = make_fart
         self._audio_dir = audio_dir
+        self._clock = clock
 
     async def say(self, text: str, voice: Voice = "default") -> bool:
         """Speak `text`. `voice` is "default", "random" or synthesizer params.
@@ -59,18 +88,34 @@ class Speech:
         """
         if not text or not await self._can_speak():
             return False
+        timings = _Timings("say", self._clock)
+        started = False
         try:
-            path = await self._synthesize(text, voice)
-        except SynthesisUnavailable:
-            path = await self._new_fart()
-        if path is None:
-            return False
-        return await self._play(path)
+            try:
+                with timings.stage("synth"):
+                    path = await self._synthesize(text, voice)
+            except SynthesisUnavailable:
+                with timings.stage("fart"):
+                    path = await self._new_fart()
+            if path is None:
+                return False
+            started = await self._play(path, timings)
+            return started
+        finally:
+            timings.log(started)
 
     async def fart(self) -> bool:
         if not await self._can_speak():
             return False
-        return await self._play(await self._new_fart())
+        timings = _Timings("fart", self._clock)
+        started = False
+        try:
+            with timings.stage("fart"):
+                path = await self._new_fart()
+            started = await self._play(path, timings)
+            return started
+        finally:
+            timings.log(started)
 
     async def synthesize(self, text: str, **params) -> Path | None:
         """Render to a file without playing it; the caller owns the file."""
@@ -115,13 +160,18 @@ class Speech:
             return False
         return True
 
-    async def _play(self, path: Path) -> bool:
+    async def _play(self, path: Path, timings: _Timings) -> bool:
         async def on_done():
             await self._delete(path)
             if self._output.listeners() < 1:
                 await self._output.disconnect()
 
-        started = await self._output.play(path, on_done)
+        with timings.stage("connect"):
+            connected = await self._output.connect()
+        started = False
+        if connected:
+            with timings.stage("play"):
+                started = await self._output.play(path, on_done)
         if not started:
             await self._delete(path)
         return started

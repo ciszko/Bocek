@@ -102,11 +102,14 @@ class DiscordVoiceOutput:
         channel = self._bot.voice_channel
         return len([m for m in channel.members if not m.bot]) if channel else 0
 
-    async def play(self, path: Path, on_done: Callable[[], Awaitable[None]]) -> bool:
+    async def connect(self) -> bool:
         if self._is_connecting:
             log.warning("Already attempting to connect to voice channel")
             return False
-        if not await self._ensure_connected():
+        return await self._ensure_connected()
+
+    async def play(self, path: Path, on_done: Callable[[], Awaitable[None]]) -> bool:
+        if not self._vc or not self._vc.is_connected():
             return False
         if self._vc.is_playing():
             log.warning("Already playing")
