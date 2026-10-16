@@ -79,9 +79,16 @@ class Speech:
         self._make_fart = make_fart
         self._audio_dir = audio_dir
         self._clock = clock
+        self._pending: set[asyncio.Task] = set()
 
-    async def say(self, text: str, voice: Voice = "default") -> bool:
+    async def say(
+        self, text: str, voice: Voice = "default", delay: float = 0.0
+    ) -> bool:
         """Speak `text`. `voice` is "default", "random" or synthesizer params.
+
+        Synthesis and the voice connection run concurrently. `delay` holds
+        playback back by that many seconds, counted from the call, while the
+        audio is prepared meanwhile.
 
         Returns True if audio started playing. Drops (never queues) when
         nothing can listen or audio is already playing.
@@ -89,6 +96,7 @@ class Speech:
         if not text or not await self._can_speak():
             return False
         timings = _Timings("say", self._clock)
+        connect, hold = self._prepare(timings, delay)
         started = False
         try:
             try:
@@ -99,22 +107,25 @@ class Speech:
                     path = await self._new_fart()
             if path is None:
                 return False
-            started = await self._play(path, timings)
+            started = await self._play(path, timings, connect, hold)
             return started
         finally:
+            self._settle(connect, hold)
             timings.log(started)
 
     async def fart(self) -> bool:
         if not await self._can_speak():
             return False
         timings = _Timings("fart", self._clock)
+        connect, hold = self._prepare(timings, 0.0)
         started = False
         try:
             with timings.stage("fart"):
                 path = await self._new_fart()
-            started = await self._play(path, timings)
+            started = await self._play(path, timings, connect, hold)
             return started
         finally:
+            self._settle(connect, hold)
             timings.log(started)
 
     async def synthesize(self, text: str, **params) -> Path | None:
@@ -160,18 +171,44 @@ class Speech:
             return False
         return True
 
-    async def _play(self, path: Path, timings: _Timings) -> bool:
+    def _prepare(
+        self, timings: _Timings, delay: float
+    ) -> tuple[asyncio.Task, asyncio.Task | None]:
+        async def connect() -> bool:
+            with timings.stage("connect"):
+                return await self._output.connect()
+
+        connect_task = asyncio.create_task(connect())
+        self._pending.add(connect_task)
+        connect_task.add_done_callback(self._pending.discard)
+        hold = asyncio.create_task(asyncio.sleep(delay)) if delay > 0 else None
+        return connect_task, hold
+
+    def _settle(self, connect: asyncio.Task, hold: asyncio.Task | None) -> None:
+        # A started connection is left to finish so the next request reuses it.
+        connect.add_done_callback(lambda t: t.cancelled() or t.exception())
+        if hold:
+            hold.cancel()
+
+    async def _play(
+        self,
+        path: Path,
+        timings: _Timings,
+        connect: asyncio.Task,
+        hold: asyncio.Task | None,
+    ) -> bool:
         async def on_done():
             await self._delete(path)
             if self._output.listeners() < 1:
                 await self._output.disconnect()
 
-        with timings.stage("connect"):
-            connected = await self._output.connect()
         started = False
-        if connected:
-            with timings.stage("play"):
-                started = await self._output.play(path, on_done)
+        if await connect:
+            if hold:
+                await hold
+            if hold is None or await self._can_speak():
+                with timings.stage("play"):
+                    started = await self._output.play(path, on_done)
         if not started:
             await self._delete(path)
         return started

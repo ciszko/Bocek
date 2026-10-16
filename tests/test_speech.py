@@ -1,3 +1,5 @@
+import asyncio
+
 import pytest
 
 from utils.speech import Speech, SynthesisUnavailable
@@ -8,11 +10,14 @@ class FakeSynthesizer:
         self.audio_dir = audio_dir
         self.calls = []
         self.unavailable = False
+        self.fail_with_none = False
 
     async def synthesize(self, text, **params):
         self.calls.append((text, params))
         if self.unavailable:
             raise SynthesisUnavailable
+        if self.fail_with_none:
+            return None
         path = self.audio_dir / f"say_{len(self.calls)}.mp3"
         path.write_bytes(b"x")
         return path
@@ -119,9 +124,7 @@ async def test_say_drops_and_cleans_up_when_already_playing(speech, output, audi
     assert list(audio_dir.iterdir()) == []
 
 
-async def test_say_falls_back_to_fart_when_synthesis_unavailable(
-    speech, synth, output
-):
+async def test_say_falls_back_to_fart_when_synthesis_unavailable(speech, synth, output):
     synth.unavailable = True
     assert await speech.say("hello") is True
     assert output.played[0].name.startswith("fart_")
@@ -193,7 +196,9 @@ def log_lines():
     log.remove(sink)
 
 
-async def test_say_logs_one_timing_line_with_stages(synth, output, audio_dir, log_lines):
+async def test_say_logs_one_timing_line_with_stages(
+    synth, output, audio_dir, log_lines
+):
     speech = Speech(synth, output, lambda: None, audio_dir, clock=StepClock())
     await speech.say("hello")
     lines = [m for m in log_lines if m.startswith("Speech say:")]
@@ -209,9 +214,98 @@ async def test_fart_logs_timing_line(speech, log_lines):
     assert "fart=" in lines[0] and "connect=" in lines[0]
 
 
-async def test_timing_line_logged_when_connect_fails(speech, output, audio_dir, log_lines):
+async def test_timing_line_logged_when_connect_fails(
+    speech, output, audio_dir, log_lines
+):
     output.connected = False
     assert await speech.say("hello") is False
     assert output.played == []
     assert list(audio_dir.iterdir()) == []
     assert any("started=False" in m for m in log_lines)
+
+
+class GatedOutput(RecordingOutput):
+    """connect() only finishes once released; records when it was started."""
+
+    def __init__(self):
+        super().__init__()
+        self.connect_started = asyncio.Event()
+        self.release_connect = asyncio.Event()
+
+    async def connect(self):
+        self.connect_started.set()
+        await self.release_connect.wait()
+        return await super().connect()
+
+
+async def test_synthesis_runs_while_connecting(synth, audio_dir):
+    output = GatedOutput()
+    speech = Speech(synth, output, lambda: None, audio_dir)
+    task = asyncio.create_task(speech.say("hello"))
+    await asyncio.wait_for(output.connect_started.wait(), 1)
+    await asyncio.sleep(0)
+    await asyncio.sleep(0)
+    assert synth.calls == [("hello", {})]
+    assert output.played == []
+    output.release_connect.set()
+    assert await asyncio.wait_for(task, 1) is True
+
+
+async def test_connection_runs_while_synthesis_in_flight(audio_dir, output):
+    release = asyncio.Event()
+
+    class SlowSynth(FakeSynthesizer):
+        async def synthesize(self, text, **params):
+            await release.wait()
+            return await super().synthesize(text, **params)
+
+    speech = Speech(SlowSynth(audio_dir), output, lambda: None, audio_dir)
+    task = asyncio.create_task(speech.say("hello"))
+    await asyncio.sleep(0.01)
+    assert output.connects == 1
+    release.set()
+    assert await asyncio.wait_for(task, 1) is True
+
+
+async def test_failed_connect_drops_synthesized_file(speech, output, audio_dir):
+    output.connected = False
+    assert await speech.say("hello") is False
+    assert list(audio_dir.iterdir()) == []
+
+
+async def test_synthesis_failure_still_lets_connection_finish(speech, synth, output):
+    synth.fail_with_none = True
+    assert await speech.say("hello") is False
+    await asyncio.sleep(0.01)
+    assert output.connects == 1
+
+
+async def test_delay_holds_playback_but_not_synthesis(speech, synth, output):
+    loop = asyncio.get_running_loop()
+    start = loop.time()
+    assert await speech.say("hello", delay=0.1) is True
+    assert synth.calls
+    assert loop.time() - start >= 0.1
+
+
+async def test_delay_does_not_slow_down_when_audio_is_slower(synth, output, audio_dir):
+    class SlowSynth(FakeSynthesizer):
+        async def synthesize(self, text, **params):
+            await asyncio.sleep(0.15)
+            return await super().synthesize(text, **params)
+
+    speech = Speech(SlowSynth(audio_dir), output, lambda: None, audio_dir)
+    loop = asyncio.get_running_loop()
+    start = loop.time()
+    await speech.say("hello", delay=0.1)
+    assert loop.time() - start < 0.22
+
+
+async def test_listener_leaving_during_delay_drops_audio(speech, output, audio_dir):
+    task = asyncio.create_task(speech.say("hello", delay=0.1))
+    await asyncio.sleep(0.02)
+    output.humans = 0
+    assert await task is False
+    assert output.played == []
+    assert output.disconnects >= 1
+    assert list(audio_dir.iterdir()) == []
