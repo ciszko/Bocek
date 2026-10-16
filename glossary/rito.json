@@ -40,8 +40,8 @@
         "{user} jest boski, ma ładne włoski",
         "{user} jest chyba dobry",
         "{user} jest twardy",
-        "{user} {self.get_rhyme(user)}",
-        "{user} {self.get_rhyme(user)} {self.get_rhyme(user)}"
+        "{user} {rhyme:user}",
+        "{user} {rhyme:user} {rhyme:user}"
     ],
     "PentaKill": [
         "{user} GIGA CZAD",
@@ -93,24 +93,24 @@
         "Baron leży, puszujemy",
         "Brawo chłopacy",
         "Baron is ded",
-        "Baron bardziej jak {self.get_rhyme('baron')}"
+        "Baron bardziej jak {rhyme:baron}"
     ],
     "DragonKill": [
         "Smok poległ dla naszego dobra",
         "Smok is ded",
         "{user} zabił smoka, palec do oka",
         "{user} smokobijec",
-        "Dragon bardziej jak {self.get_rhyme('dragon')}"
+        "Dragon bardziej jak {rhyme:dragon}"
     ],
     "HeraldKill": [
         "{user} zabił heralda",
         "Tylko podnieś heralda {user}",
-        "Herald bardziej jak {self.get_rhyme('herald')}"
+        "Herald bardziej jak {rhyme:herald}"
     ],
     "AtakhanKill": [
         "{user} zabił atakhana",
         "Karaczan poległ",
-        "Atakan, {self.get_rhyme('atakan')}, {self.get_rhyme('atakan')}",
+        "Atakan, {rhyme:atakan}, {rhyme:atakan}",
         "Atakaszczan rozpłaszczan"
     ],
     "InhibKilled": [
@@ -124,7 +124,7 @@
         "{user} puszuje jak szalony",
         "{user} zniszczył tóreta, zdjedz kotleta",
         "{user} zniszczył tureta, zdejmij napleta",
-        "Turet bardziej jak {self.get_rhyme('turet')}"
+        "Turet bardziej jak {rhyme:turet}"
     ],
     "Ace": [
         "no i ejsik",

@@ -72,7 +72,7 @@
         "czy ktoś chcę laktokontrol?",
         "wbijam na bombsajt A., kolejny terro padł",
         "Ale jesteś piękny {user}",
-        "Jestem raperem, prawie jak {self.get_rhyme('raperem')}",
+        "Jestem raperem, prawie jak {rhyme:raperem}",
         "Mam ochotę uderzyć cię w jajko {user}"
     ],
     "greetings": [
@@ -89,14 +89,14 @@
         "Jeśli jest tu {user}, przekażcie mu że wisi mi 50 złotych.",
         "Łaaazaaap!",
         "{user} {user} ty chuju.",
-        "{user} {self.get_rhyme(user)}",
-        "{user} {user} {self.get_rhyme(user)}",
-        "{user} bardziej jak {self.get_rhyme(user)}",
+        "{user} {rhyme:user}",
+        "{user} {user} {rhyme:user}",
+        "{user} bardziej jak {rhyme:user}",
         "Dawaj {user} pokaż siurdolka",
         "Witaj przywoływaczu",
         "Hej {user}, często tu bywasz?",
         "{user} jestem tu specjalnie dla ciebie!",
-        "Cześc {user}, jestem Bocek, mor lajk {self.get_rhyme('bocek')}",
+        "Cześc {user}, jestem Bocek, mor lajk {rhyme:bocek}",
         "Halo halo",
         "Nooooooooooo, w końcu wszedłeś {user}",
         "Cześć maleńka, jestem bocek."

@@ -1,8 +1,9 @@
 import json
+from types import SimpleNamespace
 
 import pytest
 
-from utils.glossary import Glossary
+from utils.glossary import RHYME, Glossary
 
 
 @pytest.fixture
@@ -14,11 +15,13 @@ def glossary(tmp_path):
                 "greetings": ["Hello {user}!"],
                 "group": ["{user} and {all_users}"],
                 "plain": ["no placeholders"],
+                "rhymes": ["{user} {rhyme:user} {rhyme:baron}"],
             }
         ),
         encoding="utf-8",
     )
-    return Glossary(object(), str(path))
+    plugin = SimpleNamespace(get_rhyme=lambda word: f"<{word}>")
+    return Glossary(plugin, str(path))
 
 
 def test_render_substitutes_context(glossary):
@@ -38,6 +41,10 @@ def test_render_missing_placeholder_raises_clear_error(glossary):
         glossary.render("greetings")
 
 
+def test_render_rhyme_placeholder_uses_context_or_literal(glossary):
+    assert glossary.render("rhymes", user="Ala") == "Ala <Ala> <baron>"
+
+
 def test_render_unknown_section_returns_none(glossary):
     assert glossary.render("nope", user="Ala") is None
 
@@ -53,5 +60,6 @@ def test_shipped_glossaries_only_use_known_placeholders():
             for line in lines:
                 if not isinstance(line, str):
                     continue
+                line = RHYME.sub("", line)
                 placeholders = Glossary(object(), str(path)).get_placeholders(line)
                 assert set(placeholders) <= known, (path.name, line)
