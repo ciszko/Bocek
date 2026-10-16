@@ -31,10 +31,16 @@ class RecordingOutput:
         self.busy = False
         self.played = []
         self.disconnects = 0
+        self.connects = 0
+        self.connected = True
         self._on_done = None
 
     def listeners(self):
         return self.humans
+
+    async def connect(self):
+        self.connects += 1
+        return self.connected
 
     async def play(self, path, on_done):
         if self.busy:
@@ -165,3 +171,47 @@ async def test_leave_if_empty_noop_with_listeners(speech, output, audio_dir):
     await speech.leave_if_empty()
     assert output.disconnects == 0
     assert len(list(audio_dir.iterdir())) == 1
+
+
+class StepClock:
+    def __init__(self, step=0.5):
+        self.now = 0.0
+        self.step = step
+
+    def __call__(self):
+        self.now += self.step
+        return self.now
+
+
+@pytest.fixture
+def log_lines():
+    from utils.log import log
+
+    lines = []
+    sink = log.add(lambda m: lines.append(m.record["message"]), level="INFO")
+    yield lines
+    log.remove(sink)
+
+
+async def test_say_logs_one_timing_line_with_stages(synth, output, audio_dir, log_lines):
+    speech = Speech(synth, output, lambda: None, audio_dir, clock=StepClock())
+    await speech.say("hello")
+    lines = [m for m in log_lines if m.startswith("Speech say:")]
+    assert len(lines) == 1
+    assert "synth=0.50s connect=0.50s play=0.50s" in lines[0]
+    assert "started=True" in lines[0]
+
+
+async def test_fart_logs_timing_line(speech, log_lines):
+    await speech.fart()
+    lines = [m for m in log_lines if m.startswith("Speech fart:")]
+    assert len(lines) == 1
+    assert "fart=" in lines[0] and "connect=" in lines[0]
+
+
+async def test_timing_line_logged_when_connect_fails(speech, output, audio_dir, log_lines):
+    output.connected = False
+    assert await speech.say("hello") is False
+    assert output.played == []
+    assert list(audio_dir.iterdir()) == []
+    assert any("started=False" in m for m in log_lines)

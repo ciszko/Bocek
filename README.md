@@ -23,6 +23,7 @@ Bocek consists of completely random and very useful features such as:
 - [Extra configuration](#extra-configuration)
   - [`config.toml`](#configtoml)
   - [`glossary`](#glossary)
+- [Speech timings](#speech-timings)
 
 
 
@@ -86,3 +87,6 @@ This directory consists of glossaries that Bocek uses to talk.
 `talk.json` - greeting and commands
 
 `rhymes2.json` - rhymes dictionary
+## Speech timings
+
+Every spoken request logs one line, e.g. `Speech say: synth=0.86s connect=0.80s play=0.01s total=1.68s started=True`. Stages: `synth` (Google TTS), `fart` (rendering a fart clip), `connect` (joining the voice channel; ~0 when already connected) and `play` (starting playback). `started=False` means the request was dropped. Follow them with `journalctl -u <service> -f | grep "Speech "`.

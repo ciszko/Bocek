@@ -4,7 +4,6 @@ import asyncio
 import os
 from difflib import get_close_matches
 from functools import cached_property
-from time import time
 
 import discord
 from discord.ext.commands import Bot
@@ -99,9 +98,7 @@ class MyBot(Bot, RhymeExtension):
         if before.channel != after.channel and after.channel == self.voice_channel:
             await asyncio.sleep(0.75)
             to_say = self.glossary.render("greetings", user=member.global_name)
-            start_time = time()
             await self.speech.say(to_say, voice="random")
-            log.info(f"Greeting took {time() - start_time:.2f}s")
             return
         if after.channel != self.voice_channel:
             await self.speech.leave_if_empty()
