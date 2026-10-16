@@ -57,3 +57,53 @@ async def test_returns_none_when_nothing_found():
 
     assert await first_usable(fetch, [1, 2]) is None
     assert await first_usable(fetch, []) is None
+
+
+class FakeInteraction:
+    def __init__(self, name="kuba"):
+        self.user = name
+        self.edits = 0
+        self.deferred = 0
+        outer = self
+
+        class Message:
+            async def edit(self, **kwargs):
+                outer.edits += 1
+                await asyncio.sleep(0.01)
+
+        class Response:
+            async def defer(self):
+                outer.deferred += 1
+
+        self.message = Message()
+        self.response = Response()
+
+
+async def test_simultaneous_delete_clicks_add_one_view_button():
+    from discord import Embed
+
+    from cogs.anonse import Anonse
+
+    view = Anonse.DeleteImageButton(msg="m", img="https://x/i.jpg", embed=Embed())
+    clicks = [FakeInteraction("a"), FakeInteraction("b"), FakeInteraction("c")]
+    await asyncio.gather(*(view.on_click.callback(i) for i in clicks))
+
+    assert len(view.children) == 2
+    assert sum(i.edits for i in clicks) == 1
+    assert sum(i.deferred for i in clicks) == 3
+
+
+async def test_delete_click_is_logged():
+    from discord import Embed
+
+    from cogs.anonse import Anonse
+    from utils.log import log
+
+    messages = []
+    sink = log.add(lambda m: messages.append(str(m)), level="INFO")
+    try:
+        view = Anonse.DeleteImageButton(msg="m", img="https://x/i.jpg", embed=Embed())
+        await view.on_click.callback(FakeInteraction("kuba"))
+    finally:
+        log.remove(sink)
+    assert any("kuba" in m and "https://x/i.jpg" in m for m in messages)
