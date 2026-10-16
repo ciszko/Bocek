@@ -96,9 +96,8 @@ class MyBot(Bot, RhymeExtension):
             await self.speech.leave_if_empty()
             return
         if before.channel != after.channel and after.channel == self.voice_channel:
-            await asyncio.sleep(0.75)
             to_say = self.glossary.render("greetings", user=member.global_name)
-            await self.speech.say(to_say, voice="random")
+            await self.speech.say(to_say, voice="random", delay=0.75)
             return
         if after.channel != self.voice_channel:
             await self.speech.leave_if_empty()

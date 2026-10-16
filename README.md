@@ -89,4 +89,4 @@ This directory consists of glossaries that Bocek uses to talk.
 `rhymes2.json` - rhymes dictionary
 ## Speech timings
 
-Every spoken request logs one line, e.g. `Speech say: synth=0.86s connect=0.80s play=0.01s total=1.68s started=True`. Stages: `synth` (Google TTS), `fart` (rendering a fart clip), `connect` (joining the voice channel; ~0 when already connected) and `play` (starting playback). `started=False` means the request was dropped. Follow them with `journalctl -u <service> -f | grep "Speech "`.
+Every spoken request logs one line, e.g. `Speech say: synth=0.86s connect=0.80s play=0.01s total=1.68s started=True`. Stages: `synth` (Google TTS), `fart` (rendering a fart clip), `connect` (joining the voice channel; ~0 when already connected) and `play` (starting playback). Stages run concurrently (`synth` and `connect` overlap), so `total` is wall time, not their sum. `started=False` means the request was dropped. Follow them with `journalctl -u <service> -f | grep "Speech "`.
