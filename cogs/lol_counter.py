@@ -1,4 +1,3 @@
-import asyncio
 from difflib import get_close_matches
 from typing import Dict, List
 
@@ -10,27 +9,21 @@ from tabulate import tabulate
 
 from utils.common import RhymeExtension
 from utils.log import log
-from utils.session import Session
 
 
 class LolCounter(RhymeExtension, Cog, name="lol_counter"):
     def __init__(self, bot):
         self.bot = bot
-        headers = {"User-Agent": "Bocek/1.0"}
         self.base_url = "https://www.counterstats.net"
-        self.session = Session(self.base_url, headers)
-
-    def cog_unload(self):
-        asyncio.create_task(self.session.close())
 
     @async_cached_property
     async def champions(self) -> Dict[str, str]:
         try:
-            r = await self.session.get("/")
+            html = await self.bot.web.text(f"{self.base_url}/")
         except Exception:
             return {"": ""}
 
-        dom = BeautifulSoup(await r.text(), "html.parser")
+        dom = BeautifulSoup(html, "html.parser")
         champion_divs = dom.find_all("div", {"class": "champion-icon champList"})
         champs = {}
         for champion_div in champion_divs:
@@ -84,13 +77,13 @@ class LolCounter(RhymeExtension, Cog, name="lol_counter"):
 
     async def get_lol_counters(self, champion, limit=10):
         champion = self.get_closest_champion(champion)
-        url = f"/league-of-legends/{champion}"
+        url = f"{self.base_url}/league-of-legends/{champion}"
         try:
-            r = await self.session.get(url)
+            html = await self.bot.web.text(url)
         except Exception as e:
             raise Exception("Kurcze jakiś problem z serwerem jest :(") from e
 
-        dom = BeautifulSoup(await r.text(), "html.parser")
+        dom = BeautifulSoup(html, "html.parser")
 
         img = dom.find("img", {"class": "icon"})["src"]
         all_h3 = dom.find_all("h3")

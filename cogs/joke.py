@@ -1,11 +1,10 @@
-import asyncio
-
 from bs4 import BeautifulSoup
 from discord import Interaction, app_commands
 from discord.ext.commands import Cog
 
 from utils.common import RhymeExtension
-from utils.session import Session
+from utils.log import log
+from utils.web import FetchError
 
 
 def parse_joke(html: str) -> str:
@@ -26,18 +25,17 @@ def parse_joke(html: str) -> str:
 class Joke(RhymeExtension, Cog, name="joke"):
     def __init__(self, bot):
         self.bot = bot
-        headers = {"User-Agent": "Bocek/1.0"}
-        url = "https://perelki.net"
-        self.session = Session(url, headers)
-
-    def cog_unload(self):
-        asyncio.create_task(self.session.close())
 
     @app_commands.command(name="żart", description="Losowy żarcik")
     async def random_joke(self, interaction: Interaction):
-        r = await self.session.get("/random")
-        msg = parse_joke(await r.text())
-        await interaction.response.send_message(msg)
+        await interaction.response.defer()
+        try:
+            msg = parse_joke(await self.bot.web.text("https://perelki.net/random"))
+        except (FetchError, AttributeError) as e:
+            log.warning(f"Joke unavailable: {e!r}")
+            await interaction.followup.send("Kurde, nie mogę teraz znaleźć żartu :(")
+            return
+        await interaction.followup.send(msg)
         if interaction.user.voice:
             await self.bot.speech.say(msg, voice="random")
 

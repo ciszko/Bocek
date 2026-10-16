@@ -1,24 +1,19 @@
-import asyncio
-
-import aiohttp
-
 from utils.log import log
+from utils.web import FetchTimeout, FetchUnreachable
 
 
 class LiveClient:
     """Adapter for the LoL Game Client API behind the Rito event-source seam."""
 
-    def __init__(self, session):
-        self._session = session
+    def __init__(self, web, base_url: str):
+        self._web = web
+        self._url = f"{base_url}/liveclientdata/eventdata"
 
     async def in_game(self) -> bool:
         try:
-            resp = await self._session.get(
-                "/liveclientdata/eventdata", timeout=3, ssl=False
-            )
-            resp.release()
-            return resp.status == 200
-        except (asyncio.TimeoutError, aiohttp.ClientConnectorError):
+            status = await self._web.status(self._url, timeout=3, retries=0, ssl=False)
+            return status == 200
+        except (FetchTimeout, FetchUnreachable):
             return False
         except Exception as e:
             log.exception(f"Unexpected error in in_game: {e}")
@@ -26,8 +21,7 @@ class LiveClient:
 
     async def events(self) -> dict | None:
         try:
-            resp = await self._session.get("/liveclientdata/eventdata", ssl=False)
-            return await resp.json()
+            return await self._web.json(self._url, retries=0, ssl=False)
         except Exception as e:
             log.exception(e)
             return None

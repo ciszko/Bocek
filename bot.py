@@ -19,6 +19,7 @@ from utils.glossary import Glossary
 from utils.log import log
 from utils.speech import Speech
 from utils.speech_adapters import DiscordVoiceOutput, GoogleSynthesizer, make_fart
+from utils.web import Web
 
 
 class MyBot(Bot, RhymeExtension):
@@ -30,9 +31,11 @@ class MyBot(Bot, RhymeExtension):
         self.voice_channel_id = int(os.getenv("VOICE_CHANNEL_ID"))
         self.text_channel_id = int(os.getenv("TEXT_CHANNEL_ID"))
         self.speech: Speech | None = None
+        self.web: Web | None = None
         os.makedirs(MP3_DIR, exist_ok=True)
 
     async def setup_hook(self):
+        self.web = Web()
         self.speech = Speech(
             GoogleSynthesizer(), DiscordVoiceOutput(self), make_fart, MP3_DIR
         )
@@ -134,6 +137,8 @@ class MyBot(Bot, RhymeExtension):
         log.info("Closing bot connections")
         if self.speech:
             await self.speech.shutdown()
+        if self.web:
+            await self.web.close()
         await super().close()
 
     def is_caller_connected(self, interaction: discord.Interaction) -> bool:

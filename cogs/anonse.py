@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 import re
 from copy import deepcopy
 from dataclasses import dataclass, field
@@ -19,7 +18,6 @@ from discord.ext.commands import Cog
 
 from utils.common import RhymeExtension, async_wrap
 from utils.log import log
-from utils.session import Session
 
 if TYPE_CHECKING:
     from bot import MyBot
@@ -124,11 +122,6 @@ class Anonse(RhymeExtension, Cog, name="anonse"):
 
     def __init__(self, bot):
         self.bot: MyBot = bot
-        headers = {"User-Agent": "Bocek/1.0"}
-        self.session = Session(BASE_URL, headers)
-
-    def cog_unload(self):
-        asyncio.create_task(self.session.close())
 
     class DeleteImageButton(discord.ui.View):
         def __init__(self, *, msg=None, img=None, embed=None):
@@ -219,8 +212,7 @@ class Anonse(RhymeExtension, Cog, name="anonse"):
             )
 
             if anonse.image:
-                response = await self.session.get(anonse.image)
-                response.raise_for_status()
+                image_data = await self.bot.web.read(anonse.image)
                 suffix = Path(urlsplit(anonse.image).path).suffix.lower()
                 if suffix not in {".jpg", ".jpeg", ".png", ".gif", ".webp"}:
                     suffix = ".jpg"
@@ -229,7 +221,6 @@ class Anonse(RhymeExtension, Cog, name="anonse"):
 
                 with TemporaryDirectory() as temp_dir:
                     image_path = Path(temp_dir) / filename
-                    image_data = await response.read()
                     await async_wrap(image_path.write_bytes)(image_data)
                     image_file = discord.File(image_path, filename=filename)
                     try:
@@ -277,8 +268,7 @@ class Anonse(RhymeExtension, Cog, name="anonse"):
         if region != "0":
             url += f"{url}&region={region}"
         try:
-            r = await self.session.get(url)
-            html = await r.text()
+            html = await self.bot.web.text(f"{BASE_URL}{url}")
         except Exception as e:
             log.exception(e)
             return []
@@ -290,8 +280,7 @@ class Anonse(RhymeExtension, Cog, name="anonse"):
         if region != "0":
             url += f"{url}&region={region}"
         try:
-            r = await self.session.get(url)
-            html = await r.text()
+            html = await self.bot.web.text(f"{BASE_URL}{url}")
         except Exception as e:
             log.exception(e)
             return 30
