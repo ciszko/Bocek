@@ -2,6 +2,7 @@ import asyncio
 from random import random
 from typing import TYPE_CHECKING
 
+import aiohttp
 from deepdiff import DeepDiff
 from discord.ext import tasks
 from discord.ext.commands import Cog
@@ -69,16 +70,16 @@ class Rito(RhymeExtension, Cog, name="rito"):
             log.exception(e)
             return None
 
-    async def in_game(self):
+    async def in_game(self) -> bool:
         try:
             resp = await self.session.get(
                 "/liveclientdata/eventdata", timeout=3, ssl=False
             )
-            if resp.status == 200:
-                return True
+            resp.release()
+            return resp.status == 200
+        except (asyncio.TimeoutError, aiohttp.ClientConnectorError):
+            return False
         except Exception as e:
-            if "Timeout" not in str(e) or "Cannot connect to host" not in str(e):
-                return False
             log.exception(f"Unexpected error in in_game: {e}")
             return False
 
