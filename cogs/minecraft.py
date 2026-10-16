@@ -1,4 +1,3 @@
-import asyncio
 import os
 
 from async_property import async_cached_property
@@ -7,32 +6,29 @@ from discord.ext.commands import Cog
 
 from utils.common import RhymeExtension
 from utils.log import log
-from utils.session import Session
 
 
 class Minecraft(RhymeExtension, Cog, name="minecraft"):
     def __init__(self, bot):
         self.bot = bot
-        base_url = "https://api.exaroton.com/v1"
         token = os.getenv("MINECRAFT_SERVER_TOKEN")
-        headers = {"User-Agent": "Bocek/1.0", "Authorization": f"Bearer {token}"}
-        self.session = Session(base_url, headers)
+        self.headers = {"Authorization": f"Bearer {token}"}
 
-    def cog_unload(self):
-        asyncio.create_task(self.session.close())
+    async def _api(self, path: str) -> dict:
+        return await self.bot.web.json(
+            f"https://api.exaroton.com/v1{path}", headers=self.headers
+        )
 
     @async_cached_property
     async def server_id(self):
-        resp = await self.session.get("/servers")
-        data = await resp.json()
+        data = await self._api("/servers")
         return next(s["id"] for s in data["data"] if s["name"] == "Xubek")
 
     @app_commands.command(
         name="minecraft_start", description="Startuje serwer minkraft"
     )
     async def minecraft_start(self, interaction: Interaction):
-        resp = await self.session.get(f"/servers/{await self.server_id}/start")
-        data = await resp.json()
+        data = await self._api(f"/servers/{await self.server_id}/start")
         if data["success"] is False:
             await interaction.response.send_message(
                 "Kurde, nie mogę włączyć serwerka :("
@@ -43,8 +39,7 @@ class Minecraft(RhymeExtension, Cog, name="minecraft"):
 
     @app_commands.command(name="minecraft_stop", description="Stopuje serwer minkraft")
     async def minecraft_stop(self, interaction: Interaction):
-        resp = await self.session.get(f"/servers/{await self.server_id}/stop")
-        data = await resp.json()
+        data = await self._api(f"/servers/{await self.server_id}/stop")
         if data["success"] is False:
             await interaction.response.send_message(
                 "Kurde, nie mogę wyłączyć serwerka :("
@@ -57,8 +52,7 @@ class Minecraft(RhymeExtension, Cog, name="minecraft"):
         name="minecraft_kredyty", description="Zwraca ilość pozostałych kredytów"
     )
     async def minecraft_credit(self, interaction: Interaction):
-        resp = await self.session.get("/account")
-        data = await resp.json()
+        data = await self._api("/account")
         if data["success"] is False:
             await interaction.response.send_message(
                 "Kurde, nie mogę wyłączyć serwerka :("

@@ -19,7 +19,6 @@ dependencies = [
     "grpcio>=1.68.0",
     "grpcio-tools>=1.62.3",
     "aiohttp>=3.11.7",
-    "aiohttp-retry>=2.9.1",
     "async-property>=0.2.2",
     "mutagen>=1.47.0",
     "niquests>=3.12.1",

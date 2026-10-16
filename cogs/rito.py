@@ -1,4 +1,3 @@
-import asyncio
 from typing import TYPE_CHECKING
 
 from discord.ext import tasks
@@ -10,7 +9,6 @@ from utils.glossary import Glossary
 from utils.live_client import LiveClient
 from utils.log import log
 from utils.narrator import Narrator
-from utils.session import Session
 
 if TYPE_CHECKING:
     from bot import MyBot
@@ -26,18 +24,13 @@ LOL_GAME_PORT = CONFIG["rito"]["lol-game-port"]
 class Rito(RhymeExtension, Cog, name="rito"):
     def __init__(self, bot):
         self.bot: MyBot = bot
-        self.session = Session(
-            f"https://{LOL_GAME_IP}:{LOL_GAME_PORT}",
-            retries=False,
-        )
         self.glossary = Glossary(self, "rito.json")
-        self.source = LiveClient(self.session)
+        self.source = LiveClient(bot.web, f"https://{LOL_GAME_IP}:{LOL_GAME_PORT}")
         self.narrator = Narrator(self.glossary, PLAYERS, EVENT_PRIORITY)
         self.rito_check.start()
 
     def cog_unload(self):
         self.rito_check.cancel()
-        asyncio.create_task(self.session.close())
 
     @tasks.loop(seconds=30)
     async def rito_check(self):
