@@ -21,6 +21,15 @@ class Glossary:
         log.info(f"{self.plugin.__class__.__name__} -> {section} -> {to_ret}")
         return to_ret, placeholders
 
+    def render(self, section="default", **context) -> str | None:
+        """Returns a random line from a section with placeholders filled from context"""
+        text, placeholders = self.get_random(section)
+        if text is None:
+            return None
+        if missing := [p for p in placeholders if p not in context]:
+            raise ValueError(f"Missing placeholders for '{section}': {missing}")
+        return text.format_map(context)
+
     def get_value(self, section, key) -> tuple[str, list[str]]:
         """Returns specific key from a dictionary section from a glossary"""
         glossary = self.get_file_json()

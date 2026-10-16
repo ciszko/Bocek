@@ -15,7 +15,6 @@ from utils.common import (
     MP3_DIR,
     TOKEN,
     RhymeExtension,
-    replace_all,
 )
 from utils.glossary import Glossary
 from utils.log import log
@@ -78,12 +77,7 @@ class MyBot(Bot, RhymeExtension):
             await message.channel.send(f"Siemano {message.author.name}!")
 
         elif msg == "bocek huju":
-            to_say, placeholders = self.glossary.get_random("bocek_huju")
-            user = message.author.name
-            scope = locals()
-            to_say = replace_all(
-                to_say, {f"{{{p}}}": eval(p, scope) for p in placeholders}
-            )
+            to_say = self.glossary.render("bocek_huju", user=message.author.name)
 
             if (
                 hasattr(message.author.voice, "channel")
@@ -104,12 +98,7 @@ class MyBot(Bot, RhymeExtension):
             return
         if before.channel != after.channel and after.channel == self.voice_channel:
             await asyncio.sleep(0.75)
-            to_say, placeholders = self.glossary.get_random("greetings")
-            user = member.global_name
-            scope = locals()
-            to_say = replace_all(
-                to_say, {f"{{{p}}}": eval(p, scope) for p in placeholders}
-            )
+            to_say = self.glossary.render("greetings", user=member.global_name)
             start_time = time()
             await self.speech.say(to_say, voice="random")
             log.info(f"Greeting took {time() - start_time:.2f}s")

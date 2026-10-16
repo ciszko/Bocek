@@ -36,12 +36,6 @@ def async_wrap(func):
     return run
 
 
-def replace_all(text, dic):
-    for i, j in dic.items():
-        text = text.replace(i, j)
-    return text
-
-
 class RhymeExtension:
     def get_rhyme(self, text):
         to_ret = ""

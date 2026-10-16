@@ -7,7 +7,7 @@ from deepdiff import DeepDiff
 from discord.ext import tasks
 from discord.ext.commands import Cog
 
-from utils.common import RhymeExtension, replace_all
+from utils.common import RhymeExtension
 from utils.config import CONFIG
 from utils.glossary import Glossary
 from utils.log import log
@@ -146,12 +146,7 @@ class Rito(RhymeExtension, Cog, name="rito"):
                     player = event["Who"]
                     event_name = event["EventName"]
                     user, _ = self.glossary.get_value("player_transcript", player)
-                    msg, msg_placeholders = self.glossary.get_random(event_name)
-                    scope = locals()
-                    msg = replace_all(
-                        msg, {f"{{{p}}}": eval(p, scope) for p in msg_placeholders}
-                    )
-                    return msg
+                    return self.glossary.render(event_name, user=user or player)
         return None
 
 
