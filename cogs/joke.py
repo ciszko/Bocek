@@ -4,6 +4,7 @@ from discord.ext.commands import Cog
 
 from utils.common import RhymeExtension
 from utils.log import log
+from utils.replies import defer, reply, reply_and_speak
 from utils.web import FetchError
 
 JOKE_URL = "https://perelki.net/losuj"
@@ -25,16 +26,20 @@ class Joke(RhymeExtension, Cog, name="joke"):
 
     @app_commands.command(name="żart", description="Losowy żarcik")
     async def random_joke(self, interaction: Interaction):
-        await interaction.response.defer()
+        if not await defer(interaction):
+            return
         try:
             msg = parse_joke(await self.bot.web.text(JOKE_URL, headers=BROWSER_HEADERS))
         except (FetchError, AttributeError) as e:
             log.warning(f"Joke unavailable: {e!r}")
-            await interaction.followup.send("Kurde, nie mogę teraz znaleźć żartu :(")
+            await reply(interaction, "Kurde, nie mogę teraz znaleźć żartu :(")
             return
-        await interaction.followup.send(msg)
-        if interaction.user.voice:
-            await self.bot.speech.say(msg, voice="random")
+        await reply_and_speak(
+            interaction,
+            self.bot.speech,
+            msg,
+            speak=bool(interaction.user.voice) and msg,
+        )
 
 
 async def setup(bot) -> None:
