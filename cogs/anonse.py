@@ -1,13 +1,15 @@
 from __future__ import annotations
 
+import asyncio
+import io
 import re
+import time
 from copy import deepcopy
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
 from random import choice, shuffle
-from tempfile import TemporaryDirectory
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, Awaitable, Callable, Iterable, List, Optional, TypeVar
 from urllib.parse import urlsplit
 
 import discord
@@ -16,13 +18,55 @@ from discord import Interaction, app_commands
 from discord.app_commands import Choice
 from discord.ext.commands import Cog
 
-from utils.common import RhymeExtension, async_wrap
+from utils.common import RhymeExtension
 from utils.log import log
 
 if TYPE_CHECKING:
     from bot import MyBot
 
 BASE_URL = "https://anonse.inaczej.pl"
+PAGE_CONCURRENCY = 3
+PAGE_ATTEMPTS = 5
+MAX_PAGE_TTL = 3600
+DEFAULT_MAX_PAGE = 30
+
+T = TypeVar("T")
+
+
+def list_url(page: int, cat: str, region: str) -> str:
+    url = f"{BASE_URL}/?m=list&pg={page}&cat={cat}"
+    if region != "0":
+        url += f"&region={region}"
+    return url
+
+
+async def first_usable(
+    fetch: Callable[[int], Awaitable[Optional[T]]],
+    pages: Iterable[int],
+    concurrency: int = PAGE_CONCURRENCY,
+) -> Optional[T]:
+    """Run fetch over pages, at most `concurrency` at once.
+
+    Returns the first non-None result and cancels the rest; None if none qualify.
+    """
+    remaining = iter(pages)
+    pending: set[asyncio.Task] = set()
+    try:
+        while True:
+            while len(pending) < concurrency and (page := next(remaining, None)):
+                pending.add(asyncio.ensure_future(fetch(page)))
+            if not pending:
+                return None
+            done, pending = await asyncio.wait(
+                pending, return_when=asyncio.FIRST_COMPLETED
+            )
+            for task in done:
+                if (result := task.result()) is not None:
+                    return result
+    finally:
+        for task in pending:
+            task.cancel()
+
 
 CategoryChoices = [
     Choice(name="ogolne", value="1"),
@@ -122,6 +166,7 @@ class Anonse(RhymeExtension, Cog, name="anonse"):
 
     def __init__(self, bot):
         self.bot: MyBot = bot
+        self._max_pages: dict[tuple[str, str], tuple[float, int]] = {}
 
     class DeleteImageButton(discord.ui.View):
         def __init__(self, *, msg=None, img=None, embed=None):
@@ -181,7 +226,7 @@ class Anonse(RhymeExtension, Cog, name="anonse"):
             kategoria = kategoria if isinstance(kategoria, str) else kategoria.value
             region = region if isinstance(region, str) else region.value
             log.info(f"{kategoria=}, {region=}")
-            anonse = await self.get_anonse(interaction, kategoria, region, siurdol)
+            anonse = await self.get_anonse(kategoria, region, siurdol)
             if not anonse:
                 try:
                     await interaction.followup.send(
@@ -219,16 +264,8 @@ class Anonse(RhymeExtension, Cog, name="anonse"):
                 filename = f"anonse{suffix}"
                 embed.set_image(url=f"attachment://{filename}")
 
-                with TemporaryDirectory() as temp_dir:
-                    image_path = Path(temp_dir) / filename
-                    await async_wrap(image_path.write_bytes)(image_data)
-                    image_file = discord.File(image_path, filename=filename)
-                    try:
-                        await interaction.followup.send(
-                            embed=embed, view=view, file=image_file
-                        )
-                    finally:
-                        image_file.close()
+                image_file = discord.File(io.BytesIO(image_data), filename=filename)
+                await interaction.followup.send(embed=embed, view=view, file=image_file)
             else:
                 await interaction.followup.send(embed=embed, view=view)
 
@@ -240,35 +277,27 @@ class Anonse(RhymeExtension, Cog, name="anonse"):
             except discord.errors.NotFound as e:
                 log.error(f"Failed to send error followup: {e}")
 
-    async def get_anonse(self, interaction, cat, region, siurdol):
+    async def get_anonse(self, cat, region, siurdol) -> Optional[AnonseAd]:
         max_page = await self.get_max_page(cat, region)
         pages = list(range(1, max_page + 1))
         shuffle(pages)
 
-        for page in pages[:5]:
+        async def usable_ad(page: int) -> Optional[AnonseAd]:
             anonses = await self.get_anonses(page, cat, region)
-            if not anonses:
-                continue
+            ads = [AnonseAd.from_html(a) for a in anonses]
             if siurdol == "tak":
-                anonses = [a for a in anonses if AnonseAd.from_html(a).image]
-                if not anonses:
-                    continue
-            anonse_item = choice(anonses)
-            anonse_ad = AnonseAd.from_html(anonse_item)
+                ads = [a for a in ads if a.image]
+            if not ads:
+                return None
+            ad = choice(ads)
+            log.info(f"ANONSE: page={page}, cat={cat}, {ad}")
+            return ad
 
-            log.info(f"ANONSE: page={page}, cat={cat}, {anonse_ad}")
-            return anonse_ad
-        else:
-            return await interaction.followup.send(
-                "Coś nie mogę znaleźć anonsa :disappointed_relieved:"
-            )
+        return await first_usable(usable_ad, pages[:PAGE_ATTEMPTS])
 
     async def get_anonses(self, page, cat, region) -> List[AnonseAd]:
-        url = f"/?m=list&pg={page}&cat={cat}"
-        if region != "0":
-            url += f"{url}&region={region}"
         try:
-            html = await self.bot.web.text(f"{BASE_URL}{url}")
+            html = await self.bot.web.text(list_url(page, cat, region))
         except Exception as e:
             log.exception(e)
             return []
@@ -276,21 +305,28 @@ class Anonse(RhymeExtension, Cog, name="anonse"):
         return dom.find_all("div", {"class": "listaditem"})
 
     async def get_max_page(self, cat, region) -> int:
-        url = f"/?m=list&pg=1&cat={cat}"
-        if region != "0":
-            url += f"{url}&region={region}"
+        key = (cat, region)
+        cached = self._max_pages.get(key)
+        if cached and time.monotonic() - cached[0] < MAX_PAGE_TTL:
+            return cached[1]
         try:
-            html = await self.bot.web.text(f"{BASE_URL}{url}")
+            html = await self.bot.web.text(list_url(1, cat, region))
         except Exception as e:
             log.exception(e)
-            return 30
+            return DEFAULT_MAX_PAGE
         dom = BeautifulSoup(html, "html.parser")
         pagination = dom.find("div", {"class": "pagination"})
-        if not pagination:
-            return 1
-        return max(
-            int(el.get_text()) for el in pagination.children if el.get_text().isdigit()
+        max_page = (
+            max(
+                int(el.get_text())
+                for el in pagination.children
+                if el.get_text().isdigit()
+            )
+            if pagination
+            else 1
         )
+        self._max_pages[key] = (time.monotonic(), max_page)
+        return max_page
 
     def replace_numbers(self, msg):
         pattern = r"(\d+)[\/,l ]*(\d+)[\/,l ]*(\d+)[\/,l ]?(\d+)?"
